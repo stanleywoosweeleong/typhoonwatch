@@ -123,7 +123,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.3.0";
+var VERSION = "v2.3.1";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -407,7 +407,7 @@ function overviewMap(storms,others,ref){
       svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1);}).join(" ")+
            '" fill="none" stroke="#43c2ab" stroke-width="1.5" stroke-dasharray="5 4"/>';
     svg+='<circle cx="'+X(c.lon).toFixed(1)+'" cy="'+Y(c.lat).toFixed(1)+'" r="6" fill="#ffb020"/>'+
-         '<text x="'+(X(c.lon)+9).toFixed(1)+'" y="'+(Y(c.lat)-7).toFixed(1)+
+         '<text x="'+(X(c.lon)+9).toFixed(1)+'" y="'+(Y(c.lat)+16).toFixed(1)+
          '" fill="#ffd489" font-size="11" font-weight="700">'+
          stormLabel(s).replace(/[<>&]/g,"")+'</text>';
   });
@@ -479,8 +479,10 @@ function trackPlot(s,ref){
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
        (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
-  // Name sits with the storm, not in the corner. Nudged off the amber dot,
-  // flipped and clamped so it never runs past the edge of the frame.
+  // Name sits with the storm. Western Pacific tracks run up and to the LEFT
+  // (northwest), so the forecast dots and their +NNh labels crowd that side.
+  // Default the name below and to the right — the water the storm has already
+  // crossed — and only move it when the frame edge forces the issue.
   if(s._label && pts.length){
     var lbl=String(s._label).replace(/[<>&]/g,"");
     var wpx=lbl.length*8.2+6;                     // rough advance at 14px bold
@@ -489,8 +491,8 @@ function trackPlot(s,ref){
     if(lx+wpx > W-6){ lx=ax-13; anchor="end"; }   // flip to the left instead
     if(anchor==="start" && lx<6) lx=6;
     if(anchor==="end" && lx-wpx<6){ lx=ax+13; anchor="start"; }
-    var ly=ay-16;
-    if(ly<18) ly=ay+28;                            // drop below if too high
+    var ly=ay+24;                                  // below by default
+    if(ly > H-8) ly=ay-16;                         // unless it would fall off
     svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#ffd489" font-size="14"'+
          ' font-weight="700" text-anchor="'+anchor+'" paint-order="stroke"'+
          ' stroke="#081019" stroke-width="3.5">'+lbl+'</text>';
