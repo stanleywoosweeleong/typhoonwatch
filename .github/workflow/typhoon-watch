@@ -1,1 +1,64 @@
+name: Typhoon watch
+
+# JMA reissues typhoon bulletins every 3 hours (more often when a storm
+# nears Japan), so a 3-hourly check matches the publication rhythm.
+# GitHub's scheduler can be 5-20 min late under load; that is fine here,
+# because the app judges freshness from the bulletin's own DTG, not from
+# when this workflow ran.
+on:
+  schedule:
+    - cron: "45 */3 * * *"
+  workflow_dispatch:        # manual "run now" button in the Actions tab
+    inputs:
+      probe:
+        description: "Connection probe only (no commit)"
+        type: boolean
+        default: false
+  push:
+    paths:
+      - "scripts/fetch_typhoon.py"
+      - ".github/workflows/jtwc-watch.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: typhoon-watch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Connection probe
+        if: inputs.probe
+        run: python scripts/fetch_typhoon.py --probe
+
+      - name: Parser self-test
+        if: ${{ !inputs.probe }}
+        run: python scripts/fetch_typhoon.py --selftest
+
+      - name: Fetch JMA typhoon data
+        if: ${{ !inputs.probe }}
+        run: python scripts/fetch_typhoon.py
+
+      - name: Commit if changed
+        if: ${{ !inputs.probe }}
+        run: |
+          git config user.name  "jtwc-watch"
+          git config user.email "actions@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "no change"
+          else
+            git commit -m "JMA typhoon data $(date -u +'%Y-%m-%d %H:%MZ')"
+            git push
+          fi
 
