@@ -123,7 +123,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.2.0";
+var VERSION = "v2.3.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -136,13 +136,26 @@ var COAST = [[[104.06,10.39],[104.02,10.03],[103.85,10.37],[104.06,10.39]],[[107
 var REGION = {w:92, e:172, s:-12, n:48};   // Malaysia through the whole WNP basin
 
 var REFS = [
-  {id:"triang",  zh:"直凉，彭亨",     en:"Triang, Pahang",       lat:3.22, lon:102.42},
-  {id:"raub",    zh:"劳勿，彭亨",     en:"Raub, Pahang",         lat:3.79, lon:101.86},
-  {id:"kuantan", zh:"关丹，彭亨",     en:"Kuantan, Pahang",      lat:3.81, lon:103.33},
-  {id:"kb",      zh:"哥打巴鲁，吉兰丹", en:"Kota Bharu, Kelantan", lat:6.13, lon:102.24},
-  {id:"kuching", zh:"古晋，砂拉越",   en:"Kuching, Sarawak",     lat:1.55, lon:110.34},
-  {id:"kk",      zh:"亚庇，沙巴",     en:"Kota Kinabalu, Sabah", lat:5.98, lon:116.07},
-  {id:"sandakan",zh:"山打根，沙巴",   en:"Sandakan, Sabah",      lat:5.84, lon:118.12}
+  /* Malaysia — home. grp "my" also switches the monsoon-surge footnote on. */
+  {id:"triang",  grp:"my", zh:"直凉，彭亨",     en:"Triang, Pahang",       lat:3.22,  lon:102.42},
+  {id:"raub",    grp:"my", zh:"劳勿，彭亨",     en:"Raub, Pahang",         lat:3.79,  lon:101.86},
+  {id:"kuantan", grp:"my", zh:"关丹，彭亨",     en:"Kuantan, Pahang",      lat:3.81,  lon:103.33},
+  {id:"kb",      grp:"my", zh:"哥打巴鲁，吉兰丹", en:"Kota Bharu, Kelantan", lat:6.13,  lon:102.24},
+  {id:"kuching", grp:"my", zh:"古晋，砂拉越",   en:"Kuching, Sarawak",     lat:1.55,  lon:110.34},
+  {id:"kk",      grp:"my", zh:"亚庇，沙巴",     en:"Kota Kinabalu, Sabah", lat:5.98,  lon:116.07},
+  {id:"sandakan",grp:"my", zh:"山打根，沙巴",   en:"Sandakan, Sabah",      lat:5.84,  lon:118.12},
+  /* Where these tracks actually end. All inside JMA's area of responsibility. */
+  {id:"danang",  grp:"reg", zh:"岘港，越南",     en:"Da Nang, Vietnam",     lat:16.05, lon:108.22},
+  {id:"haikou",  grp:"reg", zh:"海口，海南",     en:"Haikou, Hainan",       lat:20.04, lon:110.32},
+  {id:"sanya",   grp:"reg", zh:"三亚，海南",     en:"Sanya, Hainan",        lat:18.25, lon:109.51},
+  {id:"guangzhou",grp:"reg",zh:"广州，广东",     en:"Guangzhou, Guangdong", lat:23.13, lon:113.26},
+  {id:"hongkong",grp:"reg", zh:"香港",           en:"Hong Kong",            lat:22.30, lon:114.17},
+  {id:"manila",  grp:"reg", zh:"马尼拉，菲律宾", en:"Manila, Philippines",  lat:14.60, lon:120.98},
+  {id:"kaohsiung",grp:"reg",zh:"高雄，台湾",     en:"Kaohsiung, Taiwan",    lat:22.63, lon:120.30},
+  {id:"taipei",  grp:"reg", zh:"台北，台湾",     en:"Taipei, Taiwan",       lat:25.03, lon:121.56},
+  {id:"naha",    grp:"reg", zh:"那霸，冲绳",     en:"Naha, Okinawa",        lat:26.21, lon:127.68},
+  {id:"kagoshima",grp:"reg",zh:"鹿儿岛，九州",   en:"Kagoshima, Kyushu",    lat:31.60, lon:130.56},
+  {id:"tokyo",   grp:"reg", zh:"东京",           en:"Tokyo",                lat:35.69, lon:139.69}
 ];
 
 var T = {
@@ -152,6 +165,8 @@ var T = {
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
+    grpMY:"马来西亚", grpReg:"区域（气象厅责任区）",
+    rangeNoteGen:"这是球面距离计算，不是对该地点的天气预报。预报路径本身还有误差，请看预报圆。",
     regionCap:"实心橙点＝气象厅台风（虚线为预报路径）· 空心圈＝GDACS 其他系统 · 白菱形＝你选的地点",
     regionNote:"看纬度：马来西亚贴着赤道，台风几乎不会走到这里——但它们把季风涌推过来。",
     otherNote:"来源 GDACS（欧盟联合研究中心），汇整多家机构。气象厅只为它正式发布情报的气旋编号，所以未达台风级的南海低压可能不在上面那一节里。这里是补漏的，级别与命名不如气象厅严谨。",
@@ -191,6 +206,8 @@ var T = {
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
+    grpMY:"Malaysia", grpReg:"Region (JMA area of responsibility)",
+    rangeNoteGen:"A great-circle distance, not a forecast for that place. The forecast track carries its own error — read the forecast circles.",
     regionCap:"Filled amber = JMA typhoon (dashed = forecast track) · hollow ring = GDACS other system · white diamond = your chosen place",
     regionNote:"Read the latitude: Malaysia sits on the equator, where typhoons almost never reach — but they push the monsoon surge down to it.",
     otherNote:"From GDACS (European Commission JRC), aggregating several agencies. JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade may be missing from the section above. This fills that gap, with looser naming and grading than JMA's.",
@@ -462,8 +479,22 @@ function trackPlot(s,ref){
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
        (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
-  if(s._label) svg+='<text x="10" y="20" fill="#ffd489" font-size="14" font-weight="700">'+
-       String(s._label).replace(/[<>&]/g,"")+'</text>';
+  // Name sits with the storm, not in the corner. Nudged off the amber dot,
+  // flipped and clamped so it never runs past the edge of the frame.
+  if(s._label && pts.length){
+    var lbl=String(s._label).replace(/[<>&]/g,"");
+    var wpx=lbl.length*8.2+6;                     // rough advance at 14px bold
+    var ax=X(pts[0].lon), ay=Y(pts[0].lat);
+    var lx=ax+13, anchor="start";
+    if(lx+wpx > W-6){ lx=ax-13; anchor="end"; }   // flip to the left instead
+    if(anchor==="start" && lx<6) lx=6;
+    if(anchor==="end" && lx-wpx<6){ lx=ax+13; anchor="start"; }
+    var ly=ay-16;
+    if(ly<18) ly=ay+28;                            // drop below if too high
+    svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#ffd489" font-size="14"'+
+         ' font-weight="700" text-anchor="'+anchor+'" paint-order="stroke"'+
+         ' stroke="#081019" stroke-width="3.5">'+lbl+'</text>';
+  }
   return svg+'</svg>';
 }
 
@@ -569,7 +600,7 @@ function stormCard(s){
       p2.innerHTML=fill(L("rangeMin"),{km:Math.round(best.d).toLocaleString(),tau:best.tau});
       line.appendChild(p2);
     }
-    line.appendChild(el("span","note",L("rangeNote")));
+    line.appendChild(el("span","note",L(ref.grp==="my"?"rangeNote":"rangeNoteGen")));
     card.appendChild(line);
 
     s._label=stormLabel(s);
@@ -680,10 +711,15 @@ function renderAll(){
   document.getElementById("credit").innerHTML=L("credit");
   var sel=document.getElementById("refSel"), cur=refPlace().id;
   sel.textContent="";
-  REFS.forEach(function(r){
-    var o=document.createElement("option"); o.value=r.id;
-    o.textContent=(lang==="zh"?r.zh:r.en); if(r.id===cur) o.selected=true;
-    sel.appendChild(o);
+  [["my","grpMY"],["reg","grpReg"]].forEach(function(pair){
+    var og=document.createElement("optgroup"); og.label=L(pair[1]);
+    REFS.forEach(function(r){
+      if(r.grp!==pair[0]) return;
+      var o=document.createElement("option"); o.value=r.id;
+      o.textContent=(lang==="zh"?r.zh:r.en); if(r.id===cur) o.selected=true;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
   });
   document.getElementById("hRegion").textContent=L("hRegion");
   document.getElementById("hStorms").textContent=L("hStorms");
