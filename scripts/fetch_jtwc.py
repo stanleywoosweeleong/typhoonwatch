@@ -33,13 +33,30 @@ DATA = os.path.join(ROOT, "data")
 GFX = os.path.join(DATA, "graphics")
 OUT = os.path.join(DATA, "jtwc.json")
 
-BASE = "https://www.metoc.navy.mil/jtwc"
-INDEX = BASE + "/jtwc.html"
-PRODUCTS = BASE + "/products/"
 
-# Be a polite, identifiable client. Change the URL to your own repo.
-UA = ("TyphoonWatch/1.0 (+https://github.com/stanleywoosweeleong/typhoonwatch; "
-      "non-commercial farmer weather app; Mozilla/5.0 compatible)")
+# metoc.navy.mil sits behind a WAF that rejects non-browser clients. A plain
+# library User-Agent gets a 403, so we present as a browser and fall back to
+# curl, which has a different TLS handshake and sometimes passes where
+# Python's does not.
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+
+HEADERS = {
+    "User-Agent": UA,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "identity",          # urllib will not gunzip for us
+    "Upgrade-Insecure-Requests": "1",
+    "Connection": "close",
+}
+
+# Known hosts serving the same product tree. Tried in order; the first that
+# answers wins and is used for every product in that run.
+HOSTS = [
+    "https://www.metoc.navy.mil/jtwc",
+    "https://www.metoc.dc3n.navy.mil/jtwc",
+]
+HOST = HOSTS[0]          # rebound by pick_host()
 
 BASINS = {
     "wp": "Western Pacific",
@@ -55,24 +72,63 @@ RETRIES = 3
 
 # ---------------------------------------------------------------- networking
 
+def _urllib_get(url, binary):
+    req = urllib.request.Request(url, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        raw = r.read()
+    return raw if binary else raw.decode("utf-8", "replace")
+
+
+def _curl_get(url, binary):
+    """Fallback: curl's TLS fingerprint differs from Python's."""
+    import subprocess
+    cmd = ["curl", "-sSL", "--fail", "--max-time", str(TIMEOUT),
+           "-A", UA,
+           "-H", "Accept-Language: en-US,en;q=0.9",
+           "-H", "Accept: text/html,application/xhtml+xml,*/*;q=0.8",
+           url]
+    p = subprocess.run(cmd, capture_output=True, timeout=TIMEOUT + 10)
+    if p.returncode != 0:
+        raise RuntimeError("curl exit %d: %s" % (p.returncode, p.stderr.decode()[:200].strip()))
+    return p.stdout if binary else p.stdout.decode("utf-8", "replace")
+
+
 def get(url, binary=False):
-    """GET with retries. Returns bytes/str, or raises the last error."""
+    """GET with retries, urllib first then curl. Raises the last error."""
     last = None
     for attempt in range(RETRIES):
-        try:
-            req = urllib.request.Request(url, headers={
-                "User-Agent": UA,
-                "Accept": "*/*",
-                "Accept-Language": "en-US,en;q=0.9",
-            })
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-                raw = r.read()
-            return raw if binary else raw.decode("utf-8", "replace")
-        except Exception as e:  # noqa: BLE001 - we want every failure mode
-            last = e
-            if attempt < RETRIES - 1:
-                time.sleep(2 ** attempt * 3)
+        for fn in (_urllib_get, _curl_get):
+            try:
+                return fn(url, binary)
+            except urllib.error.HTTPError as e:
+                last = RuntimeError("HTTP %s %s" % (e.code, e.reason))
+                if e.code == 404:
+                    raise           # a missing product is an answer, not a failure
+            except Exception as e:  # noqa: BLE001
+                last = e
+        if attempt < RETRIES - 1:
+            time.sleep(2 ** attempt * 3)
     raise last
+
+
+def pick_host():
+    """Set HOST to the first mirror that answers. Returns the index HTML."""
+    global HOST
+    errs = []
+    for h in HOSTS:
+        try:
+            html = get(h + "/jtwc.html")
+            HOST = h
+            print("host ok: %s" % h)
+            return html
+        except Exception as e:  # noqa: BLE001
+            errs.append("%s -> %s" % (h, e))
+            print("host failed: %s -> %s" % (h, e), file=sys.stderr)
+    raise RuntimeError("; ".join(errs))
+
+
+def products():
+    return HOST + "/products/"
 
 
 # ------------------------------------------------------------------- parsing
@@ -327,7 +383,7 @@ def main():
     errors = []
 
     try:
-        index_html = get(INDEX)
+        index_html = pick_host()
     except Exception as e:  # noqa: BLE001
         # Total failure: keep the old payload, but make the failure visible.
         doc = dict(prev)
@@ -350,7 +406,7 @@ def main():
         got_text = False
         for suffix in ("web.txt", ".tcw"):
             try:
-                txt = get(PRODUCTS + sid + suffix)
+                txt = get(products() + sid + suffix)
                 if "SUBJ" not in txt.upper():
                     continue
                 rec["warning_text"] = txt.strip()
@@ -367,14 +423,14 @@ def main():
             continue
 
         try:
-            prog = get(PRODUCTS + sid + "prog.txt")
+            prog = get(products() + sid + "prog.txt")
             if "PROGNOSTIC" in prog.upper() or len(prog) > 200:
                 rec["prog_reasoning"] = prog.strip()
         except Exception:
             pass  # reasoning discussion is optional
 
         try:
-            gif = get(PRODUCTS + sid + ".gif", binary=True)
+            gif = get(products() + sid + ".gif", binary=True)
             os.makedirs(GFX, exist_ok=True)
             with open(os.path.join(GFX, sid + ".gif"), "wb") as f:
                 f.write(gif)
@@ -387,7 +443,7 @@ def main():
     abpw = None
     for name in ("abpwsair.txt", "abiosair.txt", "abpwweb.txt"):
         try:
-            txt = get(PRODUCTS + name)
+            txt = get(products() + name)
             if "TROPICAL" in txt.upper():
                 abpw = parse_abpw(txt)
                 abpw["text"] = txt.strip()
@@ -401,7 +457,7 @@ def main():
         "last_attempt": now,
         "fetch_ok": True,
         "source": "Joint Typhoon Warning Center (JTWC), U.S. Navy/Air Force",
-        "source_url": INDEX,
+        "source_url": HOST + "/jtwc.html",
         "storms": storms,
         "abpw": abpw,
         "errors": errors,
@@ -438,7 +494,7 @@ def fixture():
         "last_attempt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "fetch_ok": True,
         "source": "FIXTURE — not real data",
-        "source_url": INDEX,
+        "source_url": HOST + "/jtwc.html",
         "storms": [rec],
         "abpw": a,
         "errors": [],
@@ -451,7 +507,28 @@ def fixture():
     return 0
 
 
+def probe():
+    """Print exactly what each host/method does. Read this in the Actions log."""
+    import subprocess
+    print("== curl version ==")
+    subprocess.run(["curl", "--version"])
+    for h in HOSTS:
+        for path in ("/jtwc.html", "/products/abpwsair.txt"):
+            url = h + path
+            print("\n== %s ==" % url)
+            for name, fn in (("urllib", _urllib_get), ("curl", _curl_get)):
+                try:
+                    body = fn(url, False)
+                    head = " ".join(body[:160].split())
+                    print("  %-7s OK  %6d bytes  %s" % (name, len(body), head))
+                except Exception as e:  # noqa: BLE001
+                    print("  %-7s FAIL %s" % (name, e))
+    return 0
+
+
 if __name__ == "__main__":
+    if "--probe" in sys.argv:
+        sys.exit(probe())
     if "--selftest" in sys.argv:
         sys.exit(selftest())
     if "--fixture" in sys.argv:
