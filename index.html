@@ -3,19 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>风眼 · JTWC 台风监测</title>
+<title>风眼 · 台风监测</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="theme-color" content="#0a1420">
 <style>
-/* ---- tokens -------------------------------------------------------- */
 :root{
   --bg:#0a1420; --panel:#0f1f2e; --panel2:#132738; --line:#1e3648;
   --ink:#dbe7f1; --dim:#7f94a7; --faint:#4e6478;
-  --amber:#ffb020;      /* JTWC chart amber - warnings, current fix   */
-  --red:#ff5b52;        /* one red, used only for danger + staleness  */
-  --teal:#43c2ab;       /* forecast track                             */
+  --amber:#ffb020; --red:#ff5b52; --teal:#43c2ab;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
 }
@@ -25,10 +22,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
   font-size:15px;line-height:1.55;padding:0 0 48px;
   padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .wrap{max-width:760px;margin:0 auto;padding:0 14px}
-
-/* ---- masthead ------------------------------------------------------ */
 header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
-.mast{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 h1{margin:0;font-size:27px;font-weight:800;letter-spacing:.22em}
 h1 .lat{letter-spacing:.04em;font-size:19px;color:var(--dim);font-weight:700}
 .sub{color:var(--dim);font-size:12.5px;margin-top:3px;letter-spacing:.04em}
@@ -37,22 +31,18 @@ button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid v
   border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer}
 button:hover{border-color:var(--faint)}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-button[aria-pressed=true]{background:#1d3d55;border-color:#2f6183;color:#fff}
 select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
   border:1px solid var(--line);border-radius:7px;padding:6px 9px}
-
-/* ---- freshness ----------------------------------------------------- */
 .fresh{border:1px solid var(--line);border-left:3px solid var(--teal);background:var(--panel);
   border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13.5px}
 .fresh.stale{border-left-color:var(--red);background:#26161a;color:#ffd7d4}
 .fresh.warnish{border-left-color:var(--amber);background:#241d10}
 .fresh b{font-family:var(--mono)}
-
-/* ---- storm card ---------------------------------------------------- */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;
   padding:14px;margin-bottom:16px}
-.cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.sname{font-size:18px;font-weight:700;letter-spacing:.01em}
+.cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.sname{font-size:18px;font-weight:700}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
 .badge{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:3px 7px;
   border-radius:5px;background:#1d3d55;color:#bfe0f5;white-space:nowrap}
 .badge.hot{background:#4a1d1a;color:#ffb4ae}
@@ -61,20 +51,13 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
 .cell{background:var(--panel2);border-radius:8px;padding:8px 10px}
 .cell .k{font-size:11px;color:var(--dim);letter-spacing:.05em}
 .cell .v{font-family:var(--mono);font-size:16px;margin-top:1px}
-.cell .v small{font-size:11px;color:var(--dim);font-family:var(--sans)}
 .v.hot{color:var(--red);font-weight:700}
-
-.rangeline{margin-top:12px;font-size:13.5px;color:var(--ink);
-  background:var(--panel2);border-radius:8px;padding:9px 11px}
+.rangeline{margin-top:12px;font-size:13.5px;background:var(--panel2);border-radius:8px;padding:9px 11px}
 .rangeline .num{font-family:var(--mono);color:var(--amber)}
 .rangeline .note{display:block;color:var(--dim);font-size:12px;margin-top:3px}
-
-/* ---- track plot ---------------------------------------------------- */
 .plotwrap{margin-top:13px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
 svg.plot{display:block;width:100%;height:auto}
 .caption{font-size:11.5px;color:var(--faint);margin-top:5px;text-align:right}
-
-/* ---- disclosure ---------------------------------------------------- */
 details{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
 summary{cursor:pointer;font-size:13.5px;color:var(--dim);list-style:none}
 summary::-webkit-details-marker{display:none}
@@ -89,20 +72,12 @@ pre.tty{font-family:var(--mono);font-size:11.5px;line-height:1.45;color:#a9c6dc;
 .decode li:last-child{border-bottom:0}
 .decode code{font-family:var(--mono);font-size:12.5px;color:var(--amber);display:block}
 .decode span{font-size:13px;color:var(--dim)}
-img.gfx{width:100%;border-radius:7px;margin-top:9px;background:#fff}
-
-/* ---- invests + glossary -------------------------------------------- */
-.inv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;
-  border-bottom:1px dashed var(--line);font-size:13.5px}
-.inv:last-child{border-bottom:0}
-.inv .pos{font-family:var(--mono);color:var(--dim);font-size:12.5px}
 h2{font-size:13px;letter-spacing:.12em;color:var(--dim);font-weight:700;
   text-transform:uppercase;margin:26px 0 10px}
 .empty{background:var(--panel);border:1px dashed var(--line);border-radius:10px;
   padding:22px 16px;text-align:center;color:var(--dim);font-size:14px}
 footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   font-size:11.5px;color:var(--faint);line-height:1.7}
-footer a{color:var(--dim)}
 .stamp{font-family:var(--mono);font-size:10.5px;color:#3d5266;margin-top:8px}
 @media (prefers-reduced-motion:no-preference){.card{animation:rise .25s ease both}}
 @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -110,148 +85,116 @@ footer a{color:var(--dim)}
 </head>
 <body>
 <div class="wrap">
-
 <header>
-  <div class="mast">
-    <h1 id="brand">风眼<span class="lat"> TYPHOONWATCH</span></h1>
-  </div>
-  <div class="sub" id="tagline">JTWC 警报 · 镜像存档 · 离线可读</div>
+  <h1 id="brand">风眼<span class="lat"> TYPHOONWATCH</span></h1>
+  <div class="sub" id="tagline"></div>
   <div class="tools">
     <button id="langBtn" type="button">EN</button>
     <button id="refreshBtn" type="button">刷新</button>
-    <label class="sr" for="refSel" hidden>ref</label>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
   </div>
 </header>
-
-<div id="fresh" class="fresh">读取中…</div>
+<div id="fresh" class="fresh">…</div>
 <div id="storms"></div>
-
-<h2 id="hInv">扰动区 · INVEST</h2>
-<div id="invests" class="card"></div>
-
-<h2 id="hLearn">读懂警报 · HOW TO READ</h2>
+<h2 id="hLearn">读懂台风情报 · HOW TO READ</h2>
 <div id="learn" class="card"></div>
-
 <footer>
   <div id="credit"></div>
   <div class="stamp" id="stamp"></div>
 </footer>
-
 </div>
 <script>
 "use strict";
 /* ====================================================================
-   风眼 TYPHOONWATCH — reads ./data/jtwc.json, mirrored from JTWC by
-   .github/workflows/jtwc-watch.yml. No live third-party calls: the
-   only network request this page makes is for its own data file.
+   风眼 TYPHOONWATCH v2 — reads ./data/typhoon.json, mirrored from the
+   Japan Meteorological Agency (RSMC Tokyo) by GitHub Actions.
+
+   v1 read JTWC. metoc.navy.mil returns 403 to datacenter IPs, so that
+   source is unreachable from a runner. JMA is the WMO-designated RSMC
+   for this basin and uses 10-minute sustained winds, matching MET
+   Malaysia's convention.
    ==================================================================== */
-var VERSION = "v1.0.0";
-var STALE_H = 8;            // a warning older than this is shouted about
-var DATA_URL = "./data/jtwc.json";
+var VERSION = "v2.0.0";
+var STALE_H = 8;
+var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
 
-/* ---- reference places (great-circle distance is measured to these) --- */
 var REFS = [
-  {id:"triang",  zh:"直凉，彭亨",   en:"Triang, Pahang",     lat:3.22,  lon:102.42},
-  {id:"raub",    zh:"劳勿，彭亨",   en:"Raub, Pahang",       lat:3.79,  lon:101.86},
-  {id:"kuantan", zh:"关丹，彭亨",   en:"Kuantan, Pahang",    lat:3.81,  lon:103.33},
+  {id:"triang",  zh:"直凉，彭亨",     en:"Triang, Pahang",       lat:3.22, lon:102.42},
+  {id:"raub",    zh:"劳勿，彭亨",     en:"Raub, Pahang",         lat:3.79, lon:101.86},
+  {id:"kuantan", zh:"关丹，彭亨",     en:"Kuantan, Pahang",      lat:3.81, lon:103.33},
   {id:"kb",      zh:"哥打巴鲁，吉兰丹", en:"Kota Bharu, Kelantan", lat:6.13, lon:102.24},
-  {id:"kuching", zh:"古晋，砂拉越", en:"Kuching, Sarawak",   lat:1.55,  lon:110.34},
-  {id:"kk",      zh:"亚庇，沙巴",   en:"Kota Kinabalu, Sabah", lat:5.98, lon:116.07},
-  {id:"sandakan",zh:"山打根，沙巴", en:"Sandakan, Sabah",    lat:5.84,  lon:118.12}
+  {id:"kuching", zh:"古晋，砂拉越",   en:"Kuching, Sarawak",     lat:1.55, lon:110.34},
+  {id:"kk",      zh:"亚庇，沙巴",     en:"Kota Kinabalu, Sabah", lat:5.98, lon:116.07},
+  {id:"sandakan",zh:"山打根，沙巴",   en:"Sandakan, Sabah",      lat:5.84, lon:118.12}
 ];
 
-/* ---- i18n ----------------------------------------------------------- */
 var T = {
   zh:{
     brand:"风眼", lat:" TYPHOONWATCH",
-    tagline:"JTWC 警报 · 镜像存档 · 离线可读",
-    other:"EN", refresh:"刷新",
-    hInv:"扰动区 · INVEST", hLearn:"读懂警报 · HOW TO READ",
-    freshOk:"最新警报 {dtg}（{age} 前）· 抓取于 {fetch}",
-    freshStale:"⚠ 数据可能过时：最新警报 {dtg}，已经 {age}。JTWC 每 6 小时发布一次，超过 {h} 小时未更新，请直接查看 JTWC 官网，不要依赖本页。",
-    freshFail:"⚠ 上一次抓取失败（{when}）。以下内容是上一次成功的存档，可能已经过时。",
+    tagline:"日本气象厅 RSMC 东京 · 台风情报 · 离线可读",
+    other:"EN", refresh:"刷新", hLearn:"读懂台风情报 · HOW TO READ",
+    freshOk:"最新发表 {t}（{age} 前）· 抓取于 {fetch}",
+    freshStale:"⚠ 数据可能过时：最新发表 {t}，已经 {age}。气象厅每 3 小时更新一次，超过 {h} 小时未更新请直接查看气象厅官网。",
+    freshFail:"⚠ 上一次抓取失败（{when}）。以下是上一次成功的存档，可能已经过时。",
     freshNoData:"尚未取得任何数据。GitHub Action 至少要成功跑一次。",
     offline:"（离线：显示缓存内容）",
-    noStorm:"目前 JTWC 没有编号中的热带气旋。平静期是正常的。",
-    unknown:"未知：抓取还没有成功过一次，所以本页并不知道现在有没有台风。这里的空白不代表平静。请查看 GitHub Actions 的日志，或直接前往 JTWC 官网。",
-    noInv:"公报中没有列出扰动区。",
-    pos:"中心位置", wind:"最大持续风", gust:"阵风", move:"移动",
-    warnNo:"警报编号", acc:"定位误差",
+    noStorm:"目前气象厅没有发表中的台风情报。平静期是正常的。",
+    unknown:"未知：抓取还没有成功过一次，本页并不知道现在有没有台风。这里的空白不代表平静。请查看 GitHub Actions 日志。",
+    pos:"中心位置", wind:"最大风速", gust:"最大瞬间风速", move:"移动",
+    press:"中心气压", tnum:"台风编号", acc:"定位精度", stormR:"暴风域", galeR:"强风域",
+    circle:"预报圆半径",
     rangeNow:"目前距离 {place} <span class=\"num\">{km} 公里</span>（方位 {dir}）",
-    rangeMin:"预报路径最近点：<span class=\"num\">{km} 公里</span>，约在 {tau} 小时后",
-    rangeNote:"这只是球面距离计算，不是对马来西亚的天气预报。距离远不等于没影响——西北太平洋的台风常靠加强东北季风的涌流，把大雨送到半岛东岸。",
-    plotCap:"示意图（无海岸线）· 圆点＝当前定位，虚线＝预报路径",
-    rawTitle:"原文公报（JTWC 电报格式）",
-    decodeTitle:"逐行解读",
-    progTitle:"预报理由（JTWC 分析）",
-    gfxTitle:"官方路径图",
-    kt:"节", kmh:"公里/小时", km:"公里",
-    potential:{LOW:"低",MEDIUM:"中",HIGH:"高",UNKNOWN:"未列明"},
-    potLbl:"24 小时内发展机会",
-    credit:"数据来源：Joint Typhoon Warning Center（美国海军／空军），经 GitHub Actions 每 3 小时镜像一次。JTWC 的产品原为美国政府机构使用。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现 JTWC 已发布的内容。<br>开发协作：Claude Opus 5（Anthropic）。",
-    problems:"本则公报未能完整解析：",
-    demo:"演示数据（非真实警报）"
+    rangeMin:"预报路径最近点：<span class=\"num\">{km} 公里</span>，约 {tau} 小时后",
+    rangeNote:"这是球面距离计算，不是对马来西亚的天气预报。距离远不等于没影响——西北太平洋的台风常靠加强东北季风涌流，把大雨送到半岛东岸。",
+    plotCap:"示意图（无海岸线）· 实心点＝实况，虚圈＝预报圆（中心有 7 成机会落在圈内）",
+    decodeTitle:"逐项解读", rawTitle:"气象厅原始 JSON",
+    kt:"节", ms:"米/秒", kmh:"公里/小时", km:"公里", hpa:"百帕",
+    cat:{TD:"热带低压",TS:"热带风暴",STS:"强热带风暴",TY:"台风",L:"温带低气压"},
+    intens:{strong:"强",very_strong:"非常强",violent:"猛烈"},
+    scale:{large:"大型",very_large:"超大型"},
+    saffir:"换算约 {c}",
+    problems:"本则情报未能完整解析：",
+    demo:"演示数据（非真实情报）",
+    credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
   en:{
     brand:"风眼", lat:" TYPHOONWATCH",
-    tagline:"JTWC warnings · mirrored · readable offline",
-    other:"中文", refresh:"Refresh",
-    hInv:"INVEST AREAS", hLearn:"HOW TO READ A WARNING",
-    freshOk:"Latest warning {dtg} ({age} ago) · mirrored {fetch}",
-    freshStale:"⚠ Possibly out of date: latest warning is {dtg}, {age} old. JTWC issues every 6 hours — past {h} hours, check JTWC directly instead of trusting this page.",
+    tagline:"JMA · RSMC Tokyo Typhoon Center · readable offline",
+    other:"中文", refresh:"Refresh", hLearn:"HOW TO READ A TYPHOON BULLETIN",
+    freshOk:"Issued {t} ({age} ago) · mirrored {fetch}",
+    freshStale:"⚠ Possibly out of date: issued {t}, {age} old. JMA updates every 3 hours — past {h} hours, check JMA directly.",
     freshFail:"⚠ Last fetch failed ({when}). What follows is the last successful mirror and may be out of date.",
     freshNoData:"No data yet. The GitHub Action needs one successful run.",
     offline:"(offline: showing cached copy)",
-    noStorm:"No numbered tropical cyclones at JTWC right now. Quiet spells are normal.",
-    unknown:"Unknown — no fetch has ever succeeded, so this page does not know whether a storm exists. This blank is not a quiet period. Check the GitHub Actions log, or go to JTWC directly.",
-    noInv:"No invest areas listed in the advisory.",
-    pos:"Centre position", wind:"Max sustained", gust:"Gusts", move:"Movement",
-    warnNo:"Warning no.", acc:"Position accuracy",
+    noStorm:"JMA has no active typhoon bulletins right now. Quiet spells are normal.",
+    unknown:"Unknown — no fetch has ever succeeded, so this page does not know whether a storm exists. This blank is not a quiet period. Check the GitHub Actions log.",
+    pos:"Centre position", wind:"Max sustained", gust:"Max gust", move:"Movement",
+    press:"Central pressure", tnum:"Typhoon number", acc:"Position accuracy",
+    stormR:"Storm area", galeR:"Gale area", circle:"Forecast circle",
     rangeNow:"Now <span class=\"num\">{km} km</span> from {place} (bearing {dir})",
-    rangeMin:"Closest forecast approach: <span class=\"num\">{km} km</span>, about {tau} h from the fix",
-    rangeNote:"This is a great-circle distance, not a forecast for Malaysia. Distant does not mean harmless — West Pacific typhoons often reach the east coast by strengthening the northeast monsoon surge.",
-    plotCap:"Schematic (no coastline) · dot = current fix, dashed = forecast track",
-    rawTitle:"Raw bulletin (JTWC teletype format)",
-    decodeTitle:"Line by line",
-    progTitle:"Prognostic reasoning (JTWC analysis)",
-    gfxTitle:"Official track graphic",
-    kt:"kt", kmh:"km/h", km:"km",
-    potential:{LOW:"Low",MEDIUM:"Medium",HIGH:"High",UNKNOWN:"not stated"},
-    potLbl:"Chance of developing in 24 h",
-    credit:"Source: Joint Typhoon Warning Center (US Navy/Air Force), mirrored every 3 hours by GitHub Actions. JTWC products are produced for US government agencies. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it only shows what JTWC published.<br>Built with Claude Opus 5 (Anthropic).",
+    rangeMin:"Closest forecast approach: <span class=\"num\">{km} km</span>, about {tau} h ahead",
+    rangeNote:"A great-circle distance, not a forecast for Malaysia. Distant does not mean harmless — West Pacific typhoons often reach the east coast by strengthening the northeast monsoon surge.",
+    plotCap:"Schematic (no coastline) · solid dot = analysis, dashed circle = forecast circle (70% chance the centre falls inside)",
+    decodeTitle:"Item by item", rawTitle:"Raw JMA JSON",
+    kt:"kt", ms:"m/s", kmh:"km/h", km:"km", hpa:"hPa",
+    cat:{TD:"Tropical Depression",TS:"Tropical Storm",STS:"Severe Tropical Storm",TY:"Typhoon",L:"Extratropical Low"},
+    intens:{strong:"Strong",very_strong:"Very strong",violent:"Violent"},
+    scale:{large:"Large",very_large:"Very large"},
+    saffir:"≈ {c} equivalent",
     problems:"This bulletin did not fully parse:",
-    demo:"DEMO DATA — not a real warning"
+    demo:"DEMO DATA — not a real bulletin",
+    credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
-var lang = "zh";
+var lang="zh";
 function L(k){ return T[lang][k]; }
 function fill(s,o){ return s.replace(/\{(\w+)\}/g,function(_,k){ return o[k]!==undefined?o[k]:"{"+k+"}"; }); }
 
-/* ---- intensity ladder (JTWC uses 1-minute sustained wind) ----------- */
-function intensity(kt, basin){
-  if(kt===undefined||kt===null) return null;
-  var wp = basin==="WP"||basin==="CP"||basin==="EP";
-  if(kt>=130) return {zh:"超级台风",en:"Super Typhoon",cls:"hot"};
-  if(kt>=64)  return wp?{zh:"台风",en:"Typhoon",cls:"hot"}:{zh:"气旋风暴",en:"Cyclone",cls:"hot"};
-  if(kt>=34)  return {zh:"热带风暴",en:"Tropical Storm",cls:"amb"};
-  if(kt>=25)  return {zh:"热带低压",en:"Tropical Depression",cls:""};
-  return {zh:"热带扰动",en:"Disturbance",cls:""};
-}
-function saffir(kt){
-  if(kt>=137) return "Cat 5"; if(kt>=113) return "Cat 4";
-  if(kt>=96) return "Cat 3";  if(kt>=83) return "Cat 2";
-  if(kt>=64) return "Cat 1";  return null;
-}
-var KMH = 1.852;
-
 /* ---- geometry ------------------------------------------------------- */
 function hav(a,b,c,d){
-  var R=6371, r=Math.PI/180;
-  var dLat=(c-a)*r, dLon=(d-b)*r;
-  var s=Math.sin(dLat/2)*Math.sin(dLat/2)+
-        Math.cos(a*r)*Math.cos(c*r)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  var R=6371, r=Math.PI/180, dLat=(c-a)*r, dLon=(d-b)*r;
+  var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dLon/2)*Math.sin(dLon/2);
   return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
 }
 function bearing(a,b,c,d){
@@ -266,30 +209,33 @@ var CMP={zh:["北","东北偏北","东北","东北偏东","东","东南偏东","
 function compass(deg){ return CMP[lang][Math.round(deg/22.5)%16]; }
 function fmtLat(v){ return Math.abs(v).toFixed(1)+(v<0?"S":"N"); }
 function fmtLon(v){ return Math.abs(v).toFixed(1)+(v<0?"W":"E"); }
-
-/* ---- DTG ("011200Z" = day 01, 12:00 UTC) ---------------------------- */
-function dtgDate(dtg, ref){
-  var m = /^(\d{2})(\d{2})(\d{2})Z$/.exec(dtg||"");
-  if(!m) return null;
-  var base = ref? new Date(ref) : new Date();
-  var d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(),
-          +m[1], +m[2], +m[3]));
-  // a DTG far in the future means it belongs to the previous month
-  if(d - base > 5*864e5) d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth()-1, +m[1], +m[2], +m[3]));
-  return d;
-}
 function ago(ms){
-  var h = ms/36e5;
-  if(h < 1) return Math.max(0,Math.round(h*60)) + (lang==="zh"?" 分钟":" min");
-  if(h < 48) return h.toFixed(1) + (lang==="zh"?" 小时":" h");
-  return (h/24).toFixed(1) + (lang==="zh"?" 天":" d");
+  var h=ms/36e5;
+  if(h<1) return Math.max(0,Math.round(h*60))+(lang==="zh"?" 分钟":" min");
+  if(h<48) return h.toFixed(1)+(lang==="zh"?" 小时":" h");
+  return (h/24).toFixed(1)+(lang==="zh"?" 天":" d");
+}
+function shortT(iso){
+  var d=new Date(iso);
+  if(isNaN(d)) return "—";
+  return d.toISOString().slice(5,16).replace("T"," ")+"Z";
+}
+/* JMA quotes 10-minute sustained wind. Saffir-Simpson is defined on
+   1-minute wind, so any category shown here is a conversion, and it is
+   labelled as one rather than presented as JMA's own number. */
+function saffirFrom10min(kt10){
+  if(kt10==null) return null;
+  var kt1 = kt10/0.88;
+  if(kt1>=137) return "Cat 5"; if(kt1>=113) return "Cat 4";
+  if(kt1>=96) return "Cat 3";  if(kt1>=83) return "Cat 2";
+  if(kt1>=64) return "Cat 1";  return null;
 }
 
 /* ---- DOM helpers ---------------------------------------------------- */
-function el(tag, cls, txt){
+function el(tag,cls,txt){
   var n=document.createElement(tag);
   if(cls) n.className=cls;
-  if(txt!==undefined) n.textContent=txt;   // never innerHTML for source text
+  if(txt!==undefined) n.textContent=txt;
   return n;
 }
 function cell(k,v,cls){
@@ -297,17 +243,15 @@ function cell(k,v,cls){
   var d=el("div","v"+(cls?" "+cls:"")); d.textContent=v; c.appendChild(d);
   return c;
 }
-
-/* ---- state ---------------------------------------------------------- */
-var DOC = null, OFFLINE = false;
-
+var DOC=null, OFFLINE=false;
 function refPlace(){
-  var id = localStorage.getItem(LSR) || "triang";
+  var id=null;
+  try{ id=localStorage.getItem(LSR); }catch(e){}
   for(var i=0;i<REFS.length;i++) if(REFS[i].id===id) return REFS[i];
   return REFS[0];
 }
 
-/* ---- rendering ------------------------------------------------------ */
+/* ---- freshness ------------------------------------------------------ */
 function renderFresh(){
   var box=document.getElementById("fresh");
   box.className="fresh"; box.textContent="";
@@ -316,145 +260,168 @@ function renderFresh(){
 
   var newest=null;
   (DOC.storms||[]).forEach(function(s){
-    var d=dtgDate(s.dtg, DOC.generated);
-    if(d && (!newest || d>newest)) newest=d;
+    var t=Date.parse(s.issued||"");
+    if(!isNaN(t) && (newest===null||t>newest)) newest=t;
   });
-  if(!newest && DOC.abpw) newest = dtgDate(DOC.abpw.dtg, DOC.generated);
-
-  var now=Date.now();
-  var html;
+  var now=Date.now(), html;
   if(DOC.fetch_ok===false){
     box.classList.add("stale");
     html=fill(L("freshFail"),{when:DOC.last_attempt||"?"});
-  } else if(newest && (now-newest)/36e5 > STALE_H){
+  } else if(newest!==null && (now-newest)/36e5>STALE_H){
     box.classList.add("stale");
-    html=fill(L("freshStale"),{dtg:newest.toISOString().slice(5,16).replace("T"," ")+"Z",
-      age:ago(now-newest), h:STALE_H});
-  } else if(newest){
-    html=fill(L("freshOk"),{dtg:"<b>"+newest.toISOString().slice(5,16).replace("T"," ")+"Z</b>",
-      age:ago(now-newest), fetch:(DOC.generated||"").replace("T"," ").replace("Z","Z")});
+    html=fill(L("freshStale"),{t:shortT(new Date(newest).toISOString()),age:ago(now-newest),h:STALE_H});
+  } else if(newest!==null){
+    html=fill(L("freshOk"),{t:"<b>"+shortT(new Date(newest).toISOString())+"</b>",
+      age:ago(now-newest),fetch:(DOC.generated||"").replace("T"," ")});
   } else {
-    html=fill(L("freshOk"),{dtg:"—",age:"—",fetch:(DOC.generated||"?")});
+    html=fill(L("freshOk"),{t:"—",age:"—",fetch:(DOC.generated||"?")});
   }
-  if(OFFLINE) html += " " + L("offline");
-  box.innerHTML = html;   // template strings only; no source text interpolated
+  if(OFFLINE) html+=" "+L("offline");
+  box.innerHTML=html;
 }
 
-function trackPlot(s, ref){
-  var pts=[{lat:s.lat,lon:s.lon,tau:0,wind:s.wind_kt}];
-  (s.forecast||[]).forEach(function(f){ if(f.lat!=null) pts.push({lat:f.lat,lon:f.lon,tau:f.tau,wind:f.wind_kt}); });
-  var all=pts.concat([{lat:ref.lat,lon:ref.lon}]);
+/* ---- track plot with forecast circles -------------------------------- */
+function trackPlot(s,ref){
+  var cur=s.current, pts=[];
+  if(cur) pts.push({lat:cur.lat,lon:cur.lon,tau:0,circle:0});
+  (s.forecast||[]).forEach(function(f){
+    if(f.lat!=null) pts.push({lat:f.lat,lon:f.lon,tau:f.tau,circle:f.circle_km||0});
+  });
+  if(!pts.length) return "";
   var minLa=1e9,maxLa=-1e9,minLo=1e9,maxLo=-1e9;
-  all.forEach(function(p){ minLa=Math.min(minLa,p.lat);maxLa=Math.max(maxLa,p.lat);
-                           minLo=Math.min(minLo,p.lon);maxLo=Math.max(maxLo,p.lon); });
-  var padLa=Math.max(1.5,(maxLa-minLa)*0.12), padLo=Math.max(1.5,(maxLo-minLo)*0.12);
+  pts.concat([{lat:ref.lat,lon:ref.lon}]).forEach(function(p){
+    var padDeg=(p.circle||0)/111;
+    minLa=Math.min(minLa,p.lat-padDeg);maxLa=Math.max(maxLa,p.lat+padDeg);
+    minLo=Math.min(minLo,p.lon-padDeg);maxLo=Math.max(maxLo,p.lon+padDeg);
+  });
+  var padLa=Math.max(1.5,(maxLa-minLa)*.12), padLo=Math.max(1.5,(maxLo-minLo)*.12);
   minLa-=padLa;maxLa+=padLa;minLo-=padLo;maxLo+=padLo;
-  // Fixed box, equal degrees-per-pixel on both axes: whichever span is
-  // relatively smaller gets widened, so the schematic is never squashed.
-  var W=680, H=380;
+  var W=680,H=380;
   var sc=Math.max((maxLo-minLo)/W,(maxLa-minLa)/H);
   var cLo=(minLo+maxLo)/2, cLa=(minLa+maxLa)/2;
-  minLo=cLo-sc*W/2; maxLo=cLo+sc*W/2;
-  minLa=cLa-sc*H/2; maxLa=cLa+sc*H/2;
+  minLo=cLo-sc*W/2; maxLo=cLo+sc*W/2; minLa=cLa-sc*H/2; maxLa=cLa+sc*H/2;
   function X(lo){ return (lo-minLo)/(maxLo-minLo)*W; }
   function Y(la){ return H-(la-minLa)/(maxLa-minLa)*H; }
+  var kmPerPx=(maxLa-minLa)*111/H;
 
-  var svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="track">';
-  for(var g=Math.ceil(minLo/5)*5; g<=maxLo; g+=5)
+  var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="track">';
+  for(g=Math.ceil(minLo/5)*5; g<=maxLo; g+=5)
     svg+='<line x1="'+X(g).toFixed(1)+'" y1="0" x2="'+X(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
          '<text x="'+(X(g)+3).toFixed(1)+'" y="'+(H-4)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'E</text>';
-  for(var h=Math.ceil(minLa/5)*5; h<=maxLa; h+=5)
-    svg+='<line x1="0" y1="'+Y(h).toFixed(1)+'" x2="'+W+'" y2="'+Y(h).toFixed(1)+'" stroke="#16293a"/>'+
-         '<text x="4" y="'+(Y(h)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+h+'N</text>';
+  for(g=Math.ceil(minLa/5)*5; g<=maxLa; g+=5)
+    svg+='<line x1="0" y1="'+Y(g).toFixed(1)+'" x2="'+W+'" y2="'+Y(g).toFixed(1)+'" stroke="#16293a"/>'+
+         '<text x="4" y="'+(Y(g)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'N</text>';
 
   if(pts.length>1){
-    var d=pts.map(function(p,i){ return (i?"L":"M")+X(p.lon).toFixed(1)+" "+Y(p.lat).toFixed(1); }).join(" ");
-    svg+='<path d="'+d+'" fill="none" stroke="#43c2ab" stroke-width="2" stroke-dasharray="6 5"/>';
+    svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+X(p.lon).toFixed(1)+" "+Y(p.lat).toFixed(1);}).join(" ")+
+         '" fill="none" stroke="#43c2ab" stroke-width="2" stroke-dasharray="6 5"/>';
   }
+  // Forecast circles first, so the track and dots sit on top of them.
+  pts.forEach(function(p){
+    if(!p.circle) return;
+    svg+='<circle cx="'+X(p.lon).toFixed(1)+'" cy="'+Y(p.lat).toFixed(1)+'" r="'+(p.circle/kmPerPx).toFixed(1)+
+         '" fill="rgba(67,194,171,0.07)" stroke="#2d7a6c" stroke-width="1" stroke-dasharray="3 4"/>';
+  });
   pts.forEach(function(p,i){
-    var r=i?4:7, c=i?"#43c2ab":"#ffb020";
-    svg+='<circle cx="'+X(p.lon).toFixed(1)+'" cy="'+Y(p.lat).toFixed(1)+'" r="'+r+'" fill="'+c+'"/>';
+    svg+='<circle cx="'+X(p.lon).toFixed(1)+'" cy="'+Y(p.lat).toFixed(1)+'" r="'+(i?4:7)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
     if(i) svg+='<text x="'+(X(p.lon)+7).toFixed(1)+'" y="'+(Y(p.lat)-6).toFixed(1)+
                '" fill="#7f94a7" font-size="11" font-family="monospace">+'+p.tau+'h</text>';
   });
-  // reference place
-  var rx=X(ref.lon).toFixed(1), ry=Y(ref.lat).toFixed(1);
+  var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
   svg+='<path d="M'+rx+' '+(ry-7)+'l6 7-6 7-6-7z" fill="#dbe7f1"/>'+
-       '<text x="'+(+rx+10)+'" y="'+(+ry+4)+'" fill="#dbe7f1" font-size="11">'+
+       '<text x="'+(rx+10)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
        (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
   return svg+'</svg>';
 }
 
+/* ---- decode --------------------------------------------------------- */
 function decodeList(s){
-  var ul=el("ul","decode"), items=[];
-  if(s.dtg) items.push([s.dtg, lang==="zh"
-    ? "发布时间：每月第 "+s.dtg.slice(0,2)+" 天，世界时 "+s.dtg.slice(2,4)+":"+s.dtg.slice(4,6)+"（马来西亚时间 +8 小时）。Z 就是 UTC。"
-    : "Issued day "+s.dtg.slice(0,2)+" of the month at "+s.dtg.slice(2,4)+":"+s.dtg.slice(4,6)+" UTC. Z means UTC; Malaysia is UTC+8."]);
-  if(s.lat!=null) items.push([fmtLat(s.lat)+" "+fmtLon(s.lon), lang==="zh"
-    ? "台风中心的定位，纬度在前、经度在后。"
-    : "The fixed centre position: latitude first, then longitude."]);
-  if(s.wind_kt!=null) items.push(["MAX SUSTAINED WINDS - "+s.wind_kt+" KT", lang==="zh"
-    ? "JTWC 用 1 分钟平均风速，日本气象厅和大马气象局用 10 分钟平均，后者数值约低 12%。同一个台风，两家的数字不同是正常的，不是谁错。"
-    : "JTWC measures a 1-minute average. JMA and MET Malaysia use a 10-minute average, which reads about 12% lower. Different numbers for the same storm are expected, not a mistake."]);
-  if(s.gust_kt!=null) items.push(["GUSTS "+s.gust_kt+" KT", lang==="zh"
-    ? "阵风是短暂的最大值，通常是持续风的 1.2–1.3 倍。吹倒树的往往是阵风。"
-    : "The brief peak, usually 1.2–1.3× the sustained wind. Gusts are what actually snap trees."]);
-  if(s.move_deg!=null) items.push([s.move_deg+" DEGREES AT "+s.move_kt+" KTS", lang==="zh"
-    ? "移动方向用「去向」的方位角："+s.move_deg+"° 即朝"+compass(s.move_deg)+"。风向则相反，用「来向」——这是最容易搞混的地方。"
-    : "Movement is where it is going: "+s.move_deg+"° means toward "+compass(s.move_deg)+". Wind direction is the opposite convention (where wind comes from) — the classic confusion."]);
-  if(s.posit_accuracy_nm!=null) items.push(["POSITION ACCURATE TO WITHIN "+s.posit_accuracy_nm+" NM", lang==="zh"
-    ? "连「现在在哪里」都有 "+Math.round(s.posit_accuracy_nm*1.852)+" 公里的误差——因为定位靠卫星判读。预报的不确定度只会更大。"
-    : "Even the present position carries "+Math.round(s.posit_accuracy_nm*1.852)+" km of uncertainty, because it is read from satellite. Forecast positions are looser still."]);
-  if((s.forecast||[]).length) items.push([(lang==="zh"?"2. FORECASTS（"+s.forecast.length+" 个时次）":"2. FORECASTS ("+s.forecast.length+" points)"), lang==="zh"
-    ? "12/24/36… 小时的预报位置。JTWC 24 小时路径误差大约 100 公里，72 小时约 300 公里——所以官方图上画的是「锥形范围」，不是一条线。"
-    : "Positions at +12/24/36 h and beyond. JTWC track error runs roughly 100 km at 24 h and 300 km at 72 h — which is why the official graphic draws a cone, not a line."]);
+  var c=s.current||{}, ul=el("ul","decode"), items=[];
+  if(s.issued) items.push([s.issued, lang==="zh"
+    ? "发表时刻（世界时）。气象厅以日本时间发表，本页统一换算成世界时；马来西亚时间＝世界时 +8 小时，日本时间 −1 小时。"
+    : "Issue time in UTC. JMA publishes in JST; Malaysia is UTC+8, one hour behind Japan."]);
+  if(c.wind_ms!=null) items.push(["最大風速 "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang==="zh"
+    ? "10 分钟平均风速——和大马气象局同一个标准，可以直接比较。美国 JTWC 用 1 分钟平均，同一个台风会高出约 14%。"
+    : "A 10-minute average — the same standard MET Malaysia uses, so the numbers are directly comparable. JTWC's 1-minute average runs about 14% higher for the same storm."]);
+  if(c.gust_ms!=null) items.push(["最大瞬間風速 "+c.gust_ms+" m/s", lang==="zh"
+    ? "瞬间最大值，通常是持续风的 1.3–1.5 倍。吹倒树、掀屋顶的是它，不是平均风。"
+    : "The instantaneous peak, typically 1.3–1.5× the sustained wind. This is what takes down trees and roofs."]);
+  if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", lang==="zh"
+    ? "中心气压。数字越低越强——这是气象厅判断强度的主要依据，和风速是一体两面。"
+    : "Central pressure. Lower is stronger — JMA's primary intensity measure, the other side of the same coin as wind speed."]);
+  if(c.course_jp) items.push([c.course_jp+" "+(c.move_kt!=null?c.move_kt+" kt":(c.speed_note_jp||"")), lang==="zh"
+    ? "进行方向是「去向」"+(c.move_deg!=null?"（"+c.move_deg+"°，即朝"+compass(c.move_deg)+"）":"")+"。风向则相反，用「来向」——最容易搞混的地方。速度很慢时气象厅不给数字，只写「ゆっくり」（缓慢）或「ほとんど停滞」（几乎停滞）。"
+    : "Course is where it is going"+(c.move_deg!=null?" ("+c.move_deg+"°, toward "+compass(c.move_deg)+")":"")+". Wind direction uses the opposite convention. When movement is slow JMA gives no number, only ゆっくり (slow) or ほとんど停滞 (nearly stationary)."]);
+  if(c.accuracy_jp) items.push(["位置 "+c.accuracy_jp, lang==="zh"
+    ? "定位精度：正確（准确）／ほぼ正確（大致准确）／不確実（不确定）。连现在的位置都分等级，预报位置的不确定只会更大。"
+    : "Position accuracy: 正確 exact / ほぼ正確 nearly exact / 不確実 uncertain. Even the present position is graded — forecast positions are looser still."]);
+  if((c.storm_radii||[]).length) items.push(["暴風域 "+c.storm_radii.map(function(r){return (r.area_jp||"")+" "+r.km+" km";}).join(" / "), lang==="zh"
+    ? "暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。"
+    : "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold."]);
+  var f0=(s.forecast||[])[0];
+  if(f0&&f0.circle_km) items.push(["予報円 "+f0.circle_km+" km @ +"+f0.tau+"h", lang==="zh"
+    ? "预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。"
+    : "The forecast circle: a 70% chance the centre falls inside it. A bigger circle means a less predictable track, and says nothing about intensity. Watch it grow with lead time — that is uncertainty made visible."]);
   items.forEach(function(p){
     var li=el("li"); li.appendChild(el("code",null,p[0])); li.appendChild(el("span",null,p[1])); ul.appendChild(li);
   });
   return ul;
 }
 
+/* ---- storm card ------------------------------------------------------ */
 function stormCard(s){
-  var ref=refPlace(), card=el("div","card");
+  var ref=refPlace(), c=s.current||{}, card=el("div","card");
   var head=el("div","cardhead");
-  head.appendChild(el("div","sname", s.name || (s.basin_code+" "+s.number)));
-  var inten=intensity(s.wind_kt, s.basin_code);
-  if(inten){
-    var b=el("span","badge"+(inten.cls?" "+inten.cls:""), (lang==="zh"?inten.zh:inten.en)+(saffir(s.wind_kt)?" · "+saffir(s.wind_kt):""));
-    head.appendChild(b);
+  var nm = s.name_jp
+    ? (lang==="zh" ? "台风 "+String(s.typhoon_number||"").slice(-2)+" 号 "+(s.name_en||"")
+                   : "Typhoon "+String(s.typhoon_number||"").slice(-2)+" "+(s.name_en||""))
+    : (lang==="zh" ? "热带低压 "+(s.typhoon_number||s.id) : "Tropical depression "+(s.typhoon_number||s.id));
+  head.appendChild(el("div","sname",nm.trim()));
+  var bs=el("div","badges");
+  var catCode=c.category||s.category;
+  if(catCode){
+    var strong = catCode==="TY";
+    bs.appendChild(el("span","badge"+(strong?" hot":" amb"), (L("cat")[catCode]||catCode)));
   }
+  if(c.intensity) bs.appendChild(el("span","badge hot", L("intens")[c.intensity]));
+  if(c.scale) bs.appendChild(el("span","badge amb", L("scale")[c.scale]));
+  var sf=saffirFrom10min(c.wind_kt);
+  if(sf) bs.appendChild(el("span","badge", fill(L("saffir"),{c:sf})));
+  head.appendChild(bs);
   card.appendChild(head);
 
   if(!s.parsed){
-    var warn=el("div","rangeline");
-    warn.appendChild(el("span",null,L("problems")+" "+(s.problems||[]).join("; ")));
-    card.appendChild(warn);
+    var w=el("div","rangeline");
+    w.appendChild(el("span",null,L("problems")+" "+(s.problems||[]).join("; ")));
+    card.appendChild(w);
   }
 
   var g=el("div","grid");
-  if(s.lat!=null) g.appendChild(cell(L("pos"), fmtLat(s.lat)+"  "+fmtLon(s.lon)));
-  if(s.wind_kt!=null) g.appendChild(cell(L("wind"), s.wind_kt+" "+L("kt")+" / "+Math.round(s.wind_kt*KMH)+" "+L("kmh"), s.wind_kt>=64?"hot":""));
-  if(s.gust_kt!=null) g.appendChild(cell(L("gust"), s.gust_kt+" "+L("kt")+" / "+Math.round(s.gust_kt*KMH)+" "+L("kmh")));
-  if(s.move_deg!=null) g.appendChild(cell(L("move"), compass(s.move_deg)+" "+s.move_kt+" "+L("kt")));
-  if(s.warning_no!=null) g.appendChild(cell(L("warnNo"), "#"+s.warning_no));
-  if(s.posit_accuracy_nm!=null) g.appendChild(cell(L("acc"), "±"+Math.round(s.posit_accuracy_nm*KMH)+" "+L("km")));
+  if(c.lat!=null) g.appendChild(cell(L("pos"), fmtLat(c.lat)+"  "+fmtLon(c.lon)));
+  if(c.wind_ms!=null) g.appendChild(cell(L("wind"), c.wind_ms+" "+L("ms")+" / "+c.wind_kt+" "+L("kt"),
+    c.wind_ms>=33?"hot":""));
+  if(c.gust_ms!=null) g.appendChild(cell(L("gust"), c.gust_ms+" "+L("ms")));
+  if(c.pressure_hpa!=null) g.appendChild(cell(L("press"), c.pressure_hpa+" "+L("hpa")));
+  if(c.move_deg!=null||c.speed_note_jp) g.appendChild(cell(L("move"),
+    (c.move_deg!=null?compass(c.move_deg):"—")+" "+(c.move_kt!=null?c.move_kt+" "+L("kt"):(c.speed_note_jp||""))));
+  if(s.typhoon_number) g.appendChild(cell(L("tnum"), String(s.typhoon_number)));
+  if((c.storm_radii||[]).length) g.appendChild(cell(L("stormR"),
+    Math.max.apply(null,c.storm_radii.map(function(r){return r.km;}))+" "+L("km")));
   card.appendChild(g);
 
-  if(s.lat!=null){
-    var d0=hav(s.lat,s.lon,ref.lat,ref.lon);
-    var brg=bearing(ref.lat,ref.lon,s.lat,s.lon);
-    var line=el("div","rangeline");
+  if(c.lat!=null){
+    var d0=hav(c.lat,c.lon,ref.lat,ref.lon), line=el("div","rangeline");
     var p1=document.createElement("div");
     p1.innerHTML=fill(L("rangeNow"),{km:Math.round(d0).toLocaleString(),
-      place:(lang==="zh"?ref.zh:ref.en), dir:compass(brg)});
+      place:(lang==="zh"?ref.zh:ref.en), dir:compass(bearing(ref.lat,ref.lon,c.lat,c.lon))});
     line.appendChild(p1);
     var best=null;
     (s.forecast||[]).forEach(function(f){
       if(f.lat==null) return;
       var d=hav(f.lat,f.lon,ref.lat,ref.lon);
-      if(!best || d<best.d) best={d:d,tau:f.tau};
+      if(!best||d<best.d) best={d:d,tau:f.tau};
     });
-    if(best && best.d < d0-25){
+    if(best&&best.d<d0-25){
       var p2=document.createElement("div");
       p2.innerHTML=fill(L("rangeMin"),{km:Math.round(best.d).toLocaleString(),tau:best.tau});
       line.appendChild(p2);
@@ -462,28 +429,18 @@ function stormCard(s){
     line.appendChild(el("span","note",L("rangeNote")));
     card.appendChild(line);
 
-    var pw=el("div","plotwrap");
-    pw.innerHTML=trackPlot(s,ref);
-    card.appendChild(pw);
-    card.appendChild(el("div","caption",L("plotCap")));
+    var plot=trackPlot(s,ref);
+    if(plot){
+      var pw=el("div","plotwrap"); pw.innerHTML=plot; card.appendChild(pw);
+      card.appendChild(el("div","caption",L("plotCap")));
+    }
   }
 
-  if(s.graphic){
-    var dg=el("details"); dg.appendChild(el("summary",null,L("gfxTitle")));
-    var img=document.createElement("img"); img.className="gfx"; img.loading="lazy";
-    img.src="./data/"+s.graphic; img.alt=(s.name||"")+" track graphic";
-    dg.appendChild(img); card.appendChild(dg);
-  }
   var dd=el("details"); dd.appendChild(el("summary",null,L("decodeTitle")));
   dd.appendChild(decodeList(s)); card.appendChild(dd);
-
-  if(s.warning_text){
+  if(s.raw){
     var dr=el("details"); dr.appendChild(el("summary",null,L("rawTitle")));
-    dr.appendChild(el("pre","tty",s.warning_text)); card.appendChild(dr);
-  }
-  if(s.prog_reasoning){
-    var dp=el("details"); dp.appendChild(el("summary",null,L("progTitle")));
-    dp.appendChild(el("pre","tty",s.prog_reasoning)); card.appendChild(dp);
+    dr.appendChild(el("pre","tty",JSON.stringify(s.raw,null,1))); card.appendChild(dr);
   }
   return card;
 }
@@ -493,59 +450,34 @@ function renderStorms(){
   var list=(DOC&&DOC.storms)||[];
   if(!list.length){
     // A quiet period and a never-successful fetch look identical in the data.
-    // Only `generated` distinguishes them, so it decides which we claim.
-    var everSucceeded = !!(DOC && DOC.generated);
-    var box2=el("div","empty",L(everSucceeded?"noStorm":"unknown"));
-    if(!everSucceeded) box2.style.borderColor="#5a2b2b";
-    box.appendChild(box2); return;
+    var ever=!!(DOC&&DOC.generated);
+    var e=el("div","empty",L(ever?"noStorm":"unknown"));
+    if(!ever) e.style.borderColor="#5a2b2b";
+    box.appendChild(e); return;
   }
   list.forEach(function(s){ box.appendChild(stormCard(s)); });
 }
 
-function renderInvests(){
-  var box=document.getElementById("invests"); box.textContent="";
-  var ds=(DOC&&DOC.abpw&&DOC.abpw.disturbances)||[];
-  if(!ds.length){ box.appendChild(el("div",null,L(DOC&&DOC.generated?"noInv":"unknown"))); return; }
-  var ref=refPlace();
-  ds.forEach(function(d){
-    var row=el("div","inv");
-    var left=el("div");
-    left.appendChild(el("div",null,"INVEST "+d.id+" · "+L("potLbl")+"："+(L("potential")[d.potential]||d.potential)));
-    left.appendChild(el("div","pos",fmtLat(d.lat)+" "+fmtLon(d.lon)+" · "+
-      Math.round(hav(d.lat,d.lon,ref.lat,ref.lon)).toLocaleString()+" "+L("km")));
-    row.appendChild(left);
-    var pot=el("span","badge"+(d.potential==="HIGH"?" hot":d.potential==="MEDIUM"?" amb":""), d.id);
-    row.appendChild(pot);
-    box.appendChild(row);
-  });
-  if(DOC.abpw.text){
-    var dr=el("details"); dr.appendChild(el("summary",null,L("rawTitle")));
-    dr.appendChild(el("pre","tty",DOC.abpw.text)); box.appendChild(dr);
-  }
-}
-
 var GLOSS={
 zh:[
- ["Z / DTG","公报里的 011200Z＝当月 1 日世界时 12:00。马来西亚时间加 8 小时，即 1 日晚上 8 点。JTWC 固定在 00/06/12/18Z 发布。"],
- ["kt（节）","1 节＝1.852 公里/小时。海事沿用的单位，一节就是每小时一海里。"],
- ["TD / TS / TY / STY","按最大持续风分级：25–33 节热带低压，34–63 节热带风暴（这时才有名字），64 节以上台风，130 节以上超级台风。"],
- ["1 分钟 vs 10 分钟风速","JTWC 取 1 分钟平均，日本气象厅与大马气象局取 10 分钟平均。10 分钟值约为 1 分钟值的 0.88 倍。看到两家数字不同，先确认单位和平均时长，再谈谁准。"],
- ["INVEST（扰动区）","还没编号的可疑云团，编号如 93W。绝大多数不会发展成台风，但要盯的正是这个阶段——南海的扰动区，往往就是半岛东岸大雨的起点。"],
- ["TCFA","热带气旋形成警报。JTWC 认为 24 小时内很可能生成时发布，是从「扰动区」升级到「编号台风」之间的那一步。"],
- ["预报锥（cone）","官方图上的锥形不是台风的大小，而是中心位置的误差范围。JTWC 24 小时路径误差约 100 公里，72 小时约 300 公里。锥外也可能下大雨。"],
- ["34/50/64 节风圈","公报里 RADIUS OF 034 KT WINDS 指的是该强度风力向外延伸多远，按象限分开列——台风从来不是圆的。"],
- ["为什么马来西亚要看 JTWC","半岛几乎不会被台风正面登陆（纬度太低，科氏力弱）。真正的影响是间接的：西北太平洋或南海的气旋会加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前看季风涌。"]
+ ["为什么改用日本气象厅","美国 JTWC 的服务器对数据中心 IP 一律返回 403，GitHub 的服务器抓不到。而气象厅本来就是世界气象组织指定负责西北太平洋台风的区域专责气象中心（RSMC 东京），是这个海域的官方权威；JTWC 是美军自用而对外公开的服务。换源之后反而更贴近大马气象局的口径。"],
+ ["10 分钟 vs 1 分钟风速","气象厅取 10 分钟平均，大马气象局也是；美国 JTWC 取 1 分钟平均，同一个台风数值约高 14%。看到两家数字打架，先确认平均时长，再谈谁准。本页的「换算约 Cat X」是把 10 分钟风速折算成 1 分钟后对照萨菲尔-辛普森等级，是换算值，不是气象厅的原始分级。"],
+ ["阶级：TD / TS / STS / TY","按 10 分钟最大风速：17 m/s 以下热带低压 TD，17–24.5 热带风暴 TS，24.5–32.7 强热带风暴 STS，32.7 以上台风 TY。「台风」这个词在气象厅的定义里，等于 33 m/s（约 64 节）这条线。"],
+ ["强さ 与 大きさ","气象厅另外用两个词：強い／非常に強い／猛烈な 讲的是强度（风速），大型／超大型 讲的是范围（强风域半径）。一个台风可以「猛烈但不大」，也可以「超大型但不强」——这两件事要分开看。"],
+ ["予報円（预报圆）","台风中心有 7 成机会落在圈内。圈越大＝路径越难预测，与强弱无关。圈随时间变大，就是不确定度增长的样子。注意：暴风不会乖乖待在圈里，圈讲的是「中心」的位置，不是影响范围。"],
+ ["暴風域 与 強風域","暴風域＝25 m/s 以上，強風域＝15 m/s 以上。按方位分开列，因为台风从来不是圆的。看范围要看这两个，不要看预报圆。"],
+ ["中心气压","气象厅判断强度的主要依据。920 hPa 比 970 hPa 强得多。气压和风速是一体两面，但气压是直接测得的，风速多半是推算的。"],
+ ["马来西亚为什么要看台风","半岛几乎不会被台风正面登陆——纬度太低，科氏力太弱，气旋转不起来。真正的影响是间接的：西北太平洋或南海的台风会拉紧气压梯度、加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前几天看季风涌。"]
 ],
 en:[
- ["Z / DTG","011200Z means day 01 of the month, 12:00 UTC. Malaysia is UTC+8, so 8 pm on the 1st. JTWC issues at 00/06/12/18Z."],
- ["kt (knot)","1 kt = 1.852 km/h — one nautical mile per hour, kept from marine practice."],
- ["TD / TS / TY / STY","By max sustained wind: 25–33 kt tropical depression, 34–63 kt tropical storm (that is when it gets a name), 64 kt+ typhoon, 130 kt+ super typhoon."],
- ["1-minute vs 10-minute winds","JTWC averages over 1 minute; JMA and MET Malaysia over 10 minutes, which reads about 0.88× the JTWC figure. When two agencies disagree, check the averaging period before deciding who is wrong."],
- ["INVEST","A suspect cloud cluster, not yet numbered — tagged like 93W. Most never develop, but this is the stage worth watching: a South China Sea invest is often where east-coast rain begins."],
- ["TCFA","Tropical Cyclone Formation Alert — issued when JTWC thinks development is likely within 24 hours. It is the step between an invest and a numbered storm."],
- ["The forecast cone","The cone is not the storm's size; it is the uncertainty in centre position. JTWC track error is roughly 100 km at 24 h, 300 km at 72 h. Heavy rain happens outside it too."],
- ["34/50/64 kt wind radii","RADIUS OF 034 KT WINDS tells you how far that wind strength reaches, listed per quadrant — storms are never circular."],
- ["Why Malaysia watches JTWC","The peninsula is almost never struck directly (too near the equator for strong Coriolis). The real effect is indirect: a cyclone in the West Pacific or South China Sea strengthens the northeast monsoon surge that pushes days of rain onto Kelantan, Terengganu and east Pahang. Watching typhoons is really watching the surge early."]
+ ["Why JMA instead of JTWC","JTWC's servers return 403 to every datacenter IP, so GitHub's runners cannot reach them. JMA is the WMO-designated Regional Specialized Meteorological Centre for the western North Pacific (RSMC Tokyo) — the official authority for this basin. JTWC is a US military service that happens to be public. The switch actually brings us closer to MET Malaysia's own conventions."],
+ ["10-minute vs 1-minute winds","JMA averages over 10 minutes, and so does MET Malaysia. JTWC averages over 1 minute, which reads about 14% higher for the same storm. When two agencies disagree, check the averaging period before deciding who is wrong. The \"≈ Cat X\" badge here converts the 10-minute wind to a 1-minute basis before comparing to Saffir-Simpson — it is a conversion, not JMA's own classification."],
+ ["TD / TS / STS / TY","By 10-minute maximum wind: below 17 m/s tropical depression, 17–24.5 tropical storm, 24.5–32.7 severe tropical storm, above 32.7 typhoon. In JMA's definition the word \"typhoon\" is exactly that 33 m/s (about 64 kt) line."],
+ ["Intensity vs size","JMA uses two separate scales: 強い / 非常に強い / 猛烈な describe intensity (wind speed), while 大型 / 超大型 describe size (the radius of the gale area). A storm can be violent but small, or very large but weak. Read them separately."],
+ ["The forecast circle (予報円)","A 70% chance the centre falls inside. Bigger means a less predictable track, and says nothing about strength. It grows with lead time — that is uncertainty made visible. Note it describes where the centre goes, not how far the damage reaches."],
+ ["Storm area vs gale area","The storm area is 25 m/s and above; the gale area is 15 m/s and above. Both are listed per sector, because storms are never circular. For extent, read these — not the forecast circle."],
+ ["Central pressure","JMA's primary intensity measure. 920 hPa is far stronger than 970 hPa. Pressure and wind are two sides of one coin, but pressure is measured more directly while wind is usually estimated."],
+ ["Why Malaysia watches typhoons","The peninsula is almost never struck directly — too near the equator for Coriolis to spin one up. The real effect is indirect: a typhoon in the West Pacific or South China Sea tightens the pressure gradient and strengthens the northeast monsoon surge that pushes days of rain onto Kelantan, Terengganu and east Pahang. Watching typhoons is watching the surge a few days early."]
 ]};
 
 function renderLearn(){
@@ -559,12 +491,10 @@ function renderLearn(){
 function renderAll(){
   document.documentElement.lang = lang==="zh"?"zh":"en";
   var b=document.getElementById("brand");
-  b.textContent=L("brand");
-  var sp=el("span","lat",L("lat")); b.appendChild(sp);
+  b.textContent=L("brand"); b.appendChild(el("span","lat",L("lat")));
   document.getElementById("tagline").textContent=L("tagline");
   document.getElementById("langBtn").textContent=L("other");
   document.getElementById("refreshBtn").textContent=L("refresh");
-  document.getElementById("hInv").textContent=L("hInv");
   document.getElementById("hLearn").textContent=L("hLearn");
   document.getElementById("credit").innerHTML=L("credit");
   var sel=document.getElementById("refSel"), cur=refPlace().id;
@@ -574,17 +504,15 @@ function renderAll(){
     o.textContent=(lang==="zh"?r.zh:r.en); if(r.id===cur) o.selected=true;
     sel.appendChild(o);
   });
-  renderFresh(); renderStorms(); renderInvests(); renderLearn();
+  renderFresh(); renderStorms(); renderLearn();
 }
 
-/* ---- load ----------------------------------------------------------- */
 function load(){
-  var url = /[?&]demo=1/.test(location.search) ? "./data/jtwc.sample.json" : DATA_URL;
+  var url=/[?&]demo=1/.test(location.search)?"./data/typhoon.sample.json":DATA_URL;
   fetch(url+"?t="+Date.now(),{cache:"no-store"})
     .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
     .then(function(j){ DOC=j; OFFLINE=false; renderAll(); })
     .catch(function(){
-      // fall back to whatever the service worker kept
       fetch(url).then(function(r){ return r.json(); })
         .then(function(j){ DOC=j; OFFLINE=true; renderAll(); })
         .catch(function(){ DOC=null; renderAll(); });
@@ -592,17 +520,18 @@ function load(){
 }
 
 document.getElementById("langBtn").addEventListener("click",function(){
-  lang = lang==="zh"?"en":"zh"; localStorage.setItem(LS,lang); renderAll();
+  lang = lang==="zh"?"en":"zh";
+  try{ localStorage.setItem(LS,lang); }catch(e){}
+  renderAll();
 });
 document.getElementById("refreshBtn").addEventListener("click",load);
 document.getElementById("refSel").addEventListener("change",function(e){
-  localStorage.setItem(LSR,e.target.value); renderAll();
+  try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
+  renderAll();
 });
-
 try{ var sv=localStorage.getItem(LS); if(sv==="en"||sv==="zh") lang=sv; }catch(e){}
 renderAll(); load();
 
-/* ---- service worker: announce updates, never swap mid-read ---------- */
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js").then(function(reg){
     var last=0;
@@ -614,14 +543,13 @@ if("serviceWorker" in navigator){
       w.addEventListener("statechange",function(){
         if(w.state==="installed" && navigator.serviceWorker.controller){
           var s=document.getElementById("stamp");
-          s.textContent = (lang==="zh"?"新版待重载 · ":"Update ready — reload · ") + s.textContent;
+          s.textContent=(lang==="zh"?"新版待重载 · ":"Update ready — reload · ")+s.textContent;
         }
       });
     });
   }).catch(function(){});
 }
-document.getElementById("stamp").textContent =
-  "TYPHOONWATCH "+VERSION+" · "+location.origin;
+document.getElementById("stamp").textContent="TYPHOONWATCH "+VERSION+" · "+location.origin;
 </script>
 </body>
 </html>
