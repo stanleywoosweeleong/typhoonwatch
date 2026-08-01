@@ -375,6 +375,12 @@ def selftest():
     check("tend.empty", pick_tendency({}), (None, None))
     check("tend.all_null", pick_tendency({"hourly": {"time": ["2026-08-02T01:00"],
           "pressure_msl": [None]}}, "2026-08-02T01:00"), (None, None))
+    # the carry-forward bug: a non-grid run must not wipe the previous grid
+    old = {"nx": 3, "ny": 3, "time": "2026-08-02T00:00Z", "values": [1] * 9}
+    kept = fetch_pressure([], False, old)
+    check("grid.carried_forward", kept["grid"], old)
+    check("grid.none_when_never_had", fetch_pressure([], False, None)["grid"], None)
+
     check("aslist.object", len(_as_list({"a": 1})), 1)
     check("aslist.array", len(_as_list([{"a": 1}, {"b": 2}])), 2)
 
@@ -546,8 +552,10 @@ def pick_tendency(entry, now_iso=None):
     return cur, (None if prev is None else round(cur - float(prev), 1))
 
 
-def fetch_pressure(refs, want_grid):
-    out = {"model": "ECMWF IFS via Open-Meteo", "places": {}, "grid": None}
+def fetch_pressure(refs, want_grid, prev_grid=None):
+    """prev_grid is carried forward on runs that do not refresh it — otherwise
+    the map loses its isobars for five hours out of every six."""
+    out = {"model": "ECMWF IFS via Open-Meteo", "places": {}, "grid": prev_grid}
     entries = fetch_series([r["lat"] for r in refs], [r["lon"] for r in refs],
                            "hourly=pressure_msl&past_days=1&forecast_days=1")
     for r, e in zip(refs, entries):
@@ -642,10 +650,14 @@ def main():
     try:
         with open(os.path.join(ROOT, "index.html"), "r", encoding="utf-8") as f:
             refs = parse_refs(f.read())
-        want_grid = datetime.now(timezone.utc).hour % GRID_EVERY_H == 0
-        pressure = fetch_pressure(refs, want_grid)
-        print("pressure: %d place(s)%s" % (len(pressure["places"]),
-              ", grid %dx%d" % (pressure["grid"]["nx"], pressure["grid"]["ny"]) if pressure["grid"] else ""))
+        prev_grid = ((prev.get("pressure") or {}).get("grid")) or None
+        # refresh on the 6-hourly slot, or straight away if we have none yet
+        want_grid = (datetime.now(timezone.utc).hour % GRID_EVERY_H == 0) or not prev_grid
+        pressure = fetch_pressure(refs, want_grid, prev_grid)
+        print("pressure: %d place(s), grid %s (%s)" % (
+              len(pressure["places"]),
+              "%dx%d" % (pressure["grid"]["nx"], pressure["grid"]["ny"]) if pressure["grid"] else "none",
+              "refreshed" if want_grid else "carried forward from " + str(pressure["grid"].get("time"))))
     except Exception as e:  # noqa: BLE001
         errors.append("pressure: %s" % e)      # optional layer, never fatal
         prev_p = prev.get("pressure")
