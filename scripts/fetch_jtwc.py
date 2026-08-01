@@ -507,22 +507,39 @@ def fixture():
     return 0
 
 
+# Candidate sources, probed in one run so the Actions log tells us which are
+# reachable from an Azure runner. metoc.navy.mil returns 403 to datacenter IPs
+# (confirmed 2026-08-01: both urllib and curl, both mirrors).
+PROBE_TARGETS = [
+    ("JTWC index",      "https://www.metoc.navy.mil/jtwc/jtwc.html"),
+    ("JTWC ABPW",       "https://www.metoc.navy.mil/jtwc/products/abpwsair.txt"),
+    ("JTWC mirror",     "https://www.metoc.dc3n.navy.mil/jtwc/jtwc.html"),
+    ("NRL Monterey",    "https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abdeck.txt"),
+    ("GDACS TC list",   "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC"),
+    ("GDACS RSS",       "https://www.gdacs.org/xml/rss.xml"),
+    ("JMA typhoon",     "https://www.jma.go.jp/bosai/typhoon/data/targetTc.json"),
+    ("JMA root JSON",   "https://www.jma.go.jp/bosai/common/const/area.json"),
+    ("NOAA ATCF root",  "https://ftp.nhc.noaa.gov/atcf/btk/"),
+    ("Digital Typhoon", "https://agora.ex.nii.ac.jp/digital-typhoon/"),
+]
+
+
 def probe():
-    """Print exactly what each host/method does. Read this in the Actions log."""
-    import subprocess
-    print("== curl version ==")
-    subprocess.run(["curl", "--version"])
-    for h in HOSTS:
-        for path in ("/jtwc.html", "/products/abpwsair.txt"):
-            url = h + path
-            print("\n== %s ==" % url)
-            for name, fn in (("urllib", _urllib_get), ("curl", _curl_get)):
-                try:
-                    body = fn(url, False)
-                    head = " ".join(body[:160].split())
-                    print("  %-7s OK  %6d bytes  %s" % (name, len(body), head))
-                except Exception as e:  # noqa: BLE001
-                    print("  %-7s FAIL %s" % (name, e))
+    """Print exactly what each candidate source does. Read this in the log."""
+    reachable = []
+    for label, url in PROBE_TARGETS:
+        print("\n== %-16s %s" % (label, url))
+        for name, fn in (("urllib", _urllib_get), ("curl", _curl_get)):
+            try:
+                body = fn(url, False)
+                head = " ".join(body[:120].split())
+                print("  %-7s OK   %7d bytes  %s" % (name, len(body), head))
+                if label not in reachable:
+                    reachable.append(label)
+                break        # one success per target is enough
+            except Exception as e:  # noqa: BLE001
+                print("  %-7s FAIL %s" % (name, e))
+    print("\n== REACHABLE: %s" % (", ".join(reachable) or "NONE"))
     return 0
 
 
