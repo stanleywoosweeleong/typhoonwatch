@@ -1,0 +1,73 @@
+{
+ "abpw": {
+  "disturbances": [
+   {
+    "id": "93W",
+    "lat": 9.0,
+    "lon": 130.1,
+    "potential": "MEDIUM"
+   },
+   {
+    "id": "94W",
+    "lat": 5.1,
+    "lon": 110.8,
+    "potential": "LOW"
+   }
+  ],
+  "dtg": "010600Z",
+  "problems": [],
+  "text": "ABPW10 PGTW 010600\nSUBJ/SIGNIFICANT TROPICAL WEATHER ADVISORY FOR THE WESTERN AND\nSOUTH PACIFIC OCEAN/010600Z-011800ZAUG2026//\nRMKS/\n2. TROPICAL DISTURBANCE SUMMARY:\n   A. WESTERN NORTH PACIFIC AREA\n      (1) AN AREA OF CONVECTION (INVEST 93W) PREVIOUSLY LOCATED\n      NEAR 8.2N 132.5E IS NOW LOCATED NEAR 9.0N 130.1E. ANIMATED\n      MULTISPECTRAL IMAGERY DEPICTS FLARING CONVECTION.\n      THE POTENTIAL FOR THE DEVELOPMENT OF A SIGNIFICANT TROPICAL\n      CYCLONE WITHIN THE NEXT 24 HOURS IS MEDIUM.\n      (2) AN AREA OF CONVECTION (INVEST 94W) HAS PERSISTED\n      NEAR 5.1N 110.8E. THE POTENTIAL FOR THE DEVELOPMENT OF A\n      SIGNIFICANT TROPICAL CYCLONE WITHIN THE NEXT 24 HOURS IS LOW.\n//"
+ },
+ "demo": true,
+ "errors": [],
+ "fetch_ok": true,
+ "generated": "2026-08-01T07:46:19Z",
+ "last_attempt": "2026-08-01T07:46:19Z",
+ "source": "FIXTURE — not real data",
+ "source_url": "https://www.metoc.navy.mil/jtwc/jtwc.html",
+ "storms": [
+  {
+   "basin": "Western Pacific",
+   "basin_code": "WP",
+   "dtg": "011200Z",
+   "forecast": [
+    {
+     "lat": 14.9,
+     "lon": 113.8,
+     "tau": 12,
+     "valid": "020000Z",
+     "wind_kt": 85
+    },
+    {
+     "lat": 15.6,
+     "lon": 111.9,
+     "tau": 24,
+     "valid": "021200Z",
+     "wind_kt": 90
+    },
+    {
+     "lat": 16.1,
+     "lon": 110.2,
+     "tau": 36,
+     "valid": "030000Z",
+     "wind_kt": 80
+    }
+   ],
+   "gust_kt": 90,
+   "id": "wp0526",
+   "lat": 14.2,
+   "lon": 115.6,
+   "move_deg": 290,
+   "move_kt": 12,
+   "name": "TYPHOON 05W (KAJIKI)",
+   "number": 5,
+   "parsed": true,
+   "posit_accuracy_nm": 25,
+   "problems": [],
+   "warning_no": 12,
+   "warning_text": "WTPN31 PGTW 011200\nMSGID/GENADMIN/JOINT TYPHOON WRNCEN PEARL HARBOR HI//\nSUBJ/TYPHOON 05W (KAJIKI) WARNING NR 012//\nRMKS/\n1. TYPHOON 05W (KAJIKI) WARNING POSITION:\n   011200Z --- NEAR 14.2N 115.6E\n   MOVEMENT PAST SIX HOURS - 290 DEGREES AT 12 KTS\n   POSITION ACCURATE TO WITHIN 025 NM\n   POSITION BASED ON CENTER LOCATED BY SATELLITE\n   PRESENT WIND DISTRIBUTION:\n   MAX SUSTAINED WINDS - 075 KT, GUSTS 090 KT\n   RADIUS OF 034 KT WINDS - 120 NM NORTHEAST QUADRANT\n2. FORECASTS:\n   A. 12 HRS, VALID AT:\n      020000Z --- 14.9N 113.8E\n      MAX SUSTAINED WINDS - 085 KT, GUSTS 105 KT\n   B. 24 HRS, VALID AT:\n      021200Z --- 15.6N 111.9E\n      MAX SUSTAINED WINDS - 090 KT, GUSTS 110 KT\n   C. 36 HRS, VALID AT:\n      030000Z --- 16.1N 110.2E\n      MAX SUSTAINED WINDS - 080 KT, GUSTS 100 KT\n//",
+   "wind_kt": 75,
+   "year": 2026
+  }
+ ]
+}
