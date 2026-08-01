@@ -301,8 +301,113 @@ def selftest():
     check("bad.parsed", bad["parsed"], False)
     check("bad.no_current", "current" in bad, False)
 
+    # --- GDACS ---
+    fc = {"features": [
+        {"geometry": {"coordinates": [114.5, 22.9]},
+         "properties": {"eventid": "1001067", "episodeid": "3", "eventname": "KAJIKI",
+                        "iscurrent": "true", "alertlevel": "Orange",
+                        "severitydata": {"severity": 120, "severityunit": "km/h",
+                                         "severitytext": "Tropical Storm"},
+                        "affectedcountries": [{"iso3": "CHN"}],
+                        "url": {"report": "https://www.gdacs.org/report.aspx"}}},
+        {"geometry": {"coordinates": [157.5, 20.8]},
+         "properties": {"eventid": "1001070", "eventname": "DOLPHIN",
+                        "iscurrent": "true", "alertlevel": "Green",
+                        "severitydata": {"severity": 185, "severityunit": "km/h"}}},
+        {"geometry": {"coordinates": [60.0, 15.0]},
+         "properties": {"eventid": "1000999", "eventname": "OLD", "iscurrent": "false"}},
+        {"geometry": {}, "properties": {"eventid": "x", "iscurrent": "true"}},
+    ]}
+    ev, probs = parse_gdacs(fc)
+    check("gdacs.n", len(ev), 2)
+    check("gdacs.problems", probs, [])
+    check("gdacs.name", ev[0]["name"], "KAJIKI")
+    check("gdacs.pos", (ev[0]["lat"], ev[0]["lon"]), (22.9, 114.5))
+    check("gdacs.alert", ev[0]["alert"], "orange")
+    check("gdacs.sev", (ev[0]["severity"], ev[0]["severity_unit"]), (120.0, "km/h"))
+    check("gdacs.drops_stale", [e["name"] for e in ev], ["KAJIKI", "DOLPHIN"])
+    check("gdacs.bad_shape", parse_gdacs({})[1], ["GDACS response had no features list"])
+
+    jma = [{"id": "TC2615", "current": {"lat": 20.8, "lon": 157.5}}]
+    tagged = tag_duplicates(json.loads(json.dumps(ev)), jma)
+    check("dup.far_kept", tagged[0]["also_jma"], None)
+    check("dup.near_tagged", tagged[1]["also_jma"], "TC2615")
+    check("hav 22.9N114.5E->Kelantan", round(hav_km(22.9, 114.5, 6.13, 102.24) / 10) * 10, 2280)
+
     print("\n%s" % ("ALL TESTS PASSED" if ok else "TESTS FAILED"))
     return 0 if ok else 1
+
+
+
+# ------------------------------------------------------------------- GDACS
+# JMA lists only cyclones RSMC Tokyo issues formal bulletins for. A South
+# China Sea depression that never reaches typhoon grade — exactly the kind
+# that drives a monsoon surge onto the Malaysian east coast — can be absent
+# from targetTc.json entirely. GDACS aggregates several agencies and fills
+# that gap. It is a secondary source and is labelled as such in the app.
+
+GDACS_URL = ("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH"
+             "?eventlist=TC")
+
+
+def _truthy(v):
+    return str(v).strip().lower() in ("true", "1", "yes")
+
+
+def parse_gdacs(fc):
+    """geoJSON FeatureCollection -> list of current tropical cyclone events."""
+    out, problems = [], []
+    feats = (fc or {}).get("features")
+    if not isinstance(feats, list):
+        return [], ["GDACS response had no features list"]
+    for f in feats:
+        props = f.get("properties") or {}
+        geom = f.get("geometry") or {}
+        coords = geom.get("coordinates")
+        if not (isinstance(coords, list) and len(coords) >= 2):
+            continue                      # no position -> not usable, skip
+        if not _truthy(props.get("iscurrent")):
+            continue                      # only live systems
+        sev = props.get("severitydata") or {}
+        out.append({
+            "id": str(props.get("eventid") or ""),
+            "episode": str(props.get("episodeid") or ""),
+            "name": props.get("eventname") or props.get("name") or None,
+            "lon": _num(coords[0]),
+            "lat": _num(coords[1]),
+            "alert": (props.get("alertlevel") or "").lower() or None,
+            "severity": _num(sev.get("severity")),
+            "severity_unit": sev.get("severityunit"),
+            "severity_text": sev.get("severitytext"),
+            "from": props.get("fromdate"),
+            "to": props.get("todate"),
+            "countries": props.get("affectedcountries") or [],
+            "url": ((props.get("url") or {}).get("report")
+                    if isinstance(props.get("url"), dict) else None),
+        })
+    return [e for e in out if e["lat"] is not None and e["lon"] is not None], problems
+
+
+def hav_km(a, b, c, d):
+    r = 3.141592653589793 / 180
+    import math
+    s = (math.sin((c - a) * r / 2) ** 2 +
+         math.cos(a * r) * math.cos(c * r) * math.sin((d - b) * r / 2) ** 2)
+    return 2 * 6371 * math.asin(min(1, math.sqrt(s)))
+
+
+def tag_duplicates(events, storms, radius_km=350):
+    """Mark GDACS events that are the same system JMA already reports."""
+    for e in events:
+        e["also_jma"] = None
+        for s in storms:
+            c = s.get("current") or {}
+            if c.get("lat") is None:
+                continue
+            if hav_km(e["lat"], e["lon"], c["lat"], c["lon"]) <= radius_km:
+                e["also_jma"] = s.get("id")
+                break
+    return events
 
 
 # ---------------------------------------------------------------------- main
@@ -364,6 +469,16 @@ def main():
     print("active tropical cyclones: %s" % ([t.get("tropicalCyclone") for t in targets] or "none"))
     storms = build(targets, lambda tc: get_json("%s/%s/specifications.json" % (BASE, tc)), errors)
 
+    others = []
+    try:
+        events, probs = parse_gdacs(get_json(GDACS_URL))
+        others = tag_duplicates(events, storms)
+        errors.extend(probs)
+        print("GDACS current TC events: %d (%d also in JMA)"
+              % (len(others), sum(1 for e in others if e.get("also_jma"))))
+    except Exception as e:  # noqa: BLE001
+        errors.append("GDACS: %s" % e)     # secondary source: never fatal
+
     save({
         "generated": now,
         "last_attempt": now,
@@ -372,6 +487,8 @@ def main():
         "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
         "wind_averaging": "10-minute sustained",
         "storms": storms,
+        "others": others,
+        "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
         "errors": errors,
     })
     print("wrote %s: %d storm(s), %d error(s)" % (OUT, len(storms), len(errors)))
