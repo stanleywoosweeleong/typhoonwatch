@@ -1,8 +1,8 @@
 {
  "errors": [
-  "index fetch failed: HTTP Error 403: Forbidden"
+  "index fetch failed: https://www.metoc.navy.mil/jtwc -> curl exit 22: curl: (22) The requested URL returned error: 403; https://www.metoc.dc3n.navy.mil/jtwc -> curl exit 22: curl: (22) The requested URL returned error: 403"
  ],
  "fetch_ok": false,
  "generated": null,
- "last_attempt": "2026-08-01T08:45:03Z"
+ "last_attempt": "2026-08-01T08:49:28Z"
 }
