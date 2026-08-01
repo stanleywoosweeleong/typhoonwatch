@@ -1,0 +1,8 @@
+{
+ "errors": [
+  "index fetch failed: HTTP Error 403: Forbidden"
+ ],
+ "fetch_ok": false,
+ "generated": null,
+ "last_attempt": "2026-08-01T08:37:17Z"
+}
