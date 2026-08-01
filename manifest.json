@@ -1,0 +1,16 @@
+{
+  "name": "风眼 TYPHOONWATCH — JTWC 台风监测",
+  "short_name": "风眼",
+  "description": "JTWC 热带气旋警报的镜像与解读，离线可读。Mirrored JTWC tropical cyclone warnings, readable offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1420",
+  "theme_color": "#0a1420",
+  "lang": "zh",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

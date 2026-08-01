@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="TyphoonWatch">
+  <rect width="512" height="512" rx="96" fill="#0a1420"/>
+  <g fill="none" stroke="#43c2ab" stroke-width="26" stroke-linecap="round">
+    <path d="M256 118c74 0 118 40 118 84 0 34-28 54-62 54"/>
+    <path d="M256 394c-74 0-118-40-118-84 0-34 28-54 62-54"/>
+  </g>
+  <g fill="none" stroke="#1e5f7a" stroke-width="18" stroke-linecap="round" opacity=".85">
+    <path d="M150 176c40-30 92-38 132-22"/>
+    <path d="M362 336c-40 30-92 38-132 22"/>
+  </g>
+  <circle cx="256" cy="256" r="34" fill="#ffb020"/>
+</svg>
