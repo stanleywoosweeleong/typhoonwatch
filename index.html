@@ -57,7 +57,7 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
 .rangeline .note{display:block;color:var(--dim);font-size:12px;margin-top:3px}
 .plotwrap{margin-top:13px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
 svg.plot{display:block;width:100%;height:auto}
-.caption{font-size:11.5px;color:var(--faint);margin-top:5px;text-align:right}
+.caption{font-size:12px;color:#93aabe;margin-top:6px;text-align:right;line-height:1.5}
 details{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
 summary{cursor:pointer;font-size:13.5px;color:var(--dim);list-style:none}
 summary::-webkit-details-marker{display:none}
@@ -123,7 +123,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.1.0";
+var VERSION = "v2.2.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -151,6 +151,7 @@ var T = {
     tagline:"日本气象厅 RSMC 东京 · 台风情报 · 离线可读",
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
+    myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
     regionCap:"实心橙点＝气象厅台风（虚线为预报路径）· 空心圈＝GDACS 其他系统 · 白菱形＝你选的地点",
     regionNote:"看纬度：马来西亚贴着赤道，台风几乎不会走到这里——但它们把季风涌推过来。",
     otherNote:"来源 GDACS（欧盟联合研究中心），汇整多家机构。气象厅只为它正式发布情报的气旋编号，所以未达台风级的南海低压可能不在上面那一节里。这里是补漏的，级别与命名不如气象厅严谨。",
@@ -173,7 +174,7 @@ var T = {
     rangeNow:"目前距离 {place} <span class=\"num\">{km} 公里</span>（方位 {dir}）",
     rangeMin:"预报路径最近点：<span class=\"num\">{km} 公里</span>，约 {tau} 小时后",
     rangeNote:"这是球面距离计算，不是对马来西亚的天气预报。距离远不等于没影响——西北太平洋的台风常靠加强东北季风涌流，把大雨送到半岛东岸。",
-    plotCap:"示意图（无海岸线）· 实心点＝实况，虚圈＝预报圆（中心有 7 成机会落在圈内）",
+    plotCap:"实心橙点＝实况 · 绿点与虚圈＝预报位置和预报圆（中心有 7 成机会落在圈内）· 白点＝你选的地点",
     decodeTitle:"逐项解读", rawTitle:"气象厅原始 JSON",
     kt:"节", ms:"米/秒", kmh:"公里/小时", km:"公里", hpa:"百帕",
     cat:{TD:"热带低压",TS:"热带风暴",STS:"强热带风暴",TY:"台风",L:"温带低气压"},
@@ -189,6 +190,7 @@ var T = {
     tagline:"JMA · RSMC Tokyo Typhoon Center · readable offline",
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
+    myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
     regionCap:"Filled amber = JMA typhoon (dashed = forecast track) · hollow ring = GDACS other system · white diamond = your chosen place",
     regionNote:"Read the latitude: Malaysia sits on the equator, where typhoons almost never reach — but they push the monsoon surge down to it.",
     otherNote:"From GDACS (European Commission JRC), aggregating several agencies. JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade may be missing from the section above. This fills that gap, with looser naming and grading than JMA's.",
@@ -211,7 +213,7 @@ var T = {
     rangeNow:"Now <span class=\"num\">{km} km</span> from {place} (bearing {dir})",
     rangeMin:"Closest forecast approach: <span class=\"num\">{km} km</span>, about {tau} h ahead",
     rangeNote:"A great-circle distance, not a forecast for Malaysia. Distant does not mean harmless — West Pacific typhoons often reach the east coast by strengthening the northeast monsoon surge.",
-    plotCap:"Schematic (no coastline) · solid dot = analysis, dashed circle = forecast circle (70% chance the centre falls inside)",
+    plotCap:"Amber dot = analysis · green dots and dashed circles = forecast positions and forecast circles (70% chance the centre falls inside) · white dot = your chosen place",
     decodeTitle:"Item by item", rawTitle:"Raw JMA JSON",
     kt:"kt", ms:"m/s", kmh:"km/h", km:"km", hpa:"hPa",
     cat:{TD:"Tropical Depression",TS:"Tropical Storm",STS:"Severe Tropical Storm",TY:"Typhoon",L:"Extratropical Low"},
@@ -225,6 +227,23 @@ var T = {
 };
 var lang="zh";
 function L(k){ return T[lang][k]; }
+/* JMA writes these as free text. Translate the known set; anything
+   unrecognised falls through as the original Japanese rather than a guess. */
+var JP={
+  "ゆっくり":{zh:"缓慢",en:"slowly"},
+  "ほとんど停滞":{zh:"几乎停滞",en:"nearly stationary"},
+  "停滞":{zh:"停滞",en:"stationary"},
+  "正確":{zh:"准确",en:"exact"},
+  "ほぼ正確":{zh:"大致准确",en:"nearly exact"},
+  "不確実":{zh:"不确定",en:"uncertain"},
+  "中心付近":{zh:"中心附近",en:"near the centre"},
+  "全域":{zh:"全域",en:"all quadrants"},
+  "北":{zh:"北",en:"north"},"南":{zh:"南",en:"south"},
+  "東":{zh:"东",en:"east"},"西":{zh:"西",en:"west"},
+  "北東":{zh:"东北",en:"northeast"},"南東":{zh:"东南",en:"southeast"},
+  "南西":{zh:"西南",en:"southwest"},"北西":{zh:"西北",en:"northwest"}
+};
+function jp(s){ return (s&&JP[s]) ? JP[s][lang] : (s||""); }
 function fill(s,o){ return s.replace(/\{(\w+)\}/g,function(_,k){ return o[k]!==undefined?o[k]:"{"+k+"}"; }); }
 
 /* ---- geometry ------------------------------------------------------- */
@@ -256,6 +275,14 @@ function shortT(iso){
   if(isNaN(d)) return "—";
   return d.toISOString().slice(5,16).replace("T"," ")+"Z";
 }
+/* Malaysia keeps UTC+8 year round — no daylight saving — so a fixed offset
+   is exact, not an approximation. */
+function myt(iso){
+  var d=new Date(iso);
+  if(isNaN(d)) return "—";
+  return new Date(d.getTime()+8*36e5).toISOString().slice(5,16).replace("T"," ");
+}
+function bothT(iso){ return myt(iso)+" "+L("myt")+" ("+shortT(iso)+")"; }
 /* JMA quotes 10-minute sustained wind. Saffir-Simpson is defined on
    1-minute wind, so any category shown here is a conversion, and it is
    labelled as one rather than presented as JMA's own number. */
@@ -305,10 +332,10 @@ function renderFresh(){
     html=fill(L("freshFail"),{when:DOC.last_attempt||"?"});
   } else if(newest!==null && (now-newest)/36e5>STALE_H){
     box.classList.add("stale");
-    html=fill(L("freshStale"),{t:shortT(new Date(newest).toISOString()),age:ago(now-newest),h:STALE_H});
+    html=fill(L("freshStale"),{t:bothT(new Date(newest).toISOString()),age:ago(now-newest),h:STALE_H});
   } else if(newest!==null){
-    html=fill(L("freshOk"),{t:"<b>"+shortT(new Date(newest).toISOString())+"</b>",
-      age:ago(now-newest),fetch:(DOC.generated||"").replace("T"," ")});
+    html=fill(L("freshOk"),{t:"<b>"+bothT(new Date(newest).toISOString())+"</b>",
+      age:ago(now-newest),fetch:DOC.generated?bothT(DOC.generated):"?"});
   } else {
     html=fill(L("freshOk"),{t:"—",age:"—",fetch:(DOC.generated||"?")});
   }
@@ -365,7 +392,7 @@ function overviewMap(storms,others,ref){
     svg+='<circle cx="'+X(c.lon).toFixed(1)+'" cy="'+Y(c.lat).toFixed(1)+'" r="6" fill="#ffb020"/>'+
          '<text x="'+(X(c.lon)+9).toFixed(1)+'" y="'+(Y(c.lat)-7).toFixed(1)+
          '" fill="#ffd489" font-size="11" font-weight="700">'+
-         String(s.name_en||s.typhoon_number||"").replace(/[<>&]/g,"")+'</text>';
+         stormLabel(s).replace(/[<>&]/g,"")+'</text>';
   });
   (others||[]).forEach(function(o){
     if(o.also_jma||o.lat==null) return;
@@ -377,8 +404,8 @@ function overviewMap(storms,others,ref){
          '" fill="'+col+'" font-size="10">'+String(o.name||"").replace(/[<>&]/g,"")+'</text>';
   });
   var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
-  svg+='<path d="M'+rx+' '+(ry-8)+'l7 8-7 8-7-8z" fill="#fff"/>'+
-       '<text x="'+(rx+11)+'" y="'+(ry+4)+'" fill="#fff" font-size="11" font-weight="700">'+
+  svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#fff" stroke="#0a1420" stroke-width="1"/>'+
+       '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#fff" font-size="11" font-weight="700">'+
        (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
   return svg+'</svg>';
 }
@@ -432,16 +459,18 @@ function trackPlot(s,ref){
                '" fill="#7f94a7" font-size="11" font-family="monospace">+'+p.tau+'h</text>';
   });
   var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
-  svg+='<path d="M'+rx+' '+(ry-7)+'l6 7-6 7-6-7z" fill="#dbe7f1"/>'+
-       '<text x="'+(rx+10)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
+  svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
+       '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
        (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
+  if(s._label) svg+='<text x="10" y="20" fill="#ffd489" font-size="14" font-weight="700">'+
+       String(s._label).replace(/[<>&]/g,"")+'</text>';
   return svg+'</svg>';
 }
 
 /* ---- decode --------------------------------------------------------- */
 function decodeList(s){
   var c=s.current||{}, ul=el("ul","decode"), items=[];
-  if(s.issued) items.push([s.issued, lang==="zh"
+  if(s.issued) items.push([bothT(s.issued), lang==="zh"
     ? "发表时刻（世界时）。气象厅以日本时间发表，本页统一换算成世界时；马来西亚时间＝世界时 +8 小时，日本时间 −1 小时。"
     : "Issue time in UTC. JMA publishes in JST; Malaysia is UTC+8, one hour behind Japan."]);
   if(c.wind_ms!=null) items.push(["最大風速 "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang==="zh"
@@ -453,13 +482,14 @@ function decodeList(s){
   if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", lang==="zh"
     ? "中心气压。数字越低越强——这是气象厅判断强度的主要依据，和风速是一体两面。"
     : "Central pressure. Lower is stronger — JMA's primary intensity measure, the other side of the same coin as wind speed."]);
-  if(c.course_jp) items.push([c.course_jp+" "+(c.move_kt!=null?c.move_kt+" kt":(c.speed_note_jp||"")), lang==="zh"
+  if(c.course_jp) items.push([c.course_jp+" "+(c.move_kt!=null?c.move_kt+" kt":(c.speed_note_jp||""))+
+    (c.speed_note_jp?"  = "+jp(c.speed_note_jp):""), lang==="zh"
     ? "进行方向是「去向」"+(c.move_deg!=null?"（"+c.move_deg+"°，即朝"+compass(c.move_deg)+"）":"")+"。风向则相反，用「来向」——最容易搞混的地方。速度很慢时气象厅不给数字，只写「ゆっくり」（缓慢）或「ほとんど停滞」（几乎停滞）。"
     : "Course is where it is going"+(c.move_deg!=null?" ("+c.move_deg+"°, toward "+compass(c.move_deg)+")":"")+". Wind direction uses the opposite convention. When movement is slow JMA gives no number, only ゆっくり (slow) or ほとんど停滞 (nearly stationary)."]);
-  if(c.accuracy_jp) items.push(["位置 "+c.accuracy_jp, lang==="zh"
+  if(c.accuracy_jp) items.push(["位置 "+c.accuracy_jp+" = "+jp(c.accuracy_jp), lang==="zh"
     ? "定位精度：正確（准确）／ほぼ正確（大致准确）／不確実（不确定）。连现在的位置都分等级，预报位置的不确定只会更大。"
     : "Position accuracy: 正確 exact / ほぼ正確 nearly exact / 不確実 uncertain. Even the present position is graded — forecast positions are looser still."]);
-  if((c.storm_radii||[]).length) items.push(["暴風域 "+c.storm_radii.map(function(r){return (r.area_jp||"")+" "+r.km+" km";}).join(" / "), lang==="zh"
+  if((c.storm_radii||[]).length) items.push(["暴風域 "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang==="zh"
     ? "暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。"
     : "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold."]);
   var f0=(s.forecast||[])[0];
@@ -472,15 +502,22 @@ function decodeList(s){
   return ul;
 }
 
+/* Display name. JMA names storms only once they reach tropical-storm grade;
+   below that they carry a lowercase letter (a, b, c...) instead of a number,
+   so "b" is JMA's own designation, not a placeholder. */
+function stormLabel(s){
+  var n=String(s.typhoon_number||"");
+  if(s.name_en && /^\d+$/.test(n))
+    return (lang==="zh"?"台风 "+n.slice(-2)+" 号 ":"Typhoon "+n.slice(-2)+" ")+s.name_en;
+  if(s.name_en) return s.name_en;
+  return L("tdLetter")+(n?" "+n:"");
+}
+
 /* ---- storm card ------------------------------------------------------ */
 function stormCard(s){
   var ref=refPlace(), c=s.current||{}, card=el("div","card");
   var head=el("div","cardhead");
-  var nm = s.name_jp
-    ? (lang==="zh" ? "台风 "+String(s.typhoon_number||"").slice(-2)+" 号 "+(s.name_en||"")
-                   : "Typhoon "+String(s.typhoon_number||"").slice(-2)+" "+(s.name_en||""))
-    : (lang==="zh" ? "热带低压 "+(s.typhoon_number||s.id) : "Tropical depression "+(s.typhoon_number||s.id));
-  head.appendChild(el("div","sname",nm.trim()));
+  head.appendChild(el("div","sname",stormLabel(s)));
   var bs=el("div","badges");
   var catCode=c.category||s.category;
   if(catCode){
@@ -507,8 +544,10 @@ function stormCard(s){
   if(c.gust_ms!=null) g.appendChild(cell(L("gust"), c.gust_ms+" "+L("ms")));
   if(c.pressure_hpa!=null) g.appendChild(cell(L("press"), c.pressure_hpa+" "+L("hpa")));
   if(c.move_deg!=null||c.speed_note_jp) g.appendChild(cell(L("move"),
-    (c.move_deg!=null?compass(c.move_deg):"—")+" "+(c.move_kt!=null?c.move_kt+" "+L("kt"):(c.speed_note_jp||""))));
-  if(s.typhoon_number) g.appendChild(cell(L("tnum"), String(s.typhoon_number)));
+    (c.move_deg!=null?compass(c.move_deg):"—")+" "+
+    (c.move_kt!=null?c.move_kt+" "+L("kt"):jp(c.speed_note_jp))));
+  if(s.typhoon_number) g.appendChild(cell(
+    /^\d+$/.test(String(s.typhoon_number))?L("tnum"):L("desig"), String(s.typhoon_number)));
   if((c.storm_radii||[]).length) g.appendChild(cell(L("stormR"),
     Math.max.apply(null,c.storm_radii.map(function(r){return r.km;}))+" "+L("km")));
   card.appendChild(g);
@@ -533,6 +572,7 @@ function stormCard(s){
     line.appendChild(el("span","note",L("rangeNote")));
     card.appendChild(line);
 
+    s._label=stormLabel(s);
     var plot=trackPlot(s,ref);
     if(plot){
       var pw=el("div","plotwrap"); pw.innerHTML=plot; card.appendChild(pw);
@@ -606,6 +646,7 @@ zh:[
  ["予報円（预报圆）","台风中心有 7 成机会落在圈内。圈越大＝路径越难预测，与强弱无关。圈随时间变大，就是不确定度增长的样子。注意：暴风不会乖乖待在圈里，圈讲的是「中心」的位置，不是影响范围。"],
  ["暴風域 与 強風域","暴風域＝25 m/s 以上，強風域＝15 m/s 以上。按方位分开列，因为台风从来不是圆的。看范围要看这两个，不要看预报圆。"],
  ["中心气压","气象厅判断强度的主要依据。920 hPa 比 970 hPa 强得多。气压和风速是一体两面，但气压是直接测得的，风速多半是推算的。"],
+ ["热带低压的字母编号（a、b、c）","气象厅只有在气旋达到热带风暴级（10 分钟风速 17 m/s）时才给号码和名字。还没到这一级的热带低压，用小写字母排序：a、b、c……所以「热带低压 b」里的 b 是气象厅的正式编号，不是缺资料。\n这跟美国的 INVEST（90W–99W）不是同一件事：INVEST 只是「值得盯的一团云」，连中心闭合环流都不一定有；气象厅的热带低压已经是判定成立的系统，会正式发报。换句话说，INVEST 是观察名单，热带低压是已经点名的。"],
  ["马来西亚为什么要看台风","半岛几乎不会被台风正面登陆——纬度太低，科氏力太弱，气旋转不起来。真正的影响是间接的：西北太平洋或南海的台风会拉紧气压梯度、加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前几天看季风涌。"]
 ],
 en:[
@@ -616,6 +657,7 @@ en:[
  ["The forecast circle (予報円)","A 70% chance the centre falls inside. Bigger means a less predictable track, and says nothing about strength. It grows with lead time — that is uncertainty made visible. Note it describes where the centre goes, not how far the damage reaches."],
  ["Storm area vs gale area","The storm area is 25 m/s and above; the gale area is 15 m/s and above. Both are listed per sector, because storms are never circular. For extent, read these — not the forecast circle."],
  ["Central pressure","JMA's primary intensity measure. 920 hPa is far stronger than 970 hPa. Pressure and wind are two sides of one coin, but pressure is measured more directly while wind is usually estimated."],
+ ["Lettered depressions (a, b, c)","JMA assigns a number and a name only once a system reaches tropical-storm grade (17 m/s, 10-minute). Depressions below that are lettered in sequence instead: a, b, c. So the b in \"Tropical depression b\" is JMA's own official designation, not missing data.\nThis is not the same as a US INVEST (90W-99W). An INVEST is merely an area worth watching and may not even have a closed circulation; a JMA tropical depression is an assessed system that gets formal bulletins. INVEST is the watchlist; a lettered depression is already named."],
  ["Why Malaysia watches typhoons","The peninsula is almost never struck directly — too near the equator for Coriolis to spin one up. The real effect is indirect: a typhoon in the West Pacific or South China Sea tightens the pressure gradient and strengthens the northeast monsoon surge that pushes days of rain onto Kelantan, Terengganu and east Pahang. Watching typhoons is watching the surge a few days early."]
 ]};
 
