@@ -55,7 +55,9 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
 .rangeline{margin-top:12px;font-size:13.5px;background:var(--panel2);border-radius:8px;padding:9px 11px}
 .rangeline .num{font-family:var(--mono);color:var(--amber)}
 .rangeline .note{display:block;color:var(--dim);font-size:12px;margin-top:3px}
-.plotwrap{margin-top:13px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
+.maptools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
+.maptime{font-size:11.5px;color:var(--faint);font-family:var(--mono)}
+.plotwrap{margin-top:9px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
 svg.plot{display:block;width:100%;height:auto}
 .caption{font-size:12px;color:#93aabe;margin-top:6px;text-align:right;line-height:1.5}
 details{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
@@ -95,7 +97,6 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   <div class="tools">
     <button id="langBtn" type="button">EN</button>
     <button id="refreshBtn" type="button">刷新</button>
-    <button id="isoBtn" type="button" aria-pressed="true">等压线</button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
   </div>
 </header>
@@ -124,7 +125,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.4.0";
+var VERSION = "v2.4.1";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -166,13 +167,13 @@ var T = {
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
-    iso:"等压线", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
+    iso:"等压线", isoAt:"气压场", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
     presChg:"24 小时 {arrow}{chg} 百帕", presSteady:"24 小时几乎无变化",
     presFalls:"降压最明显：", presNote:"等压线为 ECMWF 模式的海平面气压场（间隔 1 百帕），不是人工分析图，也不是实测。本页不判读、不命名任何低压系统——闭合的等压线请自行判断。热带气压梯度本来就小，所以间隔用 1 百帕而不是天气图常见的 4 百帕。",
     presNone:"暂无气压数据。",
     grpMY:"马来西亚", grpReg:"区域（气象厅责任区）",
     rangeNoteGen:"这是球面距离计算，不是对该地点的天气预报。预报路径本身还有误差，请看预报圆。",
-    regionCap:"实心橙点＝气象厅台风（虚线为预报路径）· 空心圈＝GDACS 其他系统 · 白菱形＝你选的地点",
+    regionCap:"实心橙点＝气象厅台风（虚线为预报路径）· 空心圈＝GDACS 其他系统 · 白点＝你选的地点",
     regionNote:"看纬度：马来西亚贴着赤道，台风几乎不会走到这里——但它们把季风涌推过来。",
     otherNote:"来源 GDACS（欧盟联合研究中心），汇整多家机构。气象厅只为它正式发布情报的气旋编号，所以未达台风级的南海低压可能不在上面那一节里。这里是补漏的，级别与命名不如气象厅严谨。",
     noOther:"GDACS 目前没有进行中的热带气旋事件。",
@@ -211,13 +212,13 @@ var T = {
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
-    iso:"Isobars", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
+    iso:"Isobars", isoAt:"field", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
     presChg:"{arrow}{chg} hPa in 24 h", presSteady:"little change in 24 h",
     presFalls:"Largest falls: ", presNote:"Isobars are the ECMWF model sea-level pressure field at 1 hPa spacing — not a hand analysis and not an observation. This page does not interpret or name any low; a closed contour is yours to read. Tropical pressure gradients are slack, which is why the interval is 1 hPa rather than the 4 hPa of a typical weather chart.",
     presNone:"No pressure data yet.",
     grpMY:"Malaysia", grpReg:"Region (JMA area of responsibility)",
     rangeNoteGen:"A great-circle distance, not a forecast for that place. The forecast track carries its own error — read the forecast circles.",
-    regionCap:"Filled amber = JMA typhoon (dashed = forecast track) · hollow ring = GDACS other system · white diamond = your chosen place",
+    regionCap:"Filled amber = JMA typhoon (dashed = forecast track) · hollow ring = GDACS other system · white dot = your chosen place",
     regionNote:"Read the latitude: Malaysia sits on the equator, where typhoons almost never reach — but they push the monsoon surge down to it.",
     otherNote:"From GDACS (European Commission JRC), aggregating several agencies. JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade may be missing from the section above. This fills that gap, with looser naming and grading than JMA's.",
     noOther:"GDACS lists no active tropical cyclone events right now.",
@@ -679,6 +680,22 @@ function stormCard(s){
 function renderRegion(){
   var box=document.getElementById("region"); box.textContent="";
   var ref=refPlace();
+
+  var bar=el("div","maptools");
+  var ib=document.createElement("button");
+  ib.type="button"; ib.id="isoBtn"; ib.textContent=L("iso");
+  ib.setAttribute("aria-pressed",SHOWISO?"true":"false");
+  ib.addEventListener("click",function(){
+    SHOWISO=!SHOWISO;
+    try{ localStorage.setItem("twatch.iso",SHOWISO?"1":"0"); }catch(e){}
+    renderAll();
+  });
+  bar.appendChild(ib);
+  var P0=(DOC&&DOC.pressure)||null;
+  if(SHOWISO && P0 && P0.grid && P0.grid.time)
+    bar.appendChild(el("span","maptime",L("isoAt")+" "+myt(P0.grid.time)+" "+L("myt")));
+  box.appendChild(bar);
+
   var pw=el("div","plotwrap");
   pw.innerHTML=overviewMap((DOC&&DOC.storms)||[],(DOC&&DOC.others)||[],ref);
   box.appendChild(pw);
@@ -800,8 +817,6 @@ function renderAll(){
   document.getElementById("tagline").textContent=L("tagline");
   document.getElementById("langBtn").textContent=L("other");
   document.getElementById("refreshBtn").textContent=L("refresh");
-  var ib=document.getElementById("isoBtn");
-  ib.textContent=L("iso"); ib.setAttribute("aria-pressed",SHOWISO?"true":"false");
   document.getElementById("hLearn").textContent=L("hLearn");
   document.getElementById("credit").innerHTML=L("credit");
   var sel=document.getElementById("refSel"), cur=refPlace().id;
@@ -840,11 +855,6 @@ document.getElementById("langBtn").addEventListener("click",function(){
   renderAll();
 });
 document.getElementById("refreshBtn").addEventListener("click",load);
-document.getElementById("isoBtn").addEventListener("click",function(){
-  SHOWISO=!SHOWISO;
-  try{ localStorage.setItem("twatch.iso",SHOWISO?"1":"0"); }catch(e){}
-  renderAll();
-});
 document.getElementById("refSel").addEventListener("change",function(e){
   try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
   renderAll();
