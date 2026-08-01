@@ -175,6 +175,7 @@ var T = {
     freshNoData:"尚未取得任何数据。GitHub Action 至少要成功跑一次。",
     offline:"（离线：显示缓存内容）",
     noStorm:"目前 JTWC 没有编号中的热带气旋。平静期是正常的。",
+    unknown:"未知：抓取还没有成功过一次，所以本页并不知道现在有没有台风。这里的空白不代表平静。请查看 GitHub Actions 的日志，或直接前往 JTWC 官网。",
     noInv:"公报中没有列出扰动区。",
     pos:"中心位置", wind:"最大持续风", gust:"阵风", move:"移动",
     warnNo:"警报编号", acc:"定位误差",
@@ -204,6 +205,7 @@ var T = {
     freshNoData:"No data yet. The GitHub Action needs one successful run.",
     offline:"(offline: showing cached copy)",
     noStorm:"No numbered tropical cyclones at JTWC right now. Quiet spells are normal.",
+    unknown:"Unknown — no fetch has ever succeeded, so this page does not know whether a storm exists. This blank is not a quiet period. Check the GitHub Actions log, or go to JTWC directly.",
     noInv:"No invest areas listed in the advisory.",
     pos:"Centre position", wind:"Max sustained", gust:"Gusts", move:"Movement",
     warnNo:"Warning no.", acc:"Position accuracy",
@@ -489,14 +491,21 @@ function stormCard(s){
 function renderStorms(){
   var box=document.getElementById("storms"); box.textContent="";
   var list=(DOC&&DOC.storms)||[];
-  if(!list.length){ box.appendChild(el("div","empty",L("noStorm"))); return; }
+  if(!list.length){
+    // A quiet period and a never-successful fetch look identical in the data.
+    // Only `generated` distinguishes them, so it decides which we claim.
+    var everSucceeded = !!(DOC && DOC.generated);
+    var box2=el("div","empty",L(everSucceeded?"noStorm":"unknown"));
+    if(!everSucceeded) box2.style.borderColor="#5a2b2b";
+    box.appendChild(box2); return;
+  }
   list.forEach(function(s){ box.appendChild(stormCard(s)); });
 }
 
 function renderInvests(){
   var box=document.getElementById("invests"); box.textContent="";
   var ds=(DOC&&DOC.abpw&&DOC.abpw.disturbances)||[];
-  if(!ds.length){ box.appendChild(el("div",null,L("noInv"))); return; }
+  if(!ds.length){ box.appendChild(el("div",null,L(DOC&&DOC.generated?"noInv":"unknown"))); return; }
   var ref=refPlace();
   ds.forEach(function(d){
     var row=el("div","inv");
