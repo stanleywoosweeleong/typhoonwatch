@@ -28,6 +28,7 @@ Usage:
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -238,6 +239,14 @@ FIX_SPEC = [
 ]
 
 
+def _raises(fn):
+    try:
+        fn()
+        return False
+    except Exception:  # noqa: BLE001
+        return True
+
+
 def selftest():
     ok = True
 
@@ -334,6 +343,41 @@ def selftest():
     check("dup.near_tagged", tagged[1]["also_jma"], "TC2615")
     check("hav 22.9N114.5E->Kelantan", round(hav_km(22.9, 114.5, 6.13, 102.24) / 10) * 10, 2280)
 
+    # --- pressure ---
+    refs = parse_refs(open(os.path.join(ROOT, "index.html"), encoding="utf-8").read())
+    check("refs.n", len(refs), 18)
+    check("refs.ids_unique", len({r["id"] for r in refs}), len(refs))
+    check("refs.first", refs[0]["id"], "triang")
+    check("refs.coords_numeric",
+          all(isinstance(r["lat"], float) and isinstance(r["lon"], float) for r in refs), True)
+    check("refs.in_grid_or_region",
+          all(-15 <= r["lat"] <= 50 and 90 <= r["lon"] <= 175 for r in refs), True)
+    check("refs.comments_ignored", any(r["id"] == "tokyo" for r in refs), True)
+    check("refs.parse_empty_raises",
+          _raises(lambda: parse_refs("no refs here")), True)
+
+    la, lo = grid_points()
+    check("grid.n", len(la), 208)
+    check("grid.corners", (min(la), max(la), min(lo), max(lo)), (-5.0, 19.0, 95.0, 125.0))
+    check("grid.covers_borneo",
+          any(abs(a - 3.0) < 1.1 and abs(o - 113.0) < 1.1 for a, o in zip(la, lo)), True)
+    check("grid.daily_budget", 18 * 8 + len(la) * (24 // GRID_EVERY_H), 976)
+
+    # 25 hourly stamps: index 0 is exactly 24 h before index 24
+    times = ["2026-08-01T%02d:00" % h for h in range(1, 24)] + \
+            ["2026-08-02T00:00", "2026-08-02T01:00"]
+    ent = {"hourly": {"time": times, "pressure_msl": [1010.0] + [None] * 23 + [1008.5]}}
+    check("tend.span_is_24h", (len(times), times[0], times[24]),
+          (25, "2026-08-01T01:00", "2026-08-02T01:00"))
+    check("tend.value_and_change", pick_tendency(ent, "2026-08-02T01:00"), (1008.5, -1.5))
+    check("tend.no_history", pick_tendency({"hourly": {"time": ["2026-08-02T01:00"],
+          "pressure_msl": [1009.0]}}, "2026-08-02T01:00"), (1009.0, None))
+    check("tend.empty", pick_tendency({}), (None, None))
+    check("tend.all_null", pick_tendency({"hourly": {"time": ["2026-08-02T01:00"],
+          "pressure_msl": [None]}}, "2026-08-02T01:00"), (None, None))
+    check("aslist.object", len(_as_list({"a": 1})), 1)
+    check("aslist.array", len(_as_list([{"a": 1}, {"b": 2}])), 2)
+
     print("\n%s" % ("ALL TESTS PASSED" if ok else "TESTS FAILED"))
     return 0 if ok else 1
 
@@ -410,6 +454,121 @@ def tag_duplicates(events, storms, radius_km=350):
     return events
 
 
+
+# ---------------------------------------------------------------- pressure
+# Two products, both from Open-Meteo (ECMWF IFS), both plotted as the
+# published field. Nothing here classifies anything: no "vortex detected",
+# no invented index. Isobars are a standard rendering of a model field, and
+# a pressure tendency is an observation, not a diagnosis.
+#
+#   1. pressure + 24 h change at every reference place  (every run, 18 pts)
+#   2. a coarse MSLP grid for contouring                (every 6 h, 208 pts)
+#
+# The grid is deliberately a Malaysia-focused box rather than the whole
+# region frame, to keep the load on a free tier proportionate.
+
+OM = "https://api.open-meteo.com/v1/forecast"
+OM_MODEL = "ecmwf_ifs025"
+
+GRID = {"w": 95.0, "e": 125.0, "s": -5.0, "n": 20.0, "step": 2.0}
+GRID_EVERY_H = 6          # refresh the grid only on these UTC hours
+CHUNK = 50                # locations per HTTP call
+
+
+def grid_points():
+    lats, lons = [], []
+    la = GRID["s"]
+    while la <= GRID["n"] + 1e-9:
+        lo = GRID["w"]
+        while lo <= GRID["e"] + 1e-9:
+            lats.append(round(la, 2)); lons.append(round(lo, 2))
+            lo += GRID["step"]
+        la += GRID["step"]
+    return lats, lons
+
+
+def _as_list(payload):
+    """Open-Meteo returns an object for one location, a list for many."""
+    return payload if isinstance(payload, list) else [payload]
+
+
+def parse_refs(html):
+    """Read REFS out of index.html so the app stays the single source of truth."""
+    m = re.search(r"var REFS = \[(.*?)\n\];", html, re.S)
+    if not m:
+        raise ValueError("REFS block not found in index.html")
+    body = re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S)
+    body = re.sub(r"//[^\n]*", "", body)
+    out = []
+    for row in re.finditer(r"\{([^{}]*)\}", body):
+        d = {}
+        for k, v in re.findall(r'(\w+)\s*:\s*("[^"]*"|-?[\d.]+)', row.group(1)):
+            d[k] = v.strip('"') if v.startswith('"') else float(v)
+        if "id" in d and "lat" in d and "lon" in d:
+            out.append({"id": d["id"], "lat": d["lat"], "lon": d["lon"]})
+    if not out:
+        raise ValueError("REFS block parsed to nothing")
+    return out
+
+
+def fetch_series(lats, lons, extra):
+    """One or more chunked calls; returns the concatenated per-location list."""
+    got = []
+    for i in range(0, len(lats), CHUNK):
+        la = ",".join(str(x) for x in lats[i:i + CHUNK])
+        lo = ",".join(str(x) for x in lons[i:i + CHUNK])
+        url = "%s?latitude=%s&longitude=%s&models=%s&timezone=UTC&%s" % (OM, la, lo, OM_MODEL, extra)
+        got.extend(_as_list(get_json(url)))
+    return got
+
+
+def pick_tendency(entry, now_iso=None):
+    """Value at the hour nearest now, and the change over the preceding 24 h."""
+    h = entry.get("hourly") or {}
+    times, vals = h.get("time") or [], h.get("pressure_msl") or []
+    if not times or len(times) != len(vals):
+        return None, None
+    now = now_iso or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:00")
+    idx = None
+    for i, t in enumerate(times):
+        if t >= now:
+            idx = i
+            break
+    if idx is None:
+        idx = len(times) - 1
+    while idx >= 0 and vals[idx] is None:      # step back over gaps
+        idx -= 1
+    if idx < 0:
+        return None, None
+    cur = float(vals[idx])
+    j = idx - 24
+    prev = vals[j] if 0 <= j < len(vals) else None
+    return cur, (None if prev is None else round(cur - float(prev), 1))
+
+
+def fetch_pressure(refs, want_grid):
+    out = {"model": "ECMWF IFS via Open-Meteo", "places": {}, "grid": None}
+    entries = fetch_series([r["lat"] for r in refs], [r["lon"] for r in refs],
+                           "hourly=pressure_msl&past_days=1&forecast_days=1")
+    for r, e in zip(refs, entries):
+        cur, chg = pick_tendency(e)
+        if cur is not None:
+            out["places"][r["id"]] = {"hpa": round(cur, 1), "change24": chg}
+    if want_grid:
+        lats, lons = grid_points()
+        vals = []
+        for e in fetch_series(lats, lons, "current=pressure_msl"):
+            v = (e.get("current") or {}).get("pressure_msl")
+            vals.append(None if v is None else round(float(v), 1))
+        out["grid"] = {"w": GRID["w"], "e": GRID["e"], "s": GRID["s"], "n": GRID["n"],
+                       "step": GRID["step"],
+                       "nx": int(round((GRID["e"] - GRID["w"]) / GRID["step"])) + 1,
+                       "ny": int(round((GRID["n"] - GRID["s"]) / GRID["step"])) + 1,
+                       "values": vals,
+                       "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:00Z")}
+    return out
+
+
 # ---------------------------------------------------------------------- main
 
 def load_previous():
@@ -479,6 +638,21 @@ def main():
     except Exception as e:  # noqa: BLE001
         errors.append("GDACS: %s" % e)     # secondary source: never fatal
 
+    pressure = None
+    try:
+        with open(os.path.join(ROOT, "index.html"), "r", encoding="utf-8") as f:
+            refs = parse_refs(f.read())
+        want_grid = datetime.now(timezone.utc).hour % GRID_EVERY_H == 0
+        pressure = fetch_pressure(refs, want_grid)
+        print("pressure: %d place(s)%s" % (len(pressure["places"]),
+              ", grid %dx%d" % (pressure["grid"]["nx"], pressure["grid"]["ny"]) if pressure["grid"] else ""))
+    except Exception as e:  # noqa: BLE001
+        errors.append("pressure: %s" % e)      # optional layer, never fatal
+        prev_p = prev.get("pressure")
+        if prev_p:
+            pressure = prev_p
+            pressure["stale"] = True
+
     save({
         "generated": now,
         "last_attempt": now,
@@ -487,6 +661,7 @@ def main():
         "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
         "wind_averaging": "10-minute sustained",
         "storms": storms,
+        "pressure": pressure,
         "others": others,
         "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
         "errors": errors,
@@ -514,6 +689,7 @@ def fixture():
 
 def probe():
     for label, url in [("JMA targets", TARGETS),
+                       ("Open-Meteo", OM + "?latitude=3.22&longitude=102.42&current=pressure_msl"),
                        ("GDACS TC list",
                         "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC")]:
         print("\n== %-14s %s" % (label, url))
