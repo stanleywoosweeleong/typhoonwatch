@@ -95,6 +95,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   <div class="tools">
     <button id="langBtn" type="button">EN</button>
     <button id="refreshBtn" type="button">刷新</button>
+    <button id="isoBtn" type="button" aria-pressed="true">等压线</button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
   </div>
 </header>
@@ -123,7 +124,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.3.1";
+var VERSION = "v2.4.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -165,6 +166,10 @@ var T = {
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
+    iso:"等压线", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
+    presChg:"24 小时 {arrow}{chg} 百帕", presSteady:"24 小时几乎无变化",
+    presFalls:"降压最明显：", presNote:"等压线为 ECMWF 模式的海平面气压场（间隔 1 百帕），不是人工分析图，也不是实测。本页不判读、不命名任何低压系统——闭合的等压线请自行判断。热带气压梯度本来就小，所以间隔用 1 百帕而不是天气图常见的 4 百帕。",
+    presNone:"暂无气压数据。",
     grpMY:"马来西亚", grpReg:"区域（气象厅责任区）",
     rangeNoteGen:"这是球面距离计算，不是对该地点的天气预报。预报路径本身还有误差，请看预报圆。",
     regionCap:"实心橙点＝气象厅台风（虚线为预报路径）· 空心圈＝GDACS 其他系统 · 白菱形＝你选的地点",
@@ -206,6 +211,10 @@ var T = {
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
+    iso:"Isobars", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
+    presChg:"{arrow}{chg} hPa in 24 h", presSteady:"little change in 24 h",
+    presFalls:"Largest falls: ", presNote:"Isobars are the ECMWF model sea-level pressure field at 1 hPa spacing — not a hand analysis and not an observation. This page does not interpret or name any low; a closed contour is yours to read. Tropical pressure gradients are slack, which is why the interval is 1 hPa rather than the 4 hPa of a typical weather chart.",
+    presNone:"No pressure data yet.",
     grpMY:"Malaysia", grpReg:"Region (JMA area of responsibility)",
     rangeNoteGen:"A great-circle distance, not a forecast for that place. The forecast track carries its own error — read the forecast circles.",
     regionCap:"Filled amber = JMA typhoon (dashed = forecast track) · hollow ring = GDACS other system · white diamond = your chosen place",
@@ -324,6 +333,8 @@ function cell(k,v,cls){
   return c;
 }
 var DOC=null, OFFLINE=false;
+var SHOWISO=true;
+try{ SHOWISO = localStorage.getItem("twatch.iso")!=="0"; }catch(e){}
 function refPlace(){
   var id=null;
   try{ id=localStorage.getItem(LSR); }catch(e){}
@@ -379,6 +390,48 @@ function coastPaths(minLo,maxLo,minLa,maxLa,X,Y,width,colour){
   return out;
 }
 
+/* ---- isobars --------------------------------------------------------
+   Marching squares over the MSLP grid the fetcher mirrored. This draws the
+   published ECMWF field and nothing else: no lows are named, no circulation
+   is classified. A closed contour off Borneo is for you to read, not for the
+   app to label. Tropical pressure gradients are slack, so the interval is
+   1 hPa rather than the 4 hPa of a mid-latitude chart. */
+function isobarPaths(P,X,Y){
+  if(!P||!P.grid||!P.grid.values) return "";
+  var g=P.grid, v=g.values, nx=g.nx, ny=g.ny, out="", lvl, i, j;
+  function at(ix,iy){ var t=v[iy*nx+ix]; return (t===null||t===undefined)?NaN:t; }
+  function lon(ix){ return g.w+ix*g.step; }
+  function lat(iy){ return g.s+iy*g.step; }
+  var lo=Infinity, hi=-Infinity;
+  for(i=0;i<v.length;i++){ var t=v[i]; if(t!==null&&t!==undefined){ if(t<lo)lo=t; if(t>hi)hi=t; } }
+  if(!isFinite(lo)||hi-lo<0.5) return "";
+  var segs=[];
+  for(lvl=Math.ceil(lo); lvl<=Math.floor(hi); lvl+=1){
+    for(j=0;j<ny-1;j++) for(i=0;i<nx-1;i++){
+      var a=at(i,j+1), b=at(i+1,j+1), c=at(i+1,j), d=at(i,j);  // TL TR BR BL
+      if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(d)) continue;
+      var idx=(a>lvl?8:0)|(b>lvl?4:0)|(c>lvl?2:0)|(d>lvl?1:0);
+      if(idx===0||idx===15) continue;
+      var x0=X(lon(i)), x1=X(lon(i+1)), y0=Y(lat(j+1)), y1=Y(lat(j));
+      function ip(p,q){ return (lvl-p)/(q-p); }
+      var T=[x0+(x1-x0)*ip(a,b), y0],      // top edge
+          R=[x1, y0+(y1-y0)*ip(b,c)],      // right edge
+          B=[x0+(x1-x0)*ip(d,c), y1],      // bottom edge
+          Lf=[x0, y0+(y1-y0)*ip(a,d)];     // left edge
+      var E={1:[Lf,B],2:[B,R],3:[Lf,R],4:[T,R],5:[Lf,T,B,R],6:[T,B],7:[Lf,T],
+             8:[Lf,T],9:[T,B],10:[Lf,B,T,R],11:[T,R],12:[Lf,R],13:[B,R],14:[Lf,B]}[idx];
+      for(var k=0;k+1<E.length;k+=2) segs.push([E[k],E[k+1],lvl]);
+    }
+  }
+  if(!segs.length) return "";
+  var d2="";
+  segs.forEach(function(s){
+    d2+="M"+s[0][0].toFixed(1)+" "+s[0][1].toFixed(1)+"L"+s[1][0].toFixed(1)+" "+s[1][1].toFixed(1)+" ";
+  });
+  out+='<path d="'+d2.trim()+'" fill="none" stroke="#4a7d93" stroke-width="0.9" opacity="0.75"/>';
+  return out;
+}
+
 /* ---- regional overview ---------------------------------------------- */
 function overviewMap(storms,others,ref){
   var W=680, H=Math.round(W*(REGION.n-REGION.s)/(REGION.e-REGION.w));
@@ -391,6 +444,7 @@ function overviewMap(storms,others,ref){
     svg+='<line x1="0" y1="'+Y(g).toFixed(1)+'" x2="'+W+'" y2="'+Y(g).toFixed(1)+'" stroke="#132030"/>'+
          '<text x="3" y="'+(Y(g)-3).toFixed(1)+'" fill="#31465a" font-size="9" font-family="monospace">'+
          (g<0?(-g)+"S":g+"N")+'</text>';
+  if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,X,Y);
   svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,X,Y,0.8,"#2b4f63");
 
   // equator: the reason Malaysia is not typhoon country
@@ -629,6 +683,43 @@ function renderRegion(){
   pw.innerHTML=overviewMap((DOC&&DOC.storms)||[],(DOC&&DOC.others)||[],ref);
   box.appendChild(pw);
   box.appendChild(el("div","caption",L("regionCap")));
+
+  var P=(DOC&&DOC.pressure)||null;
+  var strip=el("div","rangeline");
+  if(!P||!P.places||!Object.keys(P.places).length){
+    strip.appendChild(el("div",null,L("presNone")));
+  } else {
+    var here=P.places[ref.id];
+    if(here){
+      var line=document.createElement("div");
+      var txt=fill(L("presAt"),{place:(lang==="zh"?ref.zh:ref.en),hpa:here.hpa.toFixed(1)});
+      if(here.change24===null||here.change24===undefined){
+        txt+=" · "+L("presSteady");
+      } else if(Math.abs(here.change24)<0.5){
+        txt+=" · "+L("presSteady");
+      } else {
+        txt+=" · "+fill(L("presChg"),{arrow:here.change24<0?"▼ ":"▲ ",
+          chg:Math.abs(here.change24).toFixed(1)});
+      }
+      line.innerHTML=txt;
+      strip.appendChild(line);
+    }
+    // Falling pressure elsewhere is the lead indicator, so surface the top three.
+    var falls=Object.keys(P.places).map(function(id){
+      var r=null;
+      for(var i=0;i<REFS.length;i++) if(REFS[i].id===id) r=REFS[i];
+      return r?{r:r,c:P.places[id].change24}:null;
+    }).filter(function(x){ return x&&x.c!==null&&x.c!==undefined&&x.c<=-1; })
+      .sort(function(a,b){ return a.c-b.c; }).slice(0,3);
+    if(falls.length){
+      strip.appendChild(el("div","pos",L("presFalls")+falls.map(function(f){
+        return (lang==="zh"?f.r.zh:f.r.en)+" ▼"+Math.abs(f.c).toFixed(1);
+      }).join(" · ")));
+    }
+    if(P.stale) strip.appendChild(el("div","pos",L("offline")));
+  }
+  strip.appendChild(el("span","note",L("presNote")));
+  box.appendChild(strip);
   box.appendChild(el("div","rangeline")).appendChild(el("span","note",L("regionNote")));
 }
 
@@ -709,6 +800,8 @@ function renderAll(){
   document.getElementById("tagline").textContent=L("tagline");
   document.getElementById("langBtn").textContent=L("other");
   document.getElementById("refreshBtn").textContent=L("refresh");
+  var ib=document.getElementById("isoBtn");
+  ib.textContent=L("iso"); ib.setAttribute("aria-pressed",SHOWISO?"true":"false");
   document.getElementById("hLearn").textContent=L("hLearn");
   document.getElementById("credit").innerHTML=L("credit");
   var sel=document.getElementById("refSel"), cur=refPlace().id;
@@ -747,6 +840,11 @@ document.getElementById("langBtn").addEventListener("click",function(){
   renderAll();
 });
 document.getElementById("refreshBtn").addEventListener("click",load);
+document.getElementById("isoBtn").addEventListener("click",function(){
+  SHOWISO=!SHOWISO;
+  try{ localStorage.setItem("twatch.iso",SHOWISO?"1":"0"); }catch(e){}
+  renderAll();
+});
 document.getElementById("refSel").addEventListener("change",function(e){
   try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
   renderAll();
