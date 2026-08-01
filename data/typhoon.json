@@ -1,8 +1,10 @@
 {
- "errors": [],
+ "errors": [
+  "GDACS: The read operation timed out"
+ ],
  "fetch_ok": true,
- "generated": "2026-08-01T19:56:07Z",
- "last_attempt": "2026-08-01T19:56:07Z",
+ "generated": "2026-08-01T21:41:38Z",
+ "last_attempt": "2026-08-01T21:41:38Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
