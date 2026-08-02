@@ -28,8 +28,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
   padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .wrap{max-width:760px;margin:0 auto;padding:0 14px}
 header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
-h1{margin:0;font-size:27px;font-weight:800;letter-spacing:.22em}
-h1 .lat{letter-spacing:.04em;font-size:19px;color:var(--dim);font-weight:700}
+/* Tracking belongs to the Latin half only. On the h1 it also spaced 风眼
+   apart, which reads as a typo in Chinese rather than as a logotype. */
+h1{margin:0;font-size:27px;font-weight:800}
+h1 .lat{letter-spacing:.2em;font-size:19px;color:var(--dim);font-weight:700}
 .sub{color:var(--dim);font-size:13.5px;margin-top:3px;letter-spacing:.04em}
 .tools{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
 button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
@@ -104,6 +106,17 @@ h2{font-size:13.5px;letter-spacing:.12em;color:var(--dim);font-weight:700;
 footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   font-size:12.5px;color:var(--faint);line-height:1.7}
 .stamp{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
+/* The footer is a details like the others, minus the rule above it — the
+   footer already draws one. */
+details.foot{border-top:0;padding-top:0;margin-top:0}
+.qrwrap{margin-top:14px;display:flex;gap:13px;align-items:center;flex-wrap:wrap}
+/* A QR must be dark on light. Scanners cope badly with inverted codes, so
+   this is the one pale panel in the app, and it keeps its quiet zone. */
+.qr{width:116px;height:116px;background:#e7eef5;border-radius:9px;flex:0 0 auto}
+.qr svg{display:block;width:100%;height:100%}
+.qrcap{font-size:12.5px;color:var(--dim);line-height:1.55;flex:1 1 160px}
+.qrcap .u{display:block;margin-top:5px;font-family:var(--mono);font-size:11.5px;
+  color:var(--faint);word-break:break-all}
 @media (prefers-reduced-motion:no-preference){.card{animation:rise .25s ease both}}
 @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 </style>
@@ -132,7 +145,14 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
 <h2 id="hLearn">读懂台风情报 · HOW TO READ</h2>
 <div id="learn" class="card"></div>
 <footer>
-  <div id="credit"></div>
+  <details id="footBox" class="foot">
+    <summary id="footSum"></summary>
+    <div id="credit"></div>
+    <div class="qrwrap">
+      <div class="qr" id="qr"></div>
+      <div class="qrcap" id="qrCap"></div>
+    </div>
+  </details>
   <div class="stamp" id="stamp"></div>
 </footer>
 </div>
@@ -147,7 +167,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.15";
+var VERSION = "v3.1.17";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -247,6 +267,8 @@ var T = {
     saffir:"换算约 {c}",
     problems:"本则情报未能完整解析：",
     demo:"演示数据（非真实情报）",
+    footTitle:"关于本页 · 来源与二维码",
+    qrCap:"扫码打开本页。也可以直接输入网址：",
     partial:"这次有部分数据没取到，下面列出来；其余照常显示。",
     credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
@@ -315,6 +337,8 @@ var T = {
     saffir:"≈ {c} equivalent",
     problems:"This bulletin did not fully parse:",
     demo:"DEMO DATA — not a real bulletin",
+    footTitle:"About this page · sources and QR",
+    qrCap:"Scan to open this page, or type the address:",
     partial:"Some data did not arrive this time. What is missing is listed below; the rest is showing normally.",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
@@ -332,7 +356,7 @@ var LANGS=["zh","tw","en"];
    OpenCC is wrong in this domain: 干 is always "dry" here (乾, not 幹), 里
    inside a phrase is 裡 while 公里 keeps 里, 台风 is 颱風 while 台湾/台北
    keep 台. Regenerate with scripts/make_tw.py after editing Chinese copy. */
-var TWMAP={"与":"與","专":"專","东":"東","两":"兩","严":"嚴","个":"個","为":"為","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","们":"們","会":"會","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","则":"則","别":"別","务":"務","动":"動","劳":"勞","势":"勢","区":"區","协":"協","单":"單","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","场":"場","处":"處","头":"頭","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","径":"徑","志":"誌","总":"總","报":"報","换":"換","据":"據","数":"數","断":"斷","无":"無","时":"時","显":"顯","晋":"晉","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","构":"構","标":"標","树":"樹","样":"樣","档":"檔","检":"檢","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","涌":"湧","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","点":"點","热":"熱","牵":"牽","状":"狀","环":"環","现":"現","画":"畫","着":"著","码":"碼","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","范":"範","萨":"薩","虚":"虛","补":"補","见":"見","观":"觀","规":"規","览":"覽","计":"計","认":"認","讯":"訊","讲":"講","许":"許","词":"詞","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","谈":"談","谨":"謹","负":"負","责":"責","败":"敗","贴":"貼","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","载":"載","较":"較","辐":"輻","边":"邊","达":"達","过":"過","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","镜":"鏡","长":"長","闭":"閉","间":"間","闷":"悶","阴":"陰","阶":"階","陆":"陸","随":"隨","难":"難","静":"靜","页":"頁","顶":"頂","项":"項","预":"預","风":"風","飘":"飄","马":"馬","鲁":"魯"};
+var TWMAP={"与":"與","专":"專","东":"東","两":"兩","严":"嚴","个":"個","为":"為","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","们":"們","会":"會","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","则":"則","别":"別","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","协":"協","单":"單","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","场":"場","处":"處","头":"頭","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","断":"斷","无":"無","时":"時","显":"顯","晋":"晉","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","构":"構","标":"標","树":"樹","样":"樣","档":"檔","检":"檢","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","涌":"湧","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","点":"點","热":"熱","牵":"牽","状":"狀","环":"環","现":"現","画":"畫","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","范":"範","萨":"薩","虚":"虛","补":"補","见":"見","观":"觀","规":"規","览":"覽","计":"計","认":"認","讯":"訊","讲":"講","许":"許","设":"設","词":"詞","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","负":"負","责":"責","败":"敗","贴":"貼","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","镜":"鏡","长":"長","闭":"閉","间":"間","闷":"悶","阴":"陰","阶":"階","陆":"陸","随":"隨","难":"難","静":"靜","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飘":"飄","马":"馬","鲁":"魯"};
 var TWPROT=[["公里","公里"],["台风","颱風"]];
 function s2t(s){
   if(typeof s!=="string") return s;
@@ -1395,6 +1419,7 @@ zh:[
  ["暴風域 与 強風域","暴風域＝25 m/s 以上，強風域＝15 m/s 以上。按方位分开列，因为台风从来不是圆的。看范围要看这两个，不要看预报圆。"],
  ["中心气压","气象厅判断强度的主要依据。920 hPa 比 970 hPa 强得多。气压和风速是一体两面，但气压是直接测得的，风速多半是推算的。"],
  ["热带低压的字母编号（a、b、c）","气象厅只有在气旋达到热带风暴级（10 分钟风速 17 m/s）时才给号码和名字。还没到这一级的热带低压，用小写字母排序：a、b、c……所以「热带低压 b」里的 b 是气象厅的正式编号，不是缺资料。\n这跟美国的 INVEST（90W–99W）不是同一件事：INVEST 只是「值得盯的一团云」，连中心闭合环流都不一定有；气象厅的热带低压已经是判定成立的系统，会正式发报。换句话说，INVEST 是观察名单，热带低压是已经点名的。"],
+ ["GDACS 是什么","GDACS（全球灾害预警与协调系统）是欧盟联合研究中心（JRC）与联合国人道事务协调厅（OCHA）从 2004 年起合办的平台，服务对象是救灾单位。它本身不是气象机构，也不做预报：它把别人的观测和路径接进来，再按人口与基础设施估算会影响到多少人，算出绿／橙／红。\n那个颜色是影响分数，不是强度分级——猛烈台风在大洋中央可以是绿色，弱系统压在人口稠密的海岸可以是橙色，路径稍微一改，两天内从红跳回绿也不稀奇。它的气旋路径主要取自美国 JTWC 与 NOAA，分级用萨菲尔-辛普森（1 分钟风速），所以同一个台风看起来会比气象厅（10 分钟风速）高约一级。\n本页用它补一个洞：气象厅只为它正式发报的气旋编号，南海那些没到台风级的低压不会出现在上面那一节，GDACS 有时候会有。所以看它是看「那里有没有一个系统」，颜色留给救灾单位去用。"],
  ["马来西亚为什么要看台风","半岛几乎不会被台风正面登陆——纬度太低，科氏力太弱，气旋转不起来。真正的影响是间接的：西北太平洋或南海的台风会拉紧气压梯度、加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前几天看季风涌。"]
 ],
 en:[
@@ -1406,8 +1431,33 @@ en:[
  ["Storm area vs gale area","The storm area is 25 m/s and above; the gale area is 15 m/s and above. Both are listed per sector, because storms are never circular. For extent, read these — not the forecast circle."],
  ["Central pressure","JMA's primary intensity measure. 920 hPa is far stronger than 970 hPa. Pressure and wind are two sides of one coin, but pressure is measured more directly while wind is usually estimated."],
  ["Lettered depressions (a, b, c)","JMA assigns a number and a name only once a system reaches tropical-storm grade (17 m/s, 10-minute). Depressions below that are lettered in sequence instead: a, b, c. So the b in \"Tropical depression b\" is JMA's own official designation, not missing data.\nThis is not the same as a US INVEST (90W-99W). An INVEST is merely an area worth watching and may not even have a closed circulation; a JMA tropical depression is an assessed system that gets formal bulletins. INVEST is the watchlist; a lettered depression is already named."],
+ ["What GDACS is","GDACS — the Global Disaster Alert and Coordination System — is a platform run jointly by the European Commission's Joint Research Centre and the UN Office for the Coordination of Humanitarian Affairs, going since 2004. Its audience is relief agencies. It is not a weather service and it issues no forecasts: it ingests other people's observations and tracks, then estimates how many people and how much infrastructure lie in the way, and scores that as green, orange or red.\nThat colour is an impact score, not a strength grade — a violent typhoon in the middle of the ocean can be green, a weak system sitting on a crowded coast can be orange, and a small shift in the predicted track can take an alert from red back to green inside two days. Its cyclone tracks come mainly from the US JTWC and NOAA, and it grades on Saffir-Simpson using 1-minute winds, so the same storm reads about a category higher than JMA's 10-minute basis.\nThis page uses it to fill one gap: JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade never appears in the section above, and GDACS sometimes has it. Read it for whether something is there. The colour is for the relief agencies."],
  ["Why Malaysia watches typhoons","The peninsula is almost never struck directly — too near the equator for Coriolis to spin one up. The real effect is indirect: a typhoon in the West Pacific or South China Sea tightens the pressure gradient and strengthens the northeast monsoon surge that pushes days of rain onto Kelantan, Terengganu and east Pahang. Watching typhoons is watching the surge a few days early."]
 ]};
+
+/* The app's own address as a QR, from a precomputed 33x33 version 4-M matrix
+   held as one SVG path of horizontal runs: 3.6 KB, no network call, works
+   offline and can be held up to a camera. If the URL ever changes, regenerate
+   with segno AND decode the result before shipping it. */
+var QRURL="https://stanleywoosweeleong.github.io/typhoonwatch/";
+var QRPATH="M4 4h7v1h-7zM12 4h2v1h-2zM15 4h2v1h-2zM18 4h1v1h-1zM22 4h1v1h-1zM26 4h1v1h-1zM30 4h7v1h-7zM4 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM16 5h1v1h-1zM20 5h2v1h-2zM23 5h1v1h-1zM25 5h2v1h-2zM28 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h3v1h-3zM10 6h1v1h-1zM12 6h2v1h-2zM16 6h1v1h-1zM21 6h6v1h-6zM30 6h1v1h-1zM32 6h3v1h-3zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h3v1h-3zM10 7h1v1h-1zM14 7h2v1h-2zM24 7h2v1h-2zM27 7h2v1h-2zM30 7h1v1h-1zM32 7h3v1h-3zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h3v1h-3zM10 8h1v1h-1zM12 8h1v1h-1zM15 8h5v1h-5zM21 8h2v1h-2zM24 8h3v1h-3zM30 8h1v1h-1zM32 8h3v1h-3zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM13 9h3v1h-3zM21 9h1v1h-1zM27 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h7v1h-7zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h7v1h-7zM16 11h2v1h-2zM23 11h2v1h-2zM26 11h2v1h-2zM4 12h1v1h-1zM7 12h6v1h-6zM14 12h2v1h-2zM18 12h4v1h-4zM23 12h1v1h-1zM27 12h3v1h-3zM32 12h1v1h-1zM34 12h3v1h-3zM5 13h1v1h-1zM7 13h2v1h-2zM13 13h2v1h-2zM16 13h1v1h-1zM19 13h1v1h-1zM22 13h2v1h-2zM27 13h1v1h-1zM32 13h3v1h-3zM8 14h3v1h-3zM13 14h3v1h-3zM18 14h2v1h-2zM21 14h2v1h-2zM26 14h5v1h-5zM32 14h5v1h-5zM4 15h2v1h-2zM7 15h1v1h-1zM9 15h1v1h-1zM12 15h3v1h-3zM18 15h2v1h-2zM21 15h1v1h-1zM23 15h2v1h-2zM31 15h1v1h-1zM34 15h2v1h-2zM5 16h3v1h-3zM10 16h4v1h-4zM15 16h4v1h-4zM20 16h5v1h-5zM28 16h1v1h-1zM30 16h1v1h-1zM36 16h1v1h-1zM5 17h2v1h-2zM13 17h1v1h-1zM16 17h1v1h-1zM20 17h2v1h-2zM23 17h3v1h-3zM27 17h1v1h-1zM31 17h1v1h-1zM34 17h1v1h-1zM5 18h1v1h-1zM8 18h3v1h-3zM13 18h3v1h-3zM20 18h1v1h-1zM23 18h4v1h-4zM30 18h1v1h-1zM6 19h4v1h-4zM11 19h1v1h-1zM14 19h3v1h-3zM18 19h2v1h-2zM22 19h2v1h-2zM27 19h1v1h-1zM29 19h1v1h-1zM31 19h1v1h-1zM34 19h1v1h-1zM36 19h1v1h-1zM5 20h2v1h-2zM9 20h4v1h-4zM16 20h3v1h-3zM23 20h1v1h-1zM26 20h1v1h-1zM28 20h6v1h-6zM8 21h1v1h-1zM12 21h1v1h-1zM14 21h2v1h-2zM19 21h2v1h-2zM22 21h3v1h-3zM29 21h2v1h-2zM32 21h1v1h-1zM34 21h3v1h-3zM5 22h2v1h-2zM9 22h2v1h-2zM12 22h2v1h-2zM19 22h1v1h-1zM23 22h1v1h-1zM25 22h3v1h-3zM29 22h1v1h-1zM31 22h1v1h-1zM33 22h2v1h-2zM36 22h1v1h-1zM4 23h2v1h-2zM8 23h2v1h-2zM11 23h1v1h-1zM15 23h3v1h-3zM19 23h4v1h-4zM24 23h1v1h-1zM26 23h1v1h-1zM28 23h1v1h-1zM30 23h1v1h-1zM32 23h5v1h-5zM4 24h2v1h-2zM9 24h2v1h-2zM13 24h1v1h-1zM16 24h4v1h-4zM23 24h1v1h-1zM28 24h1v1h-1zM31 24h1v1h-1zM33 24h1v1h-1zM35 24h2v1h-2zM4 25h4v1h-4zM12 25h2v1h-2zM15 25h1v1h-1zM17 25h1v1h-1zM20 25h1v1h-1zM22 25h3v1h-3zM27 25h1v1h-1zM29 25h1v1h-1zM32 25h2v1h-2zM4 26h1v1h-1zM9 26h3v1h-3zM14 26h2v1h-2zM17 26h1v1h-1zM19 26h3v1h-3zM24 26h1v1h-1zM26 26h3v1h-3zM30 26h1v1h-1zM32 26h2v1h-2zM35 26h2v1h-2zM4 27h1v1h-1zM6 27h1v1h-1zM11 27h2v1h-2zM14 27h1v1h-1zM18 27h1v1h-1zM20 27h2v1h-2zM27 27h5v1h-5zM34 27h3v1h-3zM4 28h2v1h-2zM9 28h3v1h-3zM19 28h2v1h-2zM28 28h6v1h-6zM35 28h2v1h-2zM12 29h2v1h-2zM15 29h6v1h-6zM22 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h2v1h-2zM4 30h7v1h-7zM12 30h2v1h-2zM15 30h1v1h-1zM17 30h1v1h-1zM19 30h2v1h-2zM22 30h4v1h-4zM27 30h2v1h-2zM30 30h1v1h-1zM32 30h1v1h-1zM34 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM12 31h1v1h-1zM15 31h1v1h-1zM17 31h3v1h-3zM23 31h1v1h-1zM26 31h3v1h-3zM32 31h3v1h-3zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h3v1h-3zM10 32h1v1h-1zM12 32h1v1h-1zM16 32h2v1h-2zM21 32h4v1h-4zM26 32h7v1h-7zM35 32h2v1h-2zM4 33h1v1h-1zM6 33h3v1h-3zM10 33h1v1h-1zM12 33h2v1h-2zM17 33h2v1h-2zM23 33h7v1h-7zM31 33h1v1h-1zM33 33h1v1h-1zM35 33h2v1h-2zM4 34h1v1h-1zM6 34h3v1h-3zM10 34h1v1h-1zM20 34h1v1h-1zM23 34h1v1h-1zM28 34h1v1h-1zM31 34h2v1h-2zM34 34h3v1h-3zM4 35h1v1h-1zM10 35h1v1h-1zM13 35h1v1h-1zM15 35h1v1h-1zM19 35h2v1h-2zM24 35h1v1h-1zM26 35h1v1h-1zM29 35h8v1h-8zM4 36h7v1h-7zM12 36h3v1h-3zM20 36h2v1h-2zM23 36h1v1h-1zM27 36h3v1h-3zM31 36h2v1h-2z";
+
+var FOOTOPEN=true;                 // open on a first launch, then remembered
+try{ var _f=localStorage.getItem("twatch.foot"); if(_f!==null) FOOTOPEN=(_f==="1"); }catch(e){}
+
+function renderFoot(){
+  var box=document.getElementById("footBox");
+  if(box.open!==FOOTOPEN) box.open=FOOTOPEN;
+  document.getElementById("footSum").textContent=X(L("footTitle"));
+  document.getElementById("credit").innerHTML=X(L("credit"));
+  document.getElementById("qr").innerHTML=
+    '<svg viewBox="0 0 41 41" role="img" aria-label="'+QRURL+'">'+
+    '<rect width="41" height="41" fill="#e7eef5"/>'+
+    '<path d="'+QRPATH+'" fill="#0a1420"/></svg>';
+  var cap=document.getElementById("qrCap");
+  cap.textContent=X(L("qrCap"));   // direct assignment: misses el()'s boundary
+  cap.appendChild(el("span","u",QRURL));
+}
 
 function renderLearn(){
   var box=document.getElementById("learn"); box.textContent="";
@@ -1434,7 +1484,6 @@ function renderAll(){
   lb.appendChild(el("span","nx","→ "+NEXTLANG[lang]));
   refreshStatus();
   document.getElementById("hLearn").textContent=X(L("hLearn"));
-  document.getElementById("credit").innerHTML=X(L("credit"));
   var sel=document.getElementById("refSel"), cur=refPlace().id;
   sel.textContent="";
   [["my","grpMY"],["reg","grpReg"]].forEach(function(pair){
@@ -1454,7 +1503,7 @@ function renderAll(){
   // The explanation sits first, in front of the reader, then the working
   // below it. No modes: one page, top to bottom.
   renderFresh(); renderSimple(); renderRegion(); renderTrend(); renderStorms(); renderOthers(); renderLearn();
-  renderStamp();
+  renderFoot(); renderStamp();
 }
 
 /* The browser never calls a weather API — it fetches this repo's own
@@ -1526,6 +1575,11 @@ if(typeof window!=="undefined") window.addEventListener("resize",function(){
   if(window.innerWidth===RSZW) return;
   RSZW=window.innerWidth;
   clearTimeout(RSZT); RSZT=setTimeout(renderAll,250);
+});
+
+document.getElementById("footBox").addEventListener("toggle",function(){
+  FOOTOPEN=this.open;
+  try{ localStorage.setItem("twatch.foot",FOOTOPEN?"1":"0"); }catch(e){}
 });
 
 document.getElementById("langBtn").addEventListener("click",function(){
