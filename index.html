@@ -147,7 +147,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.13";
+var VERSION = "v3.1.14";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -220,6 +220,7 @@ var T = {
     regionNote:"看纬度：马来西亚贴着赤道，台风几乎不会走到这里——但它们把季风涌推过来。",
     otherNote:"来源 GDACS（欧盟联合研究中心），汇整多家机构。气象厅只为它正式发布情报的气旋编号，所以未达台风级的南海低压可能不在上面那一节里。这里是补漏的，级别与命名不如气象厅严谨。",
     noOther:"GDACS 目前没有进行中的热带气旋事件。",
+    otherFail:"这次没能连上 GDACS，所以这一节是空的——不代表没有系统。气象厅的台风情报照常显示。",
     dupOf:"＝上方 {id}",
     alert:{red:"红色警报",orange:"橙色警报",green:"绿色"},
     away:"距 {place} {km} 公里",
@@ -286,6 +287,7 @@ var T = {
     regionNote:"Read the latitude: Malaysia sits on the equator, where typhoons almost never reach — but they push the monsoon surge down to it.",
     otherNote:"From GDACS (European Commission JRC), aggregating several agencies. JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade may be missing from the section above. This fills that gap, with looser naming and grading than JMA's.",
     noOther:"GDACS lists no active tropical cyclone events right now.",
+    otherFail:"GDACS could not be reached this time, so this section is empty — that is not the same as nothing being out there. The JMA bulletins above are unaffected.",
     dupOf:"= {id} above",
     alert:{red:"Red alert",orange:"Orange alert",green:"Green"},
     away:"{km} km from {place}",
@@ -578,11 +580,12 @@ function isobarPaths(P,PX,PY){
   // Violet, deliberately unlike the blue-grey coastline: on a dark map two
   // line families in the same hue read as one drawing.
   var K=mapScale();
-  /* Thin on purpose. At 1.25px the contours merged into violet blobs and the
-     shape of the field — which is the whole point — was lost. A fine line
-     shows structure; weight belongs to nothing on this map. */
+  /* As fine as the screen will draw. Every step up in weight costs detail:
+     adjacent contours fuse and the shape of the field, which is the whole
+     point of the layer, goes with them. 0.7px is the thinnest that still
+     survives a phone's pixel grid. */
   out+='<path d="'+d2.trim()+'" fill="none" stroke="#a78bd0" stroke-width="'+
-       (0.9*K).toFixed(2)+'" opacity="0.88"/>';
+       (0.7*K).toFixed(2)+'" opacity="0.92"/>';
 
   /* One value label per level, so a bullseye reads as 1004 rather than being
      guessed at. It used to go on that level's rightmost segment, full stop —
@@ -707,12 +710,15 @@ function overviewMap(storms,others,ref){
     }
     return false;
   }
-  /* Below-right stays first choice: WNP tracks run north-west, so the
-     forecast dots crowd the up-left side. But when below-right is taken by
-     a second storm, up-left is exactly the corner that has come free. */
+  /* BELOW the dot, always, if there is any room: the track leaves the storm
+     towards the north-west, so anything placed above or left of the dot sits
+     on the line the reader is trying to follow. Below-right first, then
+     below-left, then straight below; only when the frame edge forbids all
+     three does the name go above. */
   function placeLabel(px,py,txt){
-    var w=labelW(txt), o=RD+3.5*K, d=RD+1.5*FSL*0.62, i, c,
-        cand=[[px+o,py+d],[px-o-w,py-d*0.65],[px+o,py-d*0.65],[px-o-w,py+d]];
+    var w=labelW(txt), o=RD+3.5*K, d=RD+1.35*FSL, i, c,
+        cand=[[px+o,py+d],[px-o-w,py+d],[px-w/2,py+d+1.2*FSL],
+              [px+o,py-d*0.55],[px-o-w,py-d*0.55]];
     for(i=0;i<cand.length;i++){
       c={x:cand[i][0],y:cand[i][1],w:w};
       if(!boxHits(c)) return c;
@@ -738,6 +744,13 @@ function overviewMap(storms,others,ref){
     var px=+PX(c.lon).toFixed(1), py=+PY(c.lat).toFixed(1);
     plot.push({s:s,n:i+1,px:px,py:py,c:c});
     LBOX.push({x:px-RD,y:py+FSL*0.27,w:2*RD});
+    // and every forecast position, so no name lands across the track
+    (s.forecast||[]).forEach(function(f){
+      if(f.lat==null) return;
+      var fx=PX(f.lon), fy=PY(f.lat);
+      if(fx<-20||fx>W+20) return;
+      LBOX.push({x:fx-3*K,y:fy+FSL*0.27,w:6*K});
+    });
   });
   plot.forEach(function(p){
     var pts=[[p.c.lon,p.c.lat]];
@@ -854,19 +867,36 @@ function trackPlot(s,ref){
     svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+
          ((i?4:7)*K).toFixed(1)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
     if(i){
-      /* Late forecast points bunch up as the storm slows, and "+117h+93h+69h"
-         printed on top of itself is worse than showing fewer hours. Drop the
-         ones that would collide — the dots are still all there. */
-      var lx=PX(p.lon)+7*K, ly=PY(p.lat)-6*K, lw=String("+"+p.tau+"h").length*0.62*FST, free=true;
-      for(var q=0;q<TAUBOX.length;q++){
-        var bb=TAUBOX[q];
-        if(lx<bb.x+bb.w+FST*0.3 && bb.x<lx+lw+FST*0.3 && ly-FST<bb.y+FST*0.3 && bb.y-FST<ly+FST*0.3){ free=false; break; }
+      /* Every forecast point keeps its hour. Dropping the ones that collided
+         left a storm with seven dots and three numbers, which reads as if the
+         app lost track of four of them. Instead the labels ALTERNATE above
+         and below the line — the track runs roughly along one axis, so the
+         two rows interleave — and only if both sides and a nudged fallback
+         are all taken does one give way. */
+      var lt="+"+p.tau+"h", lw=lt.length*0.62*FST, lx0=PX(p.lon), ly0=PY(p.lat);
+      var up=(i%2===1), tries=[];
+      function push(dx,dy){ tries.push([lx0+dx,ly0+dy]); }
+      push(-lw/2, up?-7*K:7*K+FST*0.8);          // centred above / below
+      push(-lw/2, up?7*K+FST*0.8:-7*K);          // the other side
+      push(7*K,   up?-7*K:7*K+FST*0.8);          // shifted right, same side
+      push(-lw-7*K, up?-7*K:7*K+FST*0.8);        // shifted left
+      push(-lw/2, up?-7*K-1.3*FST:7*K+2.1*FST);  // one row further out
+      var spot=null;
+      for(var t=0;t<tries.length && !spot;t++){
+        var cx=tries[t][0], cy=tries[t][1], clear=true;
+        if(cx<2||cx+lw>W-2||cy-FST<0||cy>H-2) continue;
+        for(var q=0;q<TAUBOX.length;q++){
+          var bb=TAUBOX[q];
+          if(cx<bb.x+bb.w+FST*0.25 && bb.x<cx+lw+FST*0.25 &&
+             cy-FST<bb.y+FST*0.25 && bb.y-FST<cy+FST*0.25){ clear=false; break; }
+        }
+        if(clear) spot=[cx,cy];
       }
-      if(free){
-        TAUBOX.push({x:lx,y:ly,w:lw});
-        svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+
+      if(spot){
+        TAUBOX.push({x:spot[0],y:spot[1],w:lw});
+        svg+='<text x="'+spot[0].toFixed(1)+'" y="'+spot[1].toFixed(1)+
              '" fill="#9fb3c6" font-size="'+FST+'" font-family="monospace" paint-order="stroke"'+
-             ' stroke="#081019" stroke-width="'+(2.8*K).toFixed(1)+'">+'+p.tau+'h</text>';
+             ' stroke="#081019" stroke-width="'+(2.8*K).toFixed(1)+'">'+lt+'</text>';
       }
     }
   });
@@ -1282,7 +1312,15 @@ function renderOthers(){
   var box=document.getElementById("others"); box.textContent="";
   var list=(DOC&&DOC.others)||[], ref=refPlace();
   if(!list.length){
-    box.appendChild(el("div",null,DOC&&DOC.generated?L("noOther"):L("unknown"))); return;
+    /* An empty list means one of three different things and they must not
+       look alike: never fetched, GDACS answered with nothing, or GDACS did
+       not answer at all. The third used to render as the second — the page
+       stated there were no events at a moment when it had no idea. */
+    var gdown=(DOC&&DOC.errors||[]).some(function(e){ return /^GDACS/i.test(String(e)); });
+    box.appendChild(el("div",null, !(DOC&&DOC.generated) ? L("unknown")
+                                 : gdown ? L("otherFail") : L("noOther")));
+    if(gdown) box.style.borderColor="#5a4a2b";
+    return;
   }
   list.map(function(o){
     o._d = (o.lat!=null)?hav(o.lat,o.lon,ref.lat,ref.lon):Infinity; return o;
