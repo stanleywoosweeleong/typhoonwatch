@@ -132,7 +132,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.0.0";
+var VERSION = "v3.0.3";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -193,6 +193,7 @@ var T = {
       "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"]],
     trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
     upToDate:"已是最新（每 3 小时更新一次）。下次约",
+    loadFail:"读取失败：", openData:"直接打开数据文件 →",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
     iso:"等压线", isoAt:"气压场", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
     presChg:"24 小时 {arrow}{chg} 百帕", presSteady:"24 小时几乎无变化",
@@ -258,6 +259,7 @@ var T = {
       "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."]],
     trendNote:"The rules, written out so you can argue with them: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
     upToDate:"Already current (updates every 3 h). Next due about",
+    loadFail:"Fetch failed:", openData:"Open the data file directly →",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
     iso:"Isobars", isoAt:"field", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
     presChg:"{arrow}{chg} hPa in 24 h", presSteady:"little change in 24 h",
@@ -401,7 +403,7 @@ function cell(k,v,cls){
   var d=el("div","v"+(cls?" "+cls:"")); d.textContent=v; c.appendChild(d);
   return c;
 }
-var DOC=null, OFFLINE=false;
+var DOC=null, OFFLINE=false, LOADERR=null;
 var SHOWISO=true;
 try{ SHOWISO = localStorage.getItem("twatch.iso")!=="0"; }catch(e){}
 function refPlace(){
@@ -415,7 +417,18 @@ function refPlace(){
 function renderFresh(){
   var box=document.getElementById("fresh");
   box.className="fresh"; box.textContent="";
-  if(!DOC){ box.textContent=L("freshNoData"); box.classList.add("stale"); return; }
+  if(!DOC){
+    box.classList.add("stale");
+    box.appendChild(el("div",null,L("freshNoData")));
+    if(LOADERR){
+      box.appendChild(el("div","pos",L("loadFail")+" "+LOADERR));
+      var a=document.createElement("a");
+      a.href=DATA_URL; a.target="_blank"; a.rel="noopener";
+      a.textContent=L("openData"); a.style.color="#ffd7d4";
+      box.appendChild(a);
+    }
+    return;
+  }
   if(DOC.demo){ box.classList.add("warnish"); box.textContent=L("demo"); return; }
 
   var newest=null;
@@ -441,7 +454,7 @@ function renderFresh(){
 }
 
 /* ---- coastline ------------------------------------------------------ */
-function coastPaths(minLo,maxLo,minLa,maxLa,X,Y,width,colour){
+function coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,width,colour){
   var out="";
   for(var i=0;i<COAST.length;i++){
     var line=COAST[i], d="", drawing=false, any=false;
@@ -449,7 +462,7 @@ function coastPaths(minLo,maxLo,minLa,maxLa,X,Y,width,colour){
       var lo=line[j][0], la=line[j][1];
       var inside = lo>=minLo-2 && lo<=maxLo+2 && la>=minLa-2 && la<=maxLa+2;
       if(inside){
-        d += (drawing?"L":"M")+X(lo).toFixed(1)+" "+Y(la).toFixed(1)+" ";
+        d += (drawing?"L":"M")+PX(lo).toFixed(1)+" "+PY(la).toFixed(1)+" ";
         drawing=true; any=true;
       } else { drawing=false; }
     }
@@ -465,7 +478,7 @@ function coastPaths(minLo,maxLo,minLa,maxLa,X,Y,width,colour){
    is classified. A closed contour off Borneo is for you to read, not for the
    app to label. Tropical pressure gradients are slack, so the interval is
    1 hPa rather than the 4 hPa of a mid-latitude chart. */
-function isobarPaths(P,X,Y){
+function isobarPaths(P,PX,PY){
   if(!P||!P.grid||!P.grid.values) return "";
   var g=P.grid, v=g.values, nx=g.nx, ny=g.ny, out="", lvl, i, j;
   function at(ix,iy){ var t=v[iy*nx+ix]; return (t===null||t===undefined)?NaN:t; }
@@ -481,7 +494,7 @@ function isobarPaths(P,X,Y){
       if(isNaN(a)||isNaN(b)||isNaN(c)||isNaN(d)) continue;
       var idx=(a>lvl?8:0)|(b>lvl?4:0)|(c>lvl?2:0)|(d>lvl?1:0);
       if(idx===0||idx===15) continue;
-      var x0=X(lon(i)), x1=X(lon(i+1)), y0=Y(lat(j+1)), y1=Y(lat(j));
+      var x0=PX(lon(i)), x1=PX(lon(i+1)), y0=PY(lat(j+1)), y1=PY(lat(j));
       function ip(p,q){ return (lvl-p)/(q-p); }
       var T=[x0+(x1-x0)*ip(a,b), y0],      // top edge
           R=[x1, y0+(y1-y0)*ip(b,c)],      // right edge
@@ -518,22 +531,22 @@ function isobarPaths(P,X,Y){
 /* ---- regional overview ---------------------------------------------- */
 function overviewMap(storms,others,ref){
   var W=680, H=Math.round(W*(REGION.n-REGION.s)/(REGION.e-REGION.w));
-  function X(lo){ return (lo-REGION.w)/(REGION.e-REGION.w)*W; }
-  function Y(la){ return H-(la-REGION.s)/(REGION.n-REGION.s)*H; }
+  function PX(lo){ return (lo-REGION.w)/(REGION.e-REGION.w)*W; }
+  function PY(la){ return H-(la-REGION.s)/(REGION.n-REGION.s)*H; }
   var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="region">';
   for(g=100;g<=REGION.e;g+=10)
-    svg+='<line x1="'+X(g).toFixed(1)+'" y1="0" x2="'+X(g).toFixed(1)+'" y2="'+H+'" stroke="#132030"/>';
+    svg+='<line x1="'+PX(g).toFixed(1)+'" y1="0" x2="'+PX(g).toFixed(1)+'" y2="'+H+'" stroke="#132030"/>';
   for(g=-10;g<=REGION.n;g+=10)
-    svg+='<line x1="0" y1="'+Y(g).toFixed(1)+'" x2="'+W+'" y2="'+Y(g).toFixed(1)+'" stroke="#132030"/>'+
-         '<text x="3" y="'+(Y(g)-3).toFixed(1)+'" fill="#31465a" font-size="9" font-family="monospace">'+
+    svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#132030"/>'+
+         '<text x="3" y="'+(PY(g)-3).toFixed(1)+'" fill="#31465a" font-size="9" font-family="monospace">'+
          (g<0?(-g)+"S":g+"N")+'</text>';
-  if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,X,Y);
-  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,X,Y,0.8,"#2b4f63");
+  if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY);
+  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,0.8,"#2b4f63");
 
   // equator: the reason Malaysia is not typhoon country
-  svg+='<line x1="0" y1="'+Y(0).toFixed(1)+'" x2="'+W+'" y2="'+Y(0).toFixed(1)+
+  svg+='<line x1="0" y1="'+PY(0).toFixed(1)+'" x2="'+W+'" y2="'+PY(0).toFixed(1)+
        '" stroke="#3a5a2e" stroke-width="1" stroke-dasharray="7 6"/>'+
-       '<text x="6" y="'+(Y(0)-5).toFixed(1)+'" fill="#5e8a4a" font-size="10">'+
+       '<text x="6" y="'+(PY(0)-5).toFixed(1)+'" fill="#5e8a4a" font-size="10">'+
        X(lang!=="en"?"赤道":"Equator")+'</text>';
 
   (storms||[]).forEach(function(s){
@@ -541,10 +554,10 @@ function overviewMap(storms,others,ref){
     var pts=[[c.lon,c.lat]];
     (s.forecast||[]).forEach(function(f){ if(f.lat!=null) pts.push([f.lon,f.lat]); });
     if(pts.length>1)
-      svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1);}).join(" ")+
+      svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+PX(p[0]).toFixed(1)+" "+PY(p[1]).toFixed(1);}).join(" ")+
            '" fill="none" stroke="#43c2ab" stroke-width="1.5" stroke-dasharray="5 4"/>';
-    svg+='<circle cx="'+X(c.lon).toFixed(1)+'" cy="'+Y(c.lat).toFixed(1)+'" r="6" fill="#ffb020"/>'+
-         '<text x="'+(X(c.lon)+9).toFixed(1)+'" y="'+(Y(c.lat)+16).toFixed(1)+
+    svg+='<circle cx="'+PX(c.lon).toFixed(1)+'" cy="'+PY(c.lat).toFixed(1)+'" r="6" fill="#ffb020"/>'+
+         '<text x="'+(PX(c.lon)+9).toFixed(1)+'" y="'+(PY(c.lat)+16).toFixed(1)+
          '" fill="#ffd489" font-size="11" font-weight="700">'+
          X(stormLabel(s)).replace(/[<>&]/g,"")+'</text>';
   });
@@ -552,12 +565,12 @@ function overviewMap(storms,others,ref){
     if(o.also_jma||o.lat==null) return;
     if(o.lon<REGION.w||o.lon>REGION.e||o.lat<REGION.s||o.lat>REGION.n) return;
     var col=o.alert==="red"?"#ff5b52":o.alert==="orange"?"#ff9a3c":"#7fb2c9";
-    svg+='<circle cx="'+X(o.lon).toFixed(1)+'" cy="'+Y(o.lat).toFixed(1)+
+    svg+='<circle cx="'+PX(o.lon).toFixed(1)+'" cy="'+PY(o.lat).toFixed(1)+
          '" r="5" fill="none" stroke="'+col+'" stroke-width="2"/>'+
-         '<text x="'+(X(o.lon)+8).toFixed(1)+'" y="'+(Y(o.lat)+4).toFixed(1)+
+         '<text x="'+(PX(o.lon)+8).toFixed(1)+'" y="'+(PY(o.lat)+4).toFixed(1)+
          '" fill="'+col+'" font-size="10">'+String(o.name||"").replace(/[<>&]/g,"")+'</text>';
   });
-  var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
+  var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#fff" stroke="#0a1420" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#fff" font-size="11" font-weight="700">'+
        (lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
@@ -584,35 +597,35 @@ function trackPlot(s,ref){
   var sc=Math.max((maxLo-minLo)/W,(maxLa-minLa)/H);
   var cLo=(minLo+maxLo)/2, cLa=(minLa+maxLa)/2;
   minLo=cLo-sc*W/2; maxLo=cLo+sc*W/2; minLa=cLa-sc*H/2; maxLa=cLa+sc*H/2;
-  function X(lo){ return (lo-minLo)/(maxLo-minLo)*W; }
-  function Y(la){ return H-(la-minLa)/(maxLa-minLa)*H; }
+  function PX(lo){ return (lo-minLo)/(maxLo-minLo)*W; }
+  function PY(la){ return H-(la-minLa)/(maxLa-minLa)*H; }
   var kmPerPx=(maxLa-minLa)*111/H;
 
   var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="track">';
-  svg+=coastPaths(minLo,maxLo,minLa,maxLa,X,Y,1.1,"#2b4f63");
+  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,1.1,"#2b4f63");
   for(g=Math.ceil(minLo/5)*5; g<=maxLo; g+=5)
-    svg+='<line x1="'+X(g).toFixed(1)+'" y1="0" x2="'+X(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
-         '<text x="'+(X(g)+3).toFixed(1)+'" y="'+(H-4)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'E</text>';
+    svg+='<line x1="'+PX(g).toFixed(1)+'" y1="0" x2="'+PX(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
+         '<text x="'+(PX(g)+3).toFixed(1)+'" y="'+(H-4)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'E</text>';
   for(g=Math.ceil(minLa/5)*5; g<=maxLa; g+=5)
-    svg+='<line x1="0" y1="'+Y(g).toFixed(1)+'" x2="'+W+'" y2="'+Y(g).toFixed(1)+'" stroke="#16293a"/>'+
-         '<text x="4" y="'+(Y(g)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'N</text>';
+    svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#16293a"/>'+
+         '<text x="4" y="'+(PY(g)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'N</text>';
 
   if(pts.length>1){
-    svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+X(p.lon).toFixed(1)+" "+Y(p.lat).toFixed(1);}).join(" ")+
+    svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+PX(p.lon).toFixed(1)+" "+PY(p.lat).toFixed(1);}).join(" ")+
          '" fill="none" stroke="#43c2ab" stroke-width="2" stroke-dasharray="6 5"/>';
   }
   // Forecast circles first, so the track and dots sit on top of them.
   pts.forEach(function(p){
     if(!p.circle) return;
-    svg+='<circle cx="'+X(p.lon).toFixed(1)+'" cy="'+Y(p.lat).toFixed(1)+'" r="'+(p.circle/kmPerPx).toFixed(1)+
+    svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+(p.circle/kmPerPx).toFixed(1)+
          '" fill="rgba(67,194,171,0.07)" stroke="#2d7a6c" stroke-width="1" stroke-dasharray="3 4"/>';
   });
   pts.forEach(function(p,i){
-    svg+='<circle cx="'+X(p.lon).toFixed(1)+'" cy="'+Y(p.lat).toFixed(1)+'" r="'+(i?4:7)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
-    if(i) svg+='<text x="'+(X(p.lon)+7).toFixed(1)+'" y="'+(Y(p.lat)-6).toFixed(1)+
+    svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+(i?4:7)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
+    if(i) svg+='<text x="'+(PX(p.lon)+7).toFixed(1)+'" y="'+(PY(p.lat)-6).toFixed(1)+
                '" fill="#7f94a7" font-size="11" font-family="monospace">+'+p.tau+'h</text>';
   });
-  var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
+  var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
        (lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
@@ -623,7 +636,7 @@ function trackPlot(s,ref){
   if(s._label && pts.length){
     var lbl=X(String(s._label)).replace(/[<>&]/g,"");
     var wpx=lbl.length*8.2+6;                     // rough advance at 14px bold
-    var ax=X(pts[0].lon), ay=Y(pts[0].lat);
+    var ax=PX(pts[0].lon), ay=PY(pts[0].lat);
     var lx=ax+13, anchor="start";
     if(lx+wpx > W-6){ lx=ax-13; anchor="end"; }   // flip to the left instead
     if(anchor==="start" && lx<6) lx=6;
@@ -1116,13 +1129,24 @@ function nextDue(){
 function load(force){
   if(!force && dataAge()<CYCLE_MIN){ renderAll(); return; }
   var url=/[?&]demo=1/.test(location.search)?"./data/typhoon.sample.json":DATA_URL;
+  LOADERR=null;
   fetch(url+"?t="+Date.now(),{cache:"no-store"})
     .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-    .then(function(j){ DOC=j; OFFLINE=false; renderAll(); })
-    .catch(function(){
-      fetch(url).then(function(r){ return r.json(); })
-        .then(function(j){ DOC=j; OFFLINE=true; renderAll(); })
-        .catch(function(){ DOC=null; renderAll(); });
+    .then(function(j){ DOC=j; OFFLINE=false; LOADERR=null; renderAll(); })
+    .catch(function(e1){
+      // Keep the real reason. "No data yet" alone cannot tell a 404 from a
+      // parse error from an offline phone, and that cost a debugging cycle.
+      fetch(url).then(function(r){
+          if(!r.ok) throw new Error("HTTP "+r.status);
+          return r.json();
+        })
+        .then(function(j){ DOC=j; OFFLINE=true; LOADERR=null; renderAll(); })
+        .catch(function(e2){
+          DOC=null;
+          LOADERR=url+" — "+(e1&&e1.message?e1.message:e1)+
+                  (navigator.onLine===false?" ("+L("offline")+")":"");
+          renderAll();
+        });
     });
 }
 
