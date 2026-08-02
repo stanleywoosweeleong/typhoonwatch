@@ -136,7 +136,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.2";
+var VERSION = "v3.1.4";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -342,9 +342,35 @@ var JP={
   "北":{zh:"北",en:"north"},"南":{zh:"南",en:"south"},
   "東":{zh:"东",en:"east"},"西":{zh:"西",en:"west"},
   "北東":{zh:"东北",en:"northeast"},"南東":{zh:"东南",en:"southeast"},
-  "南西":{zh:"西南",en:"southwest"},"北西":{zh:"西北",en:"northwest"}
+  "南西":{zh:"西南",en:"southwest"},"北西":{zh:"西北",en:"northwest"},
+  // JMA writes courses on the 16-point rose, so the eight three-letter
+  // bearings appear as often as the cardinals and were simply missing.
+  "北北東":{zh:"东北偏北",en:"NNE"},"東北東":{zh:"东北偏东",en:"ENE"},
+  "東南東":{zh:"东南偏东",en:"ESE"},"南南東":{zh:"东南偏南",en:"SSE"},
+  "南南西":{zh:"西南偏南",en:"SSW"},"西南西":{zh:"西南偏西",en:"WSW"},
+  "西北西":{zh:"西北偏西",en:"WNW"},"北北西":{zh:"西北偏北",en:"NNW"}
 };
 function jp(s){ return (s&&JP[s]) ? X(JP[s][lang==="tw"?"zh":lang]) : (s||""); }
+
+/* JMA's own field names stay on the left of every decode line — the point
+   of that section is that you can open the JMA page and recognise them.
+   But a term you cannot read decodes nothing, so each carries a gloss.
+   The gloss is dropped when the kanji already IS the word in the reader's
+   script (最大風速 needs no gloss for a Chinese reader, 予報円 does), which
+   is what the s2t comparison tests. */
+var JTERM={
+  "最大風速":{zh:"最大风速",en:"max sustained wind"},
+  "最大瞬間風速":{zh:"最大瞬间风速",en:"max gust"},
+  "位置":{zh:"位置",en:"position accuracy"},
+  "暴風域":{zh:"暴风域",en:"storm-force wind area"},
+  "予報円":{zh:"预报圆",en:"forecast circle"}
+};
+function jterm(t){
+  var g=JTERM[t]; if(!g) return t;
+  var v=g[lang==="tw"?"zh":lang];
+  if(!v || s2t(v)===s2t(t)) return t;
+  return t+" = "+X(v);
+}
 function fill(s,o){ return s.replace(/\{(\w+)\}/g,function(_,k){ return o[k]!==undefined?o[k]:"{"+k+"}"; }); }
 
 /* ---- geometry ------------------------------------------------------- */
@@ -541,6 +567,21 @@ function isobarPaths(P,PX,PY){
 }
 
 /* ---- regional overview ---------------------------------------------- */
+/* Latitude ticks: south of the equator is S, not a negative N. */
+function latTick(g){ return (g<0?(-g)+"S":g+"N"); }
+
+/* The equator is the whole reason Malaysia is not typhoon country, so it
+   belongs on every frame that contains it, not only the region map. It
+   also labels itself, which is why the graticule skips its "0N" tick. */
+function equatorSVG(W,PY,minLa,maxLa){
+  if(minLa>0||maxLa<0) return "";
+  var y=PY(0).toFixed(1);
+  return '<line x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+
+         '" stroke="#3a5a2e" stroke-width="1" stroke-dasharray="7 6"/>'+
+         '<text x="6" y="'+(PY(0)-5).toFixed(1)+'" fill="#5e8a4a" font-size="10">'+
+         X(lang!=="en"?"赤道":"Equator")+'</text>';
+}
+
 function overviewMap(storms,others,ref){
   var W=680, H=Math.round(W*(REGION.n-REGION.s)/(REGION.e-REGION.w));
   function PX(lo){ return (lo-REGION.w)/(REGION.e-REGION.w)*W; }
@@ -553,16 +594,12 @@ function overviewMap(storms,others,ref){
     // 0 gets no "0N": the equator is drawn separately below and labels itself.
     if(g!==0)
       svg+='<text x="3" y="'+(PY(g)-3).toFixed(1)+'" fill="#31465a" font-size="9" font-family="monospace">'+
-           (g<0?(-g)+"S":g+"N")+'</text>';
+           latTick(g)+'</text>';
   }
   if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY);
   svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,0.8,"#2b4f63");
 
-  // equator: the reason Malaysia is not typhoon country
-  svg+='<line x1="0" y1="'+PY(0).toFixed(1)+'" x2="'+W+'" y2="'+PY(0).toFixed(1)+
-       '" stroke="#3a5a2e" stroke-width="1" stroke-dasharray="7 6"/>'+
-       '<text x="6" y="'+(PY(0)-5).toFixed(1)+'" fill="#5e8a4a" font-size="10">'+
-       X(lang!=="en"?"赤道":"Equator")+'</text>';
+  svg+=equatorSVG(W,PY,REGION.s,REGION.n);
 
   /* Colour on this map already says WHAT a thing is — amber = JMA storm,
      hollow ring = GDACS, white = your place — so it cannot also say WHICH
@@ -669,6 +706,14 @@ function trackPlot(s,ref){
     minLa=Math.min(minLa,p.lat-padDeg);maxLa=Math.max(maxLa,p.lat+padDeg);
     minLo=Math.min(minLo,p.lon-padDeg);maxLo=Math.max(maxLo,p.lon+padDeg);
   });
+  /* Malaysia's relationship with typhoons is entirely a latitude story —
+     too near the equator for one to spin up, close enough for the surge to
+     arrive. So when the chosen place sits near the equator, hold the
+     equator inside the frame rather than cropping it out by a degree or
+     two. Regional places further north (Manila, Taipei, Tokyo) are left
+     alone: dragging the frame down to 0 for them would shrink the storm
+     to nothing for no gain. */
+  if(Math.abs(ref.lat)<8){ minLa=Math.min(minLa,0); maxLa=Math.max(maxLa,0); }
   var padLa=Math.max(1.5,(maxLa-minLa)*.12), padLo=Math.max(1.5,(maxLo-minLo)*.12);
   minLa-=padLa;maxLa+=padLa;minLo-=padLo;maxLo+=padLo;
   var W=680,H=380;
@@ -684,9 +729,13 @@ function trackPlot(s,ref){
   for(g=Math.ceil(minLo/5)*5; g<=maxLo; g+=5)
     svg+='<line x1="'+PX(g).toFixed(1)+'" y1="0" x2="'+PX(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
          '<text x="'+(PX(g)+3).toFixed(1)+'" y="'+(H-4)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'E</text>';
-  for(g=Math.ceil(minLa/5)*5; g<=maxLa; g+=5)
-    svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#16293a"/>'+
-         '<text x="4" y="'+(PY(g)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'N</text>';
+  for(g=Math.ceil(minLa/5)*5; g<=maxLa; g+=5){
+    svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#16293a"/>';
+    if(g!==0)   // the equator carries its own label, drawn next
+      svg+='<text x="4" y="'+(PY(g)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+
+           latTick(g)+'</text>';
+  }
+  svg+=equatorSVG(W,PY,minLa,maxLa);
 
   if(pts.length>1){
     svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+PX(p.lon).toFixed(1)+" "+PY(p.lat).toFixed(1);}).join(" ")+
@@ -734,27 +783,31 @@ function decodeList(s){
   if(s.issued) items.push([bothT(s.issued), lang!=="en"
     ? "发表时刻（世界时）。气象厅以日本时间发表，本页统一换算成世界时；马来西亚时间＝世界时 +8 小时，日本时间 −1 小时。"
     : "Issue time in UTC. JMA publishes in JST; Malaysia is UTC+8, one hour behind Japan."]);
-  if(c.wind_ms!=null) items.push(["最大風速 "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang!=="en"
+  if(c.wind_ms!=null) items.push([jterm("最大風速")+" · "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang!=="en"
     ? "10 分钟平均风速——和大马气象局同一个标准，可以直接比较。美国 JTWC 用 1 分钟平均，同一个台风会高出约 14%。"
     : "A 10-minute average — the same standard MET Malaysia uses, so the numbers are directly comparable. JTWC's 1-minute average runs about 14% higher for the same storm."]);
-  if(c.gust_ms!=null) items.push(["最大瞬間風速 "+c.gust_ms+" m/s", lang!=="en"
+  if(c.gust_ms!=null) items.push([jterm("最大瞬間風速")+" · "+c.gust_ms+" m/s", lang!=="en"
     ? "瞬间最大值，通常是持续风的 1.3–1.5 倍。吹倒树、掀屋顶的是它，不是平均风。"
     : "The instantaneous peak, typically 1.3–1.5× the sustained wind. This is what takes down trees and roofs."]);
   if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", lang!=="en"
     ? "中心气压。数字越低越强——这是气象厅判断强度的主要依据，和风速是一体两面。"
     : "Central pressure. Lower is stronger — JMA's primary intensity measure, the other side of the same coin as wind speed."]);
-  if(c.course_jp) items.push([c.course_jp+" "+(c.move_kt!=null?c.move_kt+" kt":(c.speed_note_jp||""))+
-    (c.speed_note_jp?"  = "+jp(c.speed_note_jp):""), lang!=="en"
+  if(c.course_jp){
+    var cg=jp(c.course_jp), cbits=[c.course_jp+(cg&&cg!==c.course_jp?" = "+cg:"")];
+    if(c.move_kt!=null) cbits.push(c.move_kt+" kt");
+    if(c.speed_note_jp) cbits.push(c.speed_note_jp+" = "+jp(c.speed_note_jp));
+    items.push([cbits.join(" · "), lang!=="en"
     ? "进行方向是「去向」"+(c.move_deg!=null?"（"+c.move_deg+"°，即朝"+compass(c.move_deg)+"）":"")+"。风向则相反，用「来向」——最容易搞混的地方。速度很慢时气象厅不给数字，只写「ゆっくり」（缓慢）或「ほとんど停滞」（几乎停滞）。"
     : "Course is where it is going"+(c.move_deg!=null?" ("+c.move_deg+"°, toward "+compass(c.move_deg)+")":"")+". Wind direction uses the opposite convention. When movement is slow JMA gives no number, only ゆっくり (slow) or ほとんど停滞 (nearly stationary)."]);
-  if(c.accuracy_jp) items.push(["位置 "+c.accuracy_jp+" = "+jp(c.accuracy_jp), lang!=="en"
+  }
+  if(c.accuracy_jp) items.push([jterm("位置")+" · "+c.accuracy_jp+" = "+jp(c.accuracy_jp), lang!=="en"
     ? "定位精度：正確（准确）／ほぼ正確（大致准确）／不確実（不确定）。连现在的位置都分等级，预报位置的不确定只会更大。"
     : "Position accuracy: 正確 exact / ほぼ正確 nearly exact / 不確実 uncertain. Even the present position is graded — forecast positions are looser still."]);
-  if((c.storm_radii||[]).length) items.push(["暴風域 "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
+  if((c.storm_radii||[]).length) items.push([jterm("暴風域")+" · "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
     ? "暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。"
     : "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold."]);
   var f0=(s.forecast||[])[0];
-  if(f0&&f0.circle_km) items.push(["予報円 "+f0.circle_km+" km @ +"+f0.tau+"h", lang!=="en"
+  if(f0&&f0.circle_km) items.push([jterm("予報円")+" · "+f0.circle_km+" km @ +"+f0.tau+"h", lang!=="en"
     ? "预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。"
     : "The forecast circle: a 70% chance the centre falls inside it. A bigger circle means a less predictable track, and says nothing about intensity. Watch it grow with lead time — that is uncertainty made visible."]);
   items.forEach(function(p){

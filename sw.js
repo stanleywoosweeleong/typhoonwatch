@@ -1,6 +1,6 @@
 /* 风眼 TYPHOONWATCH service worker
    Bump CACHE_VERSION on every release; it must match VERSION in index.html. */
-var CACHE_VERSION = "twatch-v3.1.2";
+var CACHE_VERSION = "twatch-v3.1.4";
 var SHELL = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
