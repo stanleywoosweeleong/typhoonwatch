@@ -96,12 +96,14 @@ To add one: append to `REFS` in `index.html` with `grp`, `zh`, `en`, `lat`,
 Two products from Open-Meteo (ECMWF IFS), both plotted as the published field:
 
 - **Places** — MSLP and 24 h change at every reference point, every run (18 pts).
-- **Grid** — a coarse MSLP field for isobars, only on UTC hours divisible by 6
-  (208 pts over 95-125E / 5S-20N, 2 deg spacing, 5 chunked calls).
+- **Grid** — an MSLP field for isobars, only on UTC hours divisible by 6
+  (598 pts over 100-122E / 3S-22N, **1 deg** spacing, 12 chunked calls).
+  The box reaches 22N to include Hainan and the northern South China Sea,
+  where the surges that hit the east coast originate.
 
-Total ≈ 976 point-requests/day, deliberately sized to sit lightly on a free
-tier. The grid box is Malaysia-focused rather than the full region frame for
-the same reason.
+Total ≈ 2,536 point-requests/day against a ~10,000 free allowance. The grid is
+carried forward between refreshes — on a non-grid run the fetcher must NOT
+write `grid: None`, or five runs in six wipe it (this was the v2.4.1 bug).
 
 `parse_refs()` reads `REFS` straight out of `index.html`, so the app stays the
 single source of truth for reference places — add one there and the fetcher
@@ -111,6 +113,18 @@ Isobars are drawn by marching squares at **1 hPa** (not the usual 4 hPa —
 tropical gradients are too slack for that to show anything). The app names no
 low and classifies no circulation: a closed contour is for the reader. Toggle
 with the 等压线 / Isobars button.
+
+## Two modes (v2.7.0)
+
+`MODE` is `simple` by default and persisted. Simple mode hides everything in
+`FULL_IDS` and renders one card: the selected place, a regime badge, and three
+to five plain sentences that keep the REASON in ("north is rising and we are
+not") rather than handing down a verdict. Detailed mode is the full app.
+
+Deliberately absent: any share, broadcast or WhatsApp feature. This app reads a
+model's pressure trend and infers a tendency — forwarded text loses its caveats
+in one hop. Rain broadcasting stays in RainBulletin, which reports observed
+radar. Anyone who wants to know opens this app themselves.
 
 ## Honest limits
 

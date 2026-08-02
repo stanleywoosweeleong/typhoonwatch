@@ -55,6 +55,10 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
 .rangeline{margin-top:12px;font-size:13.5px;background:var(--panel2);border-radius:8px;padding:9px 11px}
 .rangeline .num{font-family:var(--mono);color:var(--amber)}
 .rangeline .note{display:block;color:var(--dim);font-size:12px;margin-top:3px}
+.plain{margin:9px 0 0;font-size:15.5px;line-height:1.65}
+.plain:first-of-type{font-size:18px;font-weight:700;color:#fff}
+.mapwhat{font-size:12.5px;color:#93aabe;margin-top:11px;line-height:1.5}
+.seasonline{font-size:13px;color:var(--dim);margin-bottom:8px}
 .maptools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
 .maptime{font-size:11.5px;color:var(--faint);font-family:var(--mono)}
 .plotwrap{margin-top:9px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
@@ -96,13 +100,17 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   <div class="sub" id="tagline"></div>
   <div class="tools">
     <button id="langBtn" type="button">EN</button>
+    <button id="modeBtn" type="button">详细</button>
     <button id="refreshBtn" type="button">刷新</button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
   </div>
 </header>
 <div id="fresh" class="fresh">…</div>
+<div id="simple" class="card"></div>
 <h2 id="hRegion">区域总览 · REGION</h2>
 <div id="region" class="card"></div>
+<h2 id="hTrend">天气走向 · OUTLOOK</h2>
+<div id="trend" class="card"></div>
 <h2 id="hStorms">气象厅台风情报 · JMA BULLETINS</h2>
 <div id="storms"></div>
 <h2 id="hOther">邻近其他系统 · OTHER SYSTEMS</h2>
@@ -125,7 +133,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.4.1";
+var VERSION = "v2.7.1";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -166,10 +174,30 @@ var T = {
     tagline:"日本气象厅 RSMC 东京 · 台风情报 · 离线可读",
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
+    modeFull:"详细", modeSimple:"简易",
+    simpleNote:"这是根据气压走向的判读，不是天气预报。会不会真的下雨还要看水气、辐合、地形。官方警报请以马来西亚气象局（MET Malaysia）为准。想看图和数字，按上面的「详细」。",
+    mapWhatRegion:"这张图看：台风在哪里、离你多远，还有气压高低（圈圈越密，风越大）。",
+    mapWhatTrack:"这张图看：这个台风预计往哪里走。虚线圈是它「可能在圈内」的范围，越往后越大，代表越不确定。",
+    hTrend:"天气走向 · OUTLOOK", trendRegion:"区域其他地点",
+    surgeShort:"涌流差", regStrong:"（明显）",
+    reg:{wet:"转湿",dry:"转干",steady:"平稳"},
+    season:{ne:"目前是东北季风季（11–3 月）：涌流从东北方压下来，先打吉兰丹、丁加奴、彭亨东岸。",
+            sw:"目前是西南季风季（5–9 月）：气流从西南方来，西海岸与砂拉越较容易得雨。",
+            inter:"目前是季候风交替期（4 月／10 月）：风向不定，午后雷雨为主，涌流讯号会比较杂乱。"},
+    whyTitle:"三种情况是怎么来的",
+    why:[["转干／又热又闷（气压上升）",
+      "台风像一台巨大的抽风机：低层把空气吸进去，高层再吐出来。吐出来的空气总要有地方下沉，常常就沉在赤道这一带。下沉气流会把高空烤暖、压住对流，午后雷雨打不上来，热气散不掉，灰霾也冲不走。所以「台风离我们很远、应该没事」的日子，反而最闷最热。看气压：本地 24 小时上升。"],
+     ["转湿／连续大雨（气压下降，或涌流差变大）",
+      "台风把南海南北的气压差拉开，季风被加速，水气一车一车往马来西亚推。这时不是台风本身打过来，而是它把季风变强了。看气压：本地 24 小时下降；或者北方（香港、海口、三亚）在升、本地没升——两者的差就是「涌流差」，差越大风越强。"],
+     ["平稳／阴天但没什么雨",
+      "多半是过渡：中层水气先到，深对流还没跟上；或者外围云带正在散。气压 24 小时几乎不动。这种天最难判断，也最不值得赌——等下一次更新再看方向。"],
+     ["为什么看 24 小时、不看 3 小时",
+      "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"]],
+    trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
     iso:"等压线", isoAt:"气压场", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
     presChg:"24 小时 {arrow}{chg} 百帕", presSteady:"24 小时几乎无变化",
-    presFalls:"降压最明显：", presNote:"等压线为 ECMWF 模式的海平面气压场（间隔 1 百帕），不是人工分析图，也不是实测。本页不判读、不命名任何低压系统——闭合的等压线请自行判断。热带气压梯度本来就小，所以间隔用 1 百帕而不是天气图常见的 4 百帕。",
+    presFalls:"降压最明显：", presNote:"等压线为 ECMWF 模式的海平面气压场（间隔 1 百帕），不是人工分析图，也不是实测。本页不判读、不命名任何低压系统——闭合的等压线请自行判断。热带气压梯度本来就小，所以间隔用 1 百帕而不是天气图常见的 4 百帕。格点间距 1 度（约 110 公里，范围 100–122°E、3°S–22°N）：闭合圈代表模式在该处确有气压低点。这个间距足以画出婆罗洲涡旋量级的系统，但更小的对流性低压仍会画成菱形——形状太尖时，看位置就好，别看形状。",
     presNone:"暂无气压数据。",
     grpMY:"马来西亚", grpReg:"区域（气象厅责任区）",
     rangeNoteGen:"这是球面距离计算，不是对该地点的天气预报。预报路径本身还有误差，请看预报圆。",
@@ -211,10 +239,30 @@ var T = {
     tagline:"JMA · RSMC Tokyo Typhoon Center · readable offline",
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
+    modeFull:"Detailed", modeSimple:"Simple",
+    simpleNote:"This is a reading of the pressure trend, not a forecast. Whether rain actually falls also depends on moisture, convergence and terrain. For official warnings, MET Malaysia is the authority. For the maps and numbers, tap Detailed above.",
+    mapWhatRegion:"This map shows: where the typhoons are, how far from you, and the pressure pattern (the tighter the rings, the stronger the wind).",
+    mapWhatTrack:"This map shows: where this storm is expected to go. The dashed circles are where its centre might be — they grow with time because the further ahead, the less certain.",
+    hTrend:"OUTLOOK", trendRegion:"Other places in the region",
+    surgeShort:"surge", regStrong:" (marked)",
+    reg:{wet:"Wetter",dry:"Drier",steady:"Steady"},
+    season:{ne:"Northeast monsoon season (Nov-Mar): surges press down from the northeast and hit Kelantan, Terengganu and east Pahang first.",
+            sw:"Southwest monsoon season (May-Sep): the flow comes from the southwest, favouring the west coast and Sarawak.",
+            inter:"Inter-monsoon (Apr / Oct): winds are variable, afternoon thunderstorms dominate, and the surge signal is noisier."},
+    whyTitle:"Where the three outcomes come from",
+    why:[["Drier / hot and stifling (pressure rising)",
+      "A typhoon is an enormous pump: it draws air in at the bottom and throws it out at the top. That outflow has to sink somewhere, and often it sinks over the equatorial belt. Sinking air warms aloft and caps convection, so the afternoon storms never fire, the heat cannot escape and haze is not washed out. The days that feel worst are often the ones where the typhoon is far away. Pressure signal: local 24 h rise."],
+     ["Wetter / days of rain (pressure falling, or the surge gap widening)",
+      "The typhoon stretches the north-south pressure difference across the South China Sea, the monsoon wind accelerates, and moisture is pushed into Malaysia load after load. The storm is not hitting you; it is making the monsoon stronger. Pressure signal: local 24 h fall, or the north (Hong Kong, Haikou, Sanya) rising while you are not — that difference is the surge gap, and the wider it is the stronger the wind."],
+     ["Steady / overcast but little rain",
+      "Usually a transition: mid-level moisture arrives before deep convection, or an outer band is decaying. Pressure barely moves over 24 h. This is the hardest state to call and the worst one to bet on — wait for the next update and see which way it breaks."],
+     ["Why 24 hours and not 3",
+      "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."]],
+    trendNote:"The rules, written out so you can argue with them: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
     iso:"Isobars", isoAt:"field", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
     presChg:"{arrow}{chg} hPa in 24 h", presSteady:"little change in 24 h",
-    presFalls:"Largest falls: ", presNote:"Isobars are the ECMWF model sea-level pressure field at 1 hPa spacing — not a hand analysis and not an observation. This page does not interpret or name any low; a closed contour is yours to read. Tropical pressure gradients are slack, which is why the interval is 1 hPa rather than the 4 hPa of a typical weather chart.",
+    presFalls:"Largest falls: ", presNote:"Isobars are the ECMWF model sea-level pressure field at 1 hPa spacing — not a hand analysis and not an observation. This page does not interpret or name any low; a closed contour is yours to read. Tropical pressure gradients are slack, which is why the interval is 1 hPa rather than the 4 hPa of a typical weather chart. Grid spacing is 1 degree (about 110 km, over 100-122E and 3S-22N): a closed contour means the model really does have a pressure minimum there. This spacing resolves a Borneo-vortex-sized system, but anything smaller still renders angular — where the shape looks sharply diamond-like, trust the position and not the shape.",
     presNone:"No pressure data yet.",
     grpMY:"Malaysia", grpReg:"Region (JMA area of responsibility)",
     rangeNoteGen:"A great-circle distance, not a forecast for that place. The forecast track carries its own error — read the forecast circles.",
@@ -335,6 +383,8 @@ function cell(k,v,cls){
 }
 var DOC=null, OFFLINE=false;
 var SHOWISO=true;
+var MODE="simple";                      // farmers open this cold; words first
+try{ MODE = localStorage.getItem("twatch.mode")==="full" ? "full" : "simple"; }catch(e){}
 try{ SHOWISO = localStorage.getItem("twatch.iso")!=="0"; }catch(e){}
 function refPlace(){
   var id=null;
@@ -429,7 +479,21 @@ function isobarPaths(P,X,Y){
   segs.forEach(function(s){
     d2+="M"+s[0][0].toFixed(1)+" "+s[0][1].toFixed(1)+"L"+s[1][0].toFixed(1)+" "+s[1][1].toFixed(1)+" ";
   });
-  out+='<path d="'+d2.trim()+'" fill="none" stroke="#4a7d93" stroke-width="0.9" opacity="0.75"/>';
+  // Violet, deliberately unlike the blue-grey coastline: on a dark map two
+  // line families in the same hue read as one drawing.
+  out+='<path d="'+d2.trim()+'" fill="none" stroke="#a78bd0" stroke-width="1" opacity="0.8"/>';
+
+  // One value label per level, so a bullseye can be read as 1004 or 1009
+  // rather than guessed at. Placed on that level's rightmost segment.
+  var best={};
+  segs.forEach(function(s){
+    var x=s[0][0], y=s[0][1], k=s[2];
+    if(!best[k] || x>best[k][0]) best[k]=[x,y];
+  });
+  Object.keys(best).forEach(function(k){
+    out+='<text x="'+(best[k][0]+3).toFixed(1)+'" y="'+(best[k][1]-3).toFixed(1)+
+         '" fill="#a78bd0" font-size="9" font-family="monospace" opacity="0.9">'+k+'</text>';
+  });
   return out;
 }
 
@@ -601,6 +665,181 @@ function stormLabel(s){
   return L("tdLetter")+(n?" "+n:"");
 }
 
+/* ---- plain language -------------------------------------------------
+   Simple mode. Same two numbers as the outlook table, said in the way a
+   farmer would say them, with the REASON kept in — "north is rising and we
+   are not" teaches something that survives the next event, where a bare
+   verdict does not. Still not a forecast, and it says so.               */
+function plainLines(ref,P,nchg){
+  var e=P.places[ref.id];
+  if(!e) return null;
+  var chg=e.change24;
+  var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
+  var g=regime(chg,surge), out=[], W=lang==="zh";
+  if(!g) return null;
+
+  if(g.k==="wet"){
+    out.push(W?"接下来偏湿。":"Leaning wetter.");
+    if(chg<=-0.7)
+      out.push(W?("我们这里的气压 24 小时里降了 "+Math.abs(chg).toFixed(1)+" 百帕。气压降，通常代表水气正在往这边聚。")
+                :("Pressure here has fallen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours. Falling pressure usually means moisture is gathering."));
+    if(surge!==null&&surge>=1.5)
+      out.push(W?("北方（香港、海口、三亚一带）的气压在升，我们这里没跟着升，两边差距拉开了 "+surge.toFixed(1)+" 百帕。差距越大，季风吹得越急，雨越容易一连下几天。")
+                :("Pressure to the north (Hong Kong, Haikou, Sanya) is rising while ours is not — the gap has widened by "+surge.toFixed(1)+" hPa. The wider that gap, the harder the monsoon blows, and the more likely rain runs for days."));
+  } else if(g.k==="dry"){
+    out.push(W?"接下来偏干，但会闷、会热。":"Leaning drier — but stifling and hot.");
+    out.push(W?("我们这里的气压 24 小时里升了 "+Math.abs(chg).toFixed(1)+" 百帕。台风像抽风机，把空气抽上去，抽走的空气总要沉回来，常常就沉在我们头顶。空气一沉，云就长不高，午后雷雨打不上来——所以会闷热、会积霾，但不太下雨。")
+              :("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours. A typhoon pumps air upward, and that air has to sink back down somewhere — often over us. Sinking air stops clouds growing tall, so the afternoon storms never fire: hot, sticky, hazy, but little rain."));
+  } else {
+    out.push(W?"暂时平稳，看不出明显方向。":"Steady for now, no clear direction.");
+    out.push(W?("气压 24 小时几乎没动（"+(chg>0?"+":"")+chg.toFixed(1)+" 百帕）。天可能灰灰的，中层云飘过来，但不一定下得成雨。这种时候最难讲，也最不值得赌——等下一次更新再看。")
+              :("Pressure has barely moved in 24 hours ("+(chg>0?"+":"")+chg.toFixed(1)+" hPa). It may look grey as mid-level cloud drifts over, without the rain following. This is the hardest state to call and the worst to bet on — wait for the next update."));
+  }
+
+  var ph=monsoon(DOC&&DOC.generated);
+  if(g.k==="wet"&&ph!=="inter")
+    out.push(W?(ph==="ne"?"现在是东北季风季，雨通常先落在吉兰丹、丁加奴和彭亨东岸。"
+                        :"现在是西南季风季，雨通常偏向西海岸和砂拉越。")
+              :(ph==="ne"?"It is northeast monsoon season, so the rain usually lands first on Kelantan, Terengganu and east Pahang."
+                        :"It is southwest monsoon season, so the rain tends to favour the west coast and Sarawak."));
+
+  // Simple mode names only the nearest storm, but must say how many exist —
+  // otherwise a second system in the basin is invisible to a reader who
+  // never opens Detailed. Detailed mode lists every one of them.
+  var near=null, count=0;
+  ((DOC&&DOC.storms)||[]).forEach(function(s){
+    var c=s.current; if(!c||c.lat==null) return;
+    count++;
+    var d=hav(c.lat,c.lon,ref.lat,ref.lon);
+    if(!near||d<near.d) near={d:d,s:s};
+  });
+  if(near){
+    var many = count>1;
+    out.push(W?((many?("目前区域内有 "+count+" 个系统，最近的是"):"目前最近的台风是")+
+                stormLabel(near.s)+"，在 "+Math.round(near.d).toLocaleString()+" 公里外。"+
+                (many?"其余的按「详细」可以看到。":"")+
+                "台风本身几乎不会打到马来西亚，影响我们的是它把季风变强。")
+              :((many?("There are "+count+" systems in the region; the nearest is "):"The nearest typhoon is ")+
+                stormLabel(near.s)+", "+Math.round(near.d).toLocaleString()+" km away. "+
+                (many?"Tap Detailed to see the rest. ":"")+
+                "Typhoons themselves almost never reach Malaysia; what reaches us is the monsoon they strengthen."));
+  }
+  return {lines:out,g:g,chg:chg,surge:surge};
+}
+
+function renderSimple(){
+  var box=document.getElementById("simple"); box.textContent="";
+  var ref=refPlace(), P=(DOC&&DOC.pressure)||null;
+  if(!P||!P.places){
+    box.appendChild(el("div",null,DOC&&DOC.generated?L("presNone"):L("unknown")));
+    return;
+  }
+  var r=plainLines(ref,P,northChange(P));
+  if(!r){ box.appendChild(el("div",null,L("presNone"))); return; }
+  var head=el("div","cardhead");
+  head.appendChild(el("div","sname",(lang==="zh"?ref.zh:ref.en)));
+  head.appendChild(el("span","badge"+(r.g.k==="wet"?" amb":r.g.k==="dry"?" hot":""),
+    L("reg")[r.g.k]+(r.g.strong?L("regStrong"):"")));
+  box.appendChild(head);
+  r.lines.forEach(function(t){ box.appendChild(el("p","plain",t)); });
+  box.appendChild(el("div","pos",L("hpa")+" "+P.places[ref.id].hpa.toFixed(1)+
+    " · 24h "+(r.chg<0?"▼":"▲")+Math.abs(r.chg).toFixed(1)+
+    (r.surge!==null?" · "+L("surgeShort")+" "+(r.surge>0?"+":"")+r.surge.toFixed(1):"")));
+  var n=el("div","rangeline"); n.appendChild(el("span","note",L("simpleNote")));
+  box.appendChild(n);
+}
+
+/* ---- outlook ---------------------------------------------------------
+   The most interpretive thing in this app, so it shows its own arithmetic.
+   Two published numbers per place, nothing else:
+     chg   = MSLP change over 24 h at that place
+     surge = how much faster the northern South China Sea is rising than
+             that place is  (mean northern chg - local chg)
+   A positive surge means the north-south gradient is tightening, which is
+   what accelerates the monsoon wind. Thresholds are stated in the panel so
+   a reader can disagree with them. This is a reading of a pressure trend,
+   NOT a forecast, and MET Malaysia remains the authority. */
+var NORTH = ["hongkong","haikou","sanya"];   // upstream end of the gradient
+
+function northChange(P){
+  var n=0, sum=0;
+  NORTH.forEach(function(id){
+    var e=P.places[id];
+    if(e && e.change24!==null && e.change24!==undefined){ sum+=e.change24; n++; }
+  });
+  // round here so the surge arithmetic downstream stays clean
+  return n?+(sum/n).toFixed(1):null;
+}
+
+function regime(chg, surge){
+  if(chg===null||chg===undefined) return null;
+  var tightening = surge!==null && surge!==undefined && surge>=1.5;
+  if(chg<=-0.7 || tightening)
+    return {k:"wet", strong:(chg<=-1.5)||(surge!==null&&surge>=2.5)};
+  if(chg>=0.7 && !(surge!==null&&surge>=0.5))
+    return {k:"dry", strong:chg>=1.5};
+  return {k:"steady", strong:false};
+}
+
+/* Malaysia's monsoon calendar, as MET Malaysia defines it. Which coast a
+   surge lands on depends on this, so the panel says which season it is. */
+function monsoon(iso){
+  var m=new Date(iso||Date.now()).getUTCMonth()+1;
+  if(m>=11||m<=3) return "ne";
+  if(m>=5&&m<=9) return "sw";
+  return "inter";
+}
+
+function renderTrend(){
+  var box=document.getElementById("trend"); box.textContent="";
+  var P=(DOC&&DOC.pressure)||null;
+  if(!P||!P.places||!Object.keys(P.places).length){
+    box.appendChild(el("div",null,DOC&&DOC.generated?L("presNone"):L("unknown")));
+    return;
+  }
+  var nchg=northChange(P);
+  var ph=monsoon(DOC&&DOC.generated);
+  box.appendChild(el("div","seasonline",L("season")[ph]));
+
+  function rows(grp,into){
+    REFS.forEach(function(r){
+      if(r.grp!==grp) return;
+      var e=P.places[r.id]; if(!e) return;
+      var surge=(nchg===null||e.change24===null||e.change24===undefined)?null:+(nchg-e.change24).toFixed(1);
+      var g=regime(e.change24,surge);
+      var row=el("div","inv"), left=el("div");
+      left.appendChild(el("div",null,(lang==="zh"?r.zh:r.en)));
+      var bits=[e.hpa.toFixed(1)+" "+L("hpa")];
+      if(e.change24!==null&&e.change24!==undefined)
+        bits.push("24h "+(e.change24<0?"▼":"▲")+Math.abs(e.change24).toFixed(1));
+      if(surge!==null) bits.push(L("surgeShort")+" "+(surge>0?"+":"")+surge.toFixed(1));
+      left.appendChild(el("div","pos",bits.join(" · ")));
+      row.appendChild(left);
+      if(g){
+        var cls=g.k==="wet"?" amb":g.k==="dry"?" hot":"";
+        row.appendChild(el("span","badge"+cls,
+          L("reg")[g.k]+(g.strong?L("regStrong"):"")));
+      }
+      into.appendChild(row);
+    });
+  }
+  rows("my",box);
+
+  var dr=el("details"); dr.appendChild(el("summary",null,L("trendRegion")));
+  var rbox=el("div"); rows("reg",rbox); dr.appendChild(rbox); box.appendChild(dr);
+
+  var why=el("details"); why.appendChild(el("summary",null,L("whyTitle")));
+  var ul=el("ul","decode");
+  L("why").forEach(function(pair){
+    var li=el("li"); li.appendChild(el("code",null,pair[0]));
+    li.appendChild(el("span",null,pair[1])); ul.appendChild(li);
+  });
+  why.appendChild(ul); box.appendChild(why);
+
+  var note=el("div","rangeline");
+  note.appendChild(el("span","note",L("trendNote"))); box.appendChild(note);
+}
+
 /* ---- storm card ------------------------------------------------------ */
 function stormCard(s){
   var ref=refPlace(), c=s.current||{}, card=el("div","card");
@@ -663,6 +902,7 @@ function stormCard(s){
     s._label=stormLabel(s);
     var plot=trackPlot(s,ref);
     if(plot){
+      card.appendChild(el("div","mapwhat",L("mapWhatTrack")));
       var pw=el("div","plotwrap"); pw.innerHTML=plot; card.appendChild(pw);
       card.appendChild(el("div","caption",L("plotCap")));
     }
@@ -696,6 +936,7 @@ function renderRegion(){
     bar.appendChild(el("span","maptime",L("isoAt")+" "+myt(P0.grid.time)+" "+L("myt")));
   box.appendChild(bar);
 
+  box.appendChild(el("div","mapwhat",L("mapWhatRegion")));
   var pw=el("div","plotwrap");
   pw.innerHTML=overviewMap((DOC&&DOC.storms)||[],(DOC&&DOC.others)||[],ref);
   box.appendChild(pw);
@@ -810,6 +1051,18 @@ function renderLearn(){
   });
 }
 
+var FULL_IDS=["hRegion","region","hTrend","trend","hStorms","storms",
+              "hOther","others","hLearn","learn"];
+
+function applyMode(){
+  var simple = MODE==="simple";
+  FULL_IDS.forEach(function(id){
+    var n=document.getElementById(id); if(n) n.hidden=simple;
+  });
+  document.getElementById("simple").hidden=!simple;
+  document.getElementById("modeBtn").textContent=simple?L("modeFull"):L("modeSimple");
+}
+
 function renderAll(){
   document.documentElement.lang = lang==="zh"?"zh":"en";
   var b=document.getElementById("brand");
@@ -834,7 +1087,11 @@ function renderAll(){
   document.getElementById("hRegion").textContent=L("hRegion");
   document.getElementById("hStorms").textContent=L("hStorms");
   document.getElementById("hOther").textContent=L("hOther");
-  renderFresh(); renderRegion(); renderStorms(); renderOthers(); renderLearn();
+  document.getElementById("hTrend").textContent=L("hTrend");
+  renderFresh();
+  applyMode();
+  if(MODE==="simple"){ renderSimple(); return; }   // one screen, nothing else
+  renderRegion(); renderTrend(); renderStorms(); renderOthers(); renderLearn();
 }
 
 function load(){
@@ -855,6 +1112,11 @@ document.getElementById("langBtn").addEventListener("click",function(){
   renderAll();
 });
 document.getElementById("refreshBtn").addEventListener("click",load);
+document.getElementById("modeBtn").addEventListener("click",function(){
+  MODE = MODE==="simple" ? "full" : "simple";
+  try{ localStorage.setItem("twatch.mode",MODE); }catch(e){}
+  renderAll();
+});
 document.getElementById("refSel").addEventListener("change",function(e){
   try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
   renderAll();
