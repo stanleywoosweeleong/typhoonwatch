@@ -147,7 +147,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.12";
+var VERSION = "v3.1.13";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -578,10 +578,11 @@ function isobarPaths(P,PX,PY){
   // Violet, deliberately unlike the blue-grey coastline: on a dark map two
   // line families in the same hue read as one drawing.
   var K=mapScale();
-  // Now the heavier of the two line families: the pressure field is what this
-  // layer exists to show, and the coast is only there to say where.
-  out+='<path d="'+d2.trim()+'" fill="none" stroke="#b49ada" stroke-width="'+
-       (1.25*K).toFixed(2)+'" opacity="0.95"/>';
+  /* Thin on purpose. At 1.25px the contours merged into violet blobs and the
+     shape of the field — which is the whole point — was lost. A fine line
+     shows structure; weight belongs to nothing on this map. */
+  out+='<path d="'+d2.trim()+'" fill="none" stroke="#a78bd0" stroke-width="'+
+       (0.9*K).toFixed(2)+'" opacity="0.88"/>';
 
   /* One value label per level, so a bullseye reads as 1004 rather than being
      guessed at. It used to go on that level's rightmost segment, full stop —
@@ -590,7 +591,7 @@ function isobarPaths(P,PX,PY){
      level walks its own segments from the right until it finds a spot nobody
      has taken, and if there is no such spot the label is DROPPED. A missing
      number is honest; overlapping numbers are a wrong number. */
-  var FSI=+(10.5*K).toFixed(1), placed=[], cand={};
+  var FSI=+(10*K).toFixed(1), placed=[], cand={};
   segs.forEach(function(s){ (cand[s[2]]=cand[s[2]]||[]).push([s[0][0],s[0][1]]); });
   function freeAt(x,y,w){
     if(x<2||y<FSI) return false;
@@ -607,7 +608,7 @@ function isobarPaths(P,PX,PY){
       var x=list[i][0]+3*K, y=list[i][1]-3*K;
       if(!freeAt(x,y,w)) continue;
       placed.push({x:x,y:y,w:w});
-      out+='<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" fill="#c7b0e8" font-size="'+FSI+
+      out+='<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" fill="#bda6e0" font-size="'+FSI+
            '" font-family="monospace" paint-order="stroke" stroke="#081019" stroke-width="'+
            (2.6*K).toFixed(1)+'">'+k+'</text>';
       return;
@@ -630,11 +631,12 @@ function mapScale(){
   return Math.max(0.85,Math.min(2.4,680/col));
 }
 
-/* Coastlines carry the whole geography of these maps, and a hairline reads
-   as a smudge on a phone held at arm's length in daylight. Width is given in
-   RENDERED pixels, a little heavier on a narrow screen where the same line
-   has less area to work with. */
-function coastW(K,base){ return +(((K>1.3?base+0.25:base))*K).toFixed(2); }
+/* Back to the original ink (#2b4f63) and the original weight. The land is
+   the frame, not the subject — it says WHERE, the isobars say WHAT. The only
+   thing kept from the brightening experiment is the scaling: the original
+   0.8 units rendered as 0.41px on a phone and disappeared, so the width is
+   now given in RENDERED pixels and comes out the same on every screen. */
+function coastW(K,base){ return +(base*K).toFixed(2); }
 
 /* Latitude ticks: south of the equator is S, not a negative N. */
 function latTick(g){ return (g<0?(-g)+"S":g+"N"); }
@@ -670,10 +672,11 @@ function overviewMap(storms,others,ref){
     // 0 gets no "0N": the equator is drawn separately below and labels itself.
     if(g!==0)
       svg+='<text x="'+(3*K).toFixed(1)+'" y="'+(PY(g)-3*K).toFixed(1)+
-           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+latTick(g)+'</text>';
+           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace" paint-order="stroke"'+
+           ' stroke="#081019" stroke-width="'+(2.4*K).toFixed(1)+'">'+latTick(g)+'</text>';
   }
   if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY);
-  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,0.95),"#3d6c85");
+  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,0.85),"#2b4f63");
 
   svg+=equatorSVG(W,PY,REGION.s,REGION.n,K);
 
@@ -818,17 +821,19 @@ function trackPlot(s,ref){
     return 30;
   }
   var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="track">';
-  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,coastW(K,1.15),"#3d6c85");
+  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,coastW(K,1.0),"#2b4f63");
   var stepLo=tickStep(maxLo-minLo,W,5), stepLa=tickStep(maxLa-minLa,H,4);
   for(g=Math.ceil(minLo/stepLo)*stepLo; g<=maxLo; g+=stepLo)
     svg+='<line x1="'+PX(g).toFixed(1)+'" y1="0" x2="'+PX(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
          '<text x="'+(PX(g)+3*K).toFixed(1)+'" y="'+(H-4*K).toFixed(1)+
-          '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+g+'E</text>';
+          '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace" paint-order="stroke"'+
+          ' stroke="#081019" stroke-width="'+(2.4*K).toFixed(1)+'">'+g+'E</text>';
   for(g=Math.ceil(minLa/stepLa)*stepLa; g<=maxLa; g+=stepLa){
     svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#16293a"/>';
     if(g!==0)   // the equator carries its own label, drawn next
       svg+='<text x="'+(4*K).toFixed(1)+'" y="'+(PY(g)-4*K).toFixed(1)+
-           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+latTick(g)+'</text>';
+           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace" paint-order="stroke"'+
+           ' stroke="#081019" stroke-width="'+(2.4*K).toFixed(1)+'">'+latTick(g)+'</text>';
   }
   svg+=equatorSVG(W,PY,minLa,maxLa,K);
 
