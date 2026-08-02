@@ -357,11 +357,15 @@ def selftest():
           _raises(lambda: parse_refs("no refs here")), True)
 
     la, lo = grid_points()
-    check("grid.n", len(la), 208)
-    check("grid.corners", (min(la), max(la), min(lo), max(lo)), (-5.0, 19.0, 95.0, 125.0))
-    check("grid.covers_borneo",
-          any(abs(a - 3.0) < 1.1 and abs(o - 113.0) < 1.1 for a, o in zip(la, lo)), True)
-    check("grid.daily_budget", 18 * 8 + len(la) * (24 // GRID_EVERY_H), 976)
+    check("grid.n", len(la), 598)
+    check("grid.corners", (min(la), max(la), min(lo), max(lo)), (-3.0, 22.0, 100.0, 122.0))
+    check("grid.step_resolves_vortex", GRID["step"] * 111 < 150, True)
+    check("grid.covers_nw_borneo",
+          sum(1 for a, o in zip(la, lo) if 1 <= a <= 5 and 109 <= o <= 115), 35)
+    check("grid.covers_hainan",
+          any(abs(a - 20.0) < 0.6 and abs(o - 110.0) < 0.6 for a, o in zip(la, lo)), True)
+    check("grid.covers_sandakan_lon", max(lo) >= 118.12, True)
+    check("grid.daily_budget", 18 * 8 + len(la) * (24 // GRID_EVERY_H), 2536)
 
     # 25 hourly stamps: index 0 is exactly 24 h before index 24
     times = ["2026-08-01T%02d:00" % h for h in range(1, 24)] + \
@@ -476,7 +480,11 @@ def tag_duplicates(events, storms, radius_km=350):
 OM = "https://api.open-meteo.com/v1/forecast"
 OM_MODEL = "ecmwf_ifs025"
 
-GRID = {"w": 95.0, "e": 125.0, "s": -5.0, "n": 20.0, "step": 2.0}
+# 1 deg (~110 km), tight on Malaysia and the South China Sea. At the old
+# 2 deg a feature needed ~500 km to resolve, so anything vortex-sized came out
+# as concentric diamonds. Box reaches 22N to include Hainan and the northern
+# SCS, where the surges that reach the east coast originate.
+GRID = {"w": 100.0, "e": 122.0, "s": -3.0, "n": 22.0, "step": 1.0}
 GRID_EVERY_H = 6          # refresh the grid only on these UTC hours
 CHUNK = 50                # locations per HTTP call
 
