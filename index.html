@@ -170,7 +170,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.19";
+var VERSION = "v3.1.20";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -724,7 +724,7 @@ function overviewMap(storms,others,ref){
   function labelW(t){
     var w=0,i;
     for(i=0;i<t.length;i++) w+=FSL*(t.charCodeAt(i)>0x2e80?1:0.56);   // CJK is wide
-    return w;
+    return w*1.04;      // the names are bold; leave a little slack for caps
   }
   /* A label box is x..x+w wide, one font-size above the baseline and a
      quarter of one below it — measured from FSL so it follows the scale. */
@@ -766,7 +766,14 @@ function overviewMap(storms,others,ref){
       c={x:cand[0][0],y:cand[0][1]+1.25*FSL*i,w:w};
       if(!boxHits(c,skip)) return c;
     }
-    return {x:cand[0][0],y:cand[0][1],w:w};   // overlap rather than drop a name
+    /* Nothing was free. Overlapping another label is survivable — you can
+       still read both — but running off the frame CLIPS the name, and a
+       storm called "台风 13 号 D" is worse than no name at all. So the last
+       resort is pulled back inside the edges before it is returned. */
+    c={x:cand[0][0],y:cand[0][1],w:w};
+    c.x=Math.max(2,Math.min(c.x,W-2-w));
+    c.y=Math.max(FSL+1,Math.min(c.y,H-2));
+    return c;
   }
 
   var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
