@@ -1,8 +1,8 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-08-02T16:37:28Z",
- "last_attempt": "2026-08-02T16:37:28Z",
+ "generated": "2026-08-02T19:54:56Z",
+ "last_attempt": "2026-08-02T19:54:56Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -619,76 +619,76 @@
   "model": "ECMWF IFS via Open-Meteo",
   "places": {
    "danang": {
-    "change24": 0.4,
-    "hpa": 1007.9
+    "change24": -0.1,
+    "hpa": 1006.1
    },
    "guangzhou": {
     "change24": -0.1,
-    "hpa": 1008.5
+    "hpa": 1007.3
    },
    "haikou": {
-    "change24": 0.1,
-    "hpa": 1007.5
+    "change24": -0.6,
+    "hpa": 1005.7
    },
    "hongkong": {
-    "change24": 0.3,
-    "hpa": 1008.8
+    "change24": -0.3,
+    "hpa": 1007.3
    },
    "kagoshima": {
-    "change24": -0.1,
-    "hpa": 1007.9
+    "change24": -0.5,
+    "hpa": 1007.8
    },
    "kaohsiung": {
-    "change24": -1.5,
-    "hpa": 1008.8
+    "change24": -1.1,
+    "hpa": 1007.8
    },
    "kb": {
-    "change24": 0.6,
-    "hpa": 1010.7
-   },
-   "kk": {
-    "change24": 0.7,
-    "hpa": 1010.5
-   },
-   "kuantan": {
-    "change24": 0.3,
-    "hpa": 1010.8
-   },
-   "kuching": {
-    "change24": 0.9,
-    "hpa": 1010.8
-   },
-   "manila": {
-    "change24": -1.5,
-    "hpa": 1007.2
-   },
-   "naha": {
-    "change24": -0.9,
-    "hpa": 1008.7
-   },
-   "raub": {
-    "change24": 0.5,
-    "hpa": 1013.6
-   },
-   "sandakan": {
-    "change24": 0.5,
-    "hpa": 1010.4
-   },
-   "sanya": {
-    "change24": 0.3,
-    "hpa": 1008.0
-   },
-   "taipei": {
-    "change24": -1.0,
+    "change24": -0.1,
     "hpa": 1009.1
    },
+   "kk": {
+    "change24": 0.2,
+    "hpa": 1009.0
+   },
+   "kuantan": {
+    "change24": -0.5,
+    "hpa": 1009.3
+   },
+   "kuching": {
+    "change24": 0.4,
+    "hpa": 1009.7
+   },
+   "manila": {
+    "change24": -1.6,
+    "hpa": 1005.5
+   },
+   "naha": {
+    "change24": -1.3,
+    "hpa": 1008.2
+   },
+   "raub": {
+    "change24": -0.1,
+    "hpa": 1012.2
+   },
+   "sandakan": {
+    "change24": 0.2,
+    "hpa": 1009.1
+   },
+   "sanya": {
+    "change24": -0.8,
+    "hpa": 1006.1
+   },
+   "taipei": {
+    "change24": -0.7,
+    "hpa": 1008.4
+   },
    "tokyo": {
-    "change24": 8.3,
-    "hpa": 1011.2
+    "change24": 8.2,
+    "hpa": 1011.9
    },
    "triang": {
-    "change24": 0.4,
-    "hpa": 1010.9
+    "change24": -0.2,
+    "hpa": 1009.6
    }
   }
  },
@@ -698,90 +698,35 @@
   {
    "category": "TD",
    "current": {
-    "accuracy_jp": "ほぼ正確",
+    "accuracy_jp": null,
     "category": "TD",
     "category_jp": "熱帯低気圧",
     "circle_km": null,
-    "course_jp": "西",
+    "course_jp": "西北西",
     "gale_radii": [],
-    "gust_kt": 45.0,
-    "gust_ms": 23.0,
+    "gust_kt": null,
+    "gust_ms": null,
     "intensity": null,
     "lat": 16.0,
     "location_jp": "フィリピンの東",
-    "lon": 123.5,
-    "move_deg": 270,
-    "move_kmh": 20.0,
-    "move_kt": 11.0,
+    "lon": 124.0,
+    "move_deg": 292.5,
+    "move_kmh": null,
+    "move_kt": null,
     "part_jp": "実況",
     "pressure_hpa": 1002.0,
     "scale": null,
-    "speed_note_jp": null,
+    "speed_note_jp": "ゆっくり",
     "storm_radii": [],
     "tau": 0,
-    "valid": "2026-08-02T15:00:00Z",
-    "wind_kt": 30.0,
-    "wind_ms": 15.0,
-    "wind_note_jp": "中心付近"
+    "valid": "2026-08-02T18:00:00Z",
+    "wind_kt": null,
+    "wind_ms": null,
+    "wind_note_jp": null
    },
-   "forecast": [
-    {
-     "accuracy_jp": null,
-     "category": "TS",
-     "category_jp": "台風",
-     "circle_km": 110.0,
-     "course_jp": "北",
-     "gale_radii": [],
-     "gust_kt": 50.0,
-     "gust_ms": 25.0,
-     "intensity": null,
-     "lat": 17.2,
-     "location_jp": "フィリピンの東",
-     "lon": 123.7,
-     "move_deg": 0,
-     "move_kmh": null,
-     "move_kt": null,
-     "part_jp": "予報　２４時間後",
-     "pressure_hpa": 1000.0,
-     "scale": null,
-     "speed_note_jp": "ゆっくり",
-     "storm_radii": [],
-     "tau": 24,
-     "valid": "2026-08-03T15:00:00Z",
-     "wind_kt": 35.0,
-     "wind_ms": 18.0,
-     "wind_note_jp": "中心付近"
-    },
-    {
-     "accuracy_jp": null,
-     "category": "TD",
-     "category_jp": "熱帯低気圧",
-     "circle_km": 200.0,
-     "course_jp": "不定",
-     "gale_radii": [],
-     "gust_kt": 0.0,
-     "gust_ms": 0.0,
-     "intensity": null,
-     "lat": 17.6,
-     "location_jp": "フィリピンの東",
-     "lon": 124.1,
-     "move_deg": null,
-     "move_kmh": null,
-     "move_kt": null,
-     "part_jp": "予報　４５時間後",
-     "pressure_hpa": 1002.0,
-     "scale": null,
-     "speed_note_jp": "ほとんど停滞",
-     "storm_radii": [],
-     "tau": 45,
-     "valid": "2026-08-04T12:00:00Z",
-     "wind_kt": 0.0,
-     "wind_ms": 0.0,
-     "wind_note_jp": null
-    }
-   ],
+   "forecast": [],
    "id": "TC2616",
-   "issued": "2026-08-02T16:15:00Z",
+   "issued": "2026-08-02T19:05:00Z",
    "name_en": null,
    "name_jp": null,
    "parsed": true,
@@ -793,8 +738,8 @@
       "jp": "熱帯低気圧"
      },
      "issue": {
-      "JST": "2026-08-03T01:15:00+09:00",
-      "UTC": "2026-08-02T16:15:00Z"
+      "JST": "2026-08-03T04:05:00+09:00",
+      "UTC": "2026-08-02T19:05:00Z"
      },
      "part": "title",
      "typhoonNumber": "b"
@@ -805,29 +750,17 @@
       "en": "TD",
       "jp": "熱帯低気圧"
      },
-     "course": "西",
+     "course": "西北西",
      "intensity": "-",
      "location": "フィリピンの東",
-     "maximumWind": {
-      "gust": {
-       "kt": "45",
-       "m/s": "23"
-      },
-      "sustained": {
-       "kt": "30",
-       "m/s": "15",
-       "note": "中心付近"
-      }
-     },
      "part": {
       "en": "Analysis",
       "jp": "実況"
      },
      "position": {
-      "accuracy": "ほぼ正確",
       "deg": [
        16.0,
-       123.5
+       124.0
       ],
       "dm": [
        [
@@ -835,67 +768,13 @@
         0
        ],
        [
-        123,
-        30
+        124,
+        0
        ]
       ]
      },
      "pressure": "1002",
      "scale": "-",
-     "speed": {
-      "km/h": "20",
-      "kt": "11"
-     },
-     "validtime": {
-      "JST": "2026-08-03T00:00:00+09:00",
-      "UTC": "2026-08-02T15:00:00Z"
-     }
-    },
-    {
-     "advancedHours": 24,
-     "category": {
-      "en": "TS",
-      "jp": "台風"
-     },
-     "course": "北",
-     "intensity": "-",
-     "location": "フィリピンの東",
-     "maximumWind": {
-      "gust": {
-       "kt": "50",
-       "m/s": "25"
-      },
-      "sustained": {
-       "kt": "35",
-       "m/s": "18",
-       "note": "中心付近"
-      }
-     },
-     "part": {
-      "en": "Forecast for 24 hours ahead",
-      "jp": "予報　２４時間後"
-     },
-     "position": {
-      "deg": [
-       17.2,
-       123.7
-      ],
-      "dm": [
-       [
-        17,
-        10
-       ],
-       [
-        123,
-        40
-       ]
-      ]
-     },
-     "pressure": "1000",
-     "probabilityCircleRadius": {
-      "km": 110,
-      "nm": 60
-     },
      "speed": {
       "note": {
        "en": "Slow",
@@ -903,68 +782,13 @@
       }
      },
      "validtime": {
-      "JST": "2026-08-04T00:00:00+09:00",
-      "UTC": "2026-08-03T15:00:00Z"
-     }
-    },
-    {
-     "advancedHours": 45,
-     "category": {
-      "en": "TD",
-      "jp": "熱帯低気圧"
-     },
-     "course": "不定",
-     "intensity": "-",
-     "location": "フィリピンの東",
-     "maximumWind": {
-      "gust": {
-       "kt": "0",
-       "m/s": "0"
-      },
-      "sustained": {
-       "kt": "0",
-       "m/s": "0"
-      }
-     },
-     "part": {
-      "en": "Forecast for 45 hours ahead",
-      "jp": "予報　４５時間後"
-     },
-     "position": {
-      "deg": [
-       17.6,
-       124.1
-      ],
-      "dm": [
-       [
-        17,
-        35
-       ],
-       [
-        124,
-        5
-       ]
-      ]
-     },
-     "pressure": "1002",
-     "probabilityCircleRadius": {
-      "km": 200,
-      "nm": 110
-     },
-     "speed": {
-      "note": {
-       "en": "Almost stationary",
-       "jp": "ほとんど停滞"
-      }
-     },
-     "validtime": {
-      "JST": "2026-08-04T21:00:00+09:00",
-      "UTC": "2026-08-04T12:00:00Z"
+      "JST": "2026-08-03T03:00:00+09:00",
+      "UTC": "2026-08-02T18:00:00Z"
      }
     }
    ],
    "target_category": "TD",
-   "target_issue": "2026-08-03T01:15:00+09:00",
+   "target_issue": "2026-08-03T04:05:00+09:00",
    "typhoon_number": "b"
   },
   {
@@ -982,21 +806,21 @@
      },
      {
       "area_jp": "南西",
-      "km": 390.0
+      "km": 440.0
      }
     ],
     "gust_kt": 130.0,
     "gust_ms": 65.0,
     "intensity": "very_strong",
-    "lat": 23.8,
+    "lat": 24.1,
     "location_jp": "南鳥島近海",
-    "lon": 150.4,
+    "lon": 149.6,
     "move_deg": 292.5,
-    "move_kmh": 20.0,
-    "move_kt": 12.0,
+    "move_kmh": 25.0,
+    "move_kt": 13.0,
     "part_jp": "実況",
     "pressure_hpa": 940.0,
-    "scale": null,
+    "scale": "large",
     "speed_note_jp": null,
     "storm_radii": [
      {
@@ -1005,7 +829,7 @@
      }
     ],
     "tau": 0,
-    "valid": "2026-08-02T15:00:00Z",
+    "valid": "2026-08-02T18:00:00Z",
     "wind_kt": 90.0,
     "wind_ms": 45.0,
     "wind_note_jp": "中心付近"
@@ -1018,28 +842,28 @@
      "circle_km": 45.0,
      "course_jp": "西",
      "gale_radii": [],
-     "gust_kt": 130.0,
-     "gust_ms": 65.0,
+     "gust_kt": 120.0,
+     "gust_ms": 60.0,
      "intensity": "very_strong",
-     "lat": 24.3,
+     "lat": 24.6,
      "location_jp": "小笠原近海",
-     "lon": 147.7,
+     "lon": 147.1,
      "move_deg": 270,
-     "move_kmh": 25.0,
-     "move_kt": 13.0,
+     "move_kmh": 20.0,
+     "move_kt": 12.0,
      "part_jp": "予報　１２時間後",
-     "pressure_hpa": 940.0,
+     "pressure_hpa": 945.0,
      "scale": null,
      "speed_note_jp": null,
      "storm_radii": [
       {
        "area_jp": "全域",
-       "km": 230.0
+       "km": 250.0
       }
      ],
      "tau": 12,
-     "valid": "2026-08-03T03:00:00Z",
-     "wind_kt": 90.0,
+     "valid": "2026-08-03T06:00:00Z",
+     "wind_kt": 85.0,
      "wind_ms": 45.0,
      "wind_note_jp": "中心付近"
     },
@@ -1053,12 +877,12 @@
      "gust_kt": 120.0,
      "gust_ms": 60.0,
      "intensity": "very_strong",
-     "lat": 24.8,
+     "lat": 25.0,
      "location_jp": "小笠原近海",
-     "lon": 145.0,
+     "lon": 144.4,
      "move_deg": 270,
-     "move_kmh": 25.0,
-     "move_kt": 13.0,
+     "move_kmh": 20.0,
+     "move_kt": 12.0,
      "part_jp": "予報　２４時間後",
      "pressure_hpa": 945.0,
      "scale": null,
@@ -1070,7 +894,7 @@
       }
      ],
      "tau": 24,
-     "valid": "2026-08-03T15:00:00Z",
+     "valid": "2026-08-03T18:00:00Z",
      "wind_kt": 85.0,
      "wind_ms": 45.0,
      "wind_note_jp": "中心付近"
@@ -1085,13 +909,13 @@
      "gust_kt": 120.0,
      "gust_ms": 60.0,
      "intensity": "very_strong",
-     "lat": 25.1,
-     "location_jp": "小笠原近海",
-     "lon": 140.4,
+     "lat": 25.3,
+     "location_jp": "日本の南",
+     "lon": 139.0,
      "move_deg": 270,
      "move_kmh": 20.0,
      "move_kt": 12.0,
-     "part_jp": "予報　４５時間後",
+     "part_jp": "予報　４８時間後",
      "pressure_hpa": 945.0,
      "scale": null,
      "speed_note_jp": null,
@@ -1101,8 +925,8 @@
        "km": 310.0
       }
      ],
-     "tau": 45,
-     "valid": "2026-08-04T12:00:00Z",
+     "tau": 48,
+     "valid": "2026-08-04T18:00:00Z",
      "wind_kt": 85.0,
      "wind_ms": 45.0,
      "wind_note_jp": "中心付近"
@@ -1117,13 +941,13 @@
      "gust_kt": 115.0,
      "gust_ms": 60.0,
      "intensity": "strong",
-     "lat": 26.0,
+     "lat": 25.9,
      "location_jp": "日本の南",
-     "lon": 135.3,
+     "lon": 134.3,
      "move_deg": 270,
      "move_kmh": 20.0,
-     "move_kt": 12.0,
-     "part_jp": "予報　６９時間後",
+     "move_kt": 11.0,
+     "part_jp": "予報　７２時間後",
      "pressure_hpa": 950.0,
      "scale": null,
      "speed_note_jp": null,
@@ -1133,8 +957,8 @@
        "km": 370.0
       }
      ],
-     "tau": 69,
-     "valid": "2026-08-05T12:00:00Z",
+     "tau": 72,
+     "valid": "2026-08-05T18:00:00Z",
      "wind_kt": 80.0,
      "wind_ms": 40.0,
      "wind_note_jp": "中心付近"
@@ -1149,13 +973,13 @@
      "gust_kt": 105.0,
      "gust_ms": 55.0,
      "intensity": "strong",
-     "lat": 26.6,
+     "lat": 26.4,
      "location_jp": "日本の南",
-     "lon": 130.5,
+     "lon": 130.0,
      "move_deg": 270,
      "move_kmh": 20.0,
-     "move_kt": 11.0,
-     "part_jp": "予報　９３時間後",
+     "move_kt": 10.0,
+     "part_jp": "予報　９６時間後",
      "pressure_hpa": 950.0,
      "scale": null,
      "speed_note_jp": null,
@@ -1165,8 +989,8 @@
        "km": 410.0
       }
      ],
-     "tau": 93,
-     "valid": "2026-08-06T12:00:00Z",
+     "tau": 96,
+     "valid": "2026-08-06T18:00:00Z",
      "wind_kt": 75.0,
      "wind_ms": 40.0,
      "wind_note_jp": "中心付近"
@@ -1181,13 +1005,13 @@
      "gust_kt": 105.0,
      "gust_ms": 55.0,
      "intensity": "strong",
-     "lat": 26.9,
+     "lat": 26.4,
      "location_jp": "東シナ海",
-     "lon": 126.9,
+     "lon": 127.1,
      "move_deg": 270,
-     "move_kmh": 15.0,
-     "move_kt": 8.0,
-     "part_jp": "予報　１１７時間後",
+     "move_kmh": 10.0,
+     "move_kt": 6.0,
+     "part_jp": "予報　１２０時間後",
      "pressure_hpa": 950.0,
      "scale": null,
      "speed_note_jp": null,
@@ -1197,15 +1021,15 @@
        "km": 440.0
       }
      ],
-     "tau": 117,
-     "valid": "2026-08-07T12:00:00Z",
+     "tau": 120,
+     "valid": "2026-08-07T18:00:00Z",
      "wind_kt": 75.0,
      "wind_ms": 40.0,
      "wind_note_jp": "中心付近"
     }
    ],
    "id": "TC2615",
-   "issued": "2026-08-02T15:45:00Z",
+   "issued": "2026-08-02T18:45:00Z",
    "name_en": "Dolphin",
    "name_jp": "ドルフィン",
    "parsed": true,
@@ -1217,8 +1041,8 @@
       "jp": "台風"
      },
      "issue": {
-      "JST": "2026-08-03T00:45:00+09:00",
-      "UTC": "2026-08-02T15:45:00Z"
+      "JST": "2026-08-03T03:45:00+09:00",
+      "UTC": "2026-08-02T18:45:00Z"
      },
      "name": {
       "en": "Dolphin",
@@ -1245,8 +1069,8 @@
       {
        "area": "南西",
        "range": {
-        "km": 390,
-        "nm": 210
+        "km": 440,
+        "nm": 240
        }
       }
      ],
@@ -1270,25 +1094,25 @@
      "position": {
       "accuracy": "正確",
       "deg": [
-       23.8,
-       150.4
+       24.1,
+       149.6
       ],
       "dm": [
        [
-        23,
-        50
+        24,
+        5
        ],
        [
-        150,
-        25
+        149,
+        35
        ]
       ]
      },
      "pressure": "940",
-     "scale": "-",
+     "scale": "大型",
      "speed": {
-      "km/h": "20",
-      "kt": "12"
+      "km/h": "25",
+      "kt": "13"
      },
      "stormWarning": [
       {
@@ -1303,8 +1127,8 @@
       }
      ],
      "validtime": {
-      "JST": "2026-08-03T00:00:00+09:00",
-      "UTC": "2026-08-02T15:00:00Z"
+      "JST": "2026-08-03T03:00:00+09:00",
+      "UTC": "2026-08-02T18:00:00Z"
      }
     },
     {
@@ -1318,11 +1142,11 @@
      "location": "小笠原近海",
      "maximumWind": {
       "gust": {
-       "kt": "130",
-       "m/s": "65"
+       "kt": "120",
+       "m/s": "60"
       },
       "sustained": {
-       "kt": "90",
+       "kt": "85",
        "m/s": "45",
        "note": "中心付近"
       }
@@ -1333,28 +1157,28 @@
      },
      "position": {
       "deg": [
-       24.3,
-       147.7
+       24.6,
+       147.1
       ],
       "dm": [
        [
         24,
-        20
+        35
        ],
        [
         147,
-        40
+        5
        ]
       ]
      },
-     "pressure": "940",
+     "pressure": "945",
      "probabilityCircleRadius": {
       "km": 45,
       "nm": 25
      },
      "speed": {
-      "km/h": "25",
-      "kt": "13"
+      "km/h": "20",
+      "kt": "12"
      },
      "stormWarning": [
       {
@@ -1363,14 +1187,14 @@
         "jp": "全域"
        },
        "range": {
-        "km": 230,
-        "nm": 125
+        "km": 250,
+        "nm": 135
        }
       }
      ],
      "validtime": {
-      "JST": "2026-08-03T12:00:00+09:00",
-      "UTC": "2026-08-03T03:00:00Z"
+      "JST": "2026-08-03T15:00:00+09:00",
+      "UTC": "2026-08-03T06:00:00Z"
      }
     },
     {
@@ -1399,17 +1223,17 @@
      },
      "position": {
       "deg": [
-       24.8,
-       145.0
+       25.0,
+       144.4
       ],
       "dm": [
        [
-        24,
-        50
+        25,
+        0
        ],
        [
-        145,
-        0
+        144,
+        25
        ]
       ]
      },
@@ -1419,8 +1243,8 @@
       "nm": 35
      },
      "speed": {
-      "km/h": "25",
-      "kt": "13"
+      "km/h": "20",
+      "kt": "12"
      },
      "stormWarning": [
       {
@@ -1435,19 +1259,19 @@
       }
      ],
      "validtime": {
-      "JST": "2026-08-04T00:00:00+09:00",
-      "UTC": "2026-08-03T15:00:00Z"
+      "JST": "2026-08-04T03:00:00+09:00",
+      "UTC": "2026-08-03T18:00:00Z"
      }
     },
     {
-     "advancedHours": 45,
+     "advancedHours": 48,
      "category": {
       "en": "TY",
       "jp": "台風"
      },
      "course": "西",
      "intensity": "非常に強い",
-     "location": "小笠原近海",
+     "location": "日本の南",
      "maximumWind": {
       "gust": {
        "kt": "120",
@@ -1460,22 +1284,22 @@
       }
      },
      "part": {
-      "en": "Forecast for 45 hours ahead",
-      "jp": "予報　４５時間後"
+      "en": "Forecast for 48 hours ahead",
+      "jp": "予報　４８時間後"
      },
      "position": {
       "deg": [
-       25.1,
-       140.4
+       25.3,
+       139.0
       ],
       "dm": [
        [
         25,
-        5
+        20
        ],
        [
-        140,
-        25
+        139,
+        0
        ]
       ]
      },
@@ -1501,12 +1325,12 @@
       }
      ],
      "validtime": {
-      "JST": "2026-08-04T21:00:00+09:00",
-      "UTC": "2026-08-04T12:00:00Z"
+      "JST": "2026-08-05T03:00:00+09:00",
+      "UTC": "2026-08-04T18:00:00Z"
      }
     },
     {
-     "advancedHours": 69,
+     "advancedHours": 72,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -1526,21 +1350,21 @@
       }
      },
      "part": {
-      "en": "Forecast for 69 hours ahead",
-      "jp": "予報　６９時間後"
+      "en": "Forecast for 72 hours ahead",
+      "jp": "予報　７２時間後"
      },
      "position": {
       "deg": [
-       26.0,
-       135.3
+       25.9,
+       134.3
       ],
       "dm": [
        [
-        26,
-        0
+        25,
+        55
        ],
        [
-        135,
+        134,
         20
        ]
       ]
@@ -1552,7 +1376,7 @@
      },
      "speed": {
       "km/h": "20",
-      "kt": "12"
+      "kt": "11"
      },
      "stormWarning": [
       {
@@ -1567,12 +1391,12 @@
       }
      ],
      "validtime": {
-      "JST": "2026-08-05T21:00:00+09:00",
-      "UTC": "2026-08-05T12:00:00Z"
+      "JST": "2026-08-06T03:00:00+09:00",
+      "UTC": "2026-08-05T18:00:00Z"
      }
     },
     {
-     "advancedHours": 93,
+     "advancedHours": 96,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -1592,22 +1416,22 @@
       }
      },
      "part": {
-      "en": "Forecast for 93 hours ahead",
-      "jp": "予報　９３時間後"
+      "en": "Forecast for 96 hours ahead",
+      "jp": "予報　９６時間後"
      },
      "position": {
       "deg": [
-       26.6,
-       130.5
+       26.4,
+       130.0
       ],
       "dm": [
        [
         26,
-        35
+        25
        ],
        [
         130,
-        30
+        0
        ]
       ]
      },
@@ -1618,7 +1442,7 @@
      },
      "speed": {
       "km/h": "20",
-      "kt": "11"
+      "kt": "10"
      },
      "stormWarning": [
       {
@@ -1633,12 +1457,12 @@
       }
      ],
      "validtime": {
-      "JST": "2026-08-06T21:00:00+09:00",
-      "UTC": "2026-08-06T12:00:00Z"
+      "JST": "2026-08-07T03:00:00+09:00",
+      "UTC": "2026-08-06T18:00:00Z"
      }
     },
     {
-     "advancedHours": 117,
+     "advancedHours": 120,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -1658,22 +1482,22 @@
       }
      },
      "part": {
-      "en": "Forecast for 117 hours ahead",
-      "jp": "予報　１１７時間後"
+      "en": "Forecast for 120 hours ahead",
+      "jp": "予報　１２０時間後"
      },
      "position": {
       "deg": [
-       26.9,
-       126.9
+       26.4,
+       127.1
       ],
       "dm": [
        [
         26,
-        55
+        25
        ],
        [
-        126,
-        55
+        127,
+        5
        ]
       ]
      },
@@ -1683,8 +1507,8 @@
       "nm": 120
      },
      "speed": {
-      "km/h": "15",
-      "kt": "8"
+      "km/h": "10",
+      "kt": "6"
      },
      "stormWarning": [
       {
@@ -1699,13 +1523,13 @@
       }
      ],
      "validtime": {
-      "JST": "2026-08-07T21:00:00+09:00",
-      "UTC": "2026-08-07T12:00:00Z"
+      "JST": "2026-08-08T03:00:00+09:00",
+      "UTC": "2026-08-07T18:00:00Z"
      }
     }
    ],
    "target_category": "TY",
-   "target_issue": "2026-08-03T00:45:00+09:00",
+   "target_issue": "2026-08-03T03:45:00+09:00",
    "typhoon_number": "2613"
   }
  ],
