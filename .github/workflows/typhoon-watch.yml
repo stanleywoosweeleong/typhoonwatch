@@ -32,6 +32,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # a shallow clone cannot rebase onto origin
 
       - uses: actions/setup-python@v5
         with:
@@ -52,12 +54,42 @@ jobs:
       - name: Commit if changed
         if: ${{ !inputs.probe }}
         run: |
-          git config user.name  "jtwc-watch"
+          set -e
+          BRANCH="${GITHUB_REF_NAME}"
+          git config user.name  "typhoon-watch"
           git config user.email "actions@users.noreply.github.com"
-          git add data
-          if git diff --cached --quiet; then
+
+          if git diff --quiet -- data; then
             echo "no change"
-          else
-            git commit -m "JMA typhoon data $(date -u +'%Y-%m-%d %H:%MZ')"
-            git push
+            exit 0
           fi
+
+          # Two writers share this branch: this job writes data/, Stanley
+          # pushes app files by hand. A plain push loses that race and the run
+          # fails with "! [rejected] ... (fetch first)". So: keep the freshly
+          # fetched data aside, take whatever the remote has now, put the data
+          # back on top, then commit. The newest fetch always wins for data/,
+          # and hand-pushed app files are never clobbered.
+          TMP="$(mktemp -d)"
+          cp -r data "$TMP/"
+
+          for i in 1 2 3; do
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            rm -rf data
+            cp -r "$TMP/data" data
+            git add data
+            if git diff --cached --quiet; then
+              echo "no change after syncing with remote"
+              exit 0
+            fi
+            git commit -m "JMA typhoon data $(date -u +'%Y-%m-%d %H:%MZ')"
+            if git push origin "HEAD:$BRANCH"; then
+              echo "pushed on attempt $i"
+              exit 0
+            fi
+            echo "push rejected, retrying in 10s"
+            sleep 10
+          done
+          echo "could not push after 3 attempts" >&2
+          exit 1
