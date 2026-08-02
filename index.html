@@ -147,7 +147,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.11";
+var VERSION = "v3.1.12";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -577,20 +577,41 @@ function isobarPaths(P,PX,PY){
   });
   // Violet, deliberately unlike the blue-grey coastline: on a dark map two
   // line families in the same hue read as one drawing.
-  out+='<path d="'+d2.trim()+'" fill="none" stroke="#a78bd0" stroke-width="'+
-       (0.95*mapScale()).toFixed(2)+'" opacity="0.78"/>';
+  var K=mapScale();
+  // Now the heavier of the two line families: the pressure field is what this
+  // layer exists to show, and the coast is only there to say where.
+  out+='<path d="'+d2.trim()+'" fill="none" stroke="#b49ada" stroke-width="'+
+       (1.25*K).toFixed(2)+'" opacity="0.95"/>';
 
-  // One value label per level, so a bullseye can be read as 1004 or 1009
-  // rather than guessed at. Placed on that level's rightmost segment.
-  var best={};
-  segs.forEach(function(s){
-    var x=s[0][0], y=s[0][1], k=s[2];
-    if(!best[k] || x>best[k][0]) best[k]=[x,y];
-  });
-  Object.keys(best).forEach(function(k){
-    out+='<text x="'+(best[k][0]+3).toFixed(1)+'" y="'+(best[k][1]-3).toFixed(1)+
-         '" fill="#a78bd0" font-size="'+(9.5*mapScale()).toFixed(1)+
-         '" font-family="monospace" opacity="0.92">'+k+'</text>';
+  /* One value label per level, so a bullseye reads as 1004 rather than being
+     guessed at. It used to go on that level's rightmost segment, full stop —
+     and where several levels crowd the same corner, four labels landed on top
+     of each other and the result was unreadable digits ("1005006"). Now each
+     level walks its own segments from the right until it finds a spot nobody
+     has taken, and if there is no such spot the label is DROPPED. A missing
+     number is honest; overlapping numbers are a wrong number. */
+  var FSI=+(10.5*K).toFixed(1), placed=[], cand={};
+  segs.forEach(function(s){ (cand[s[2]]=cand[s[2]]||[]).push([s[0][0],s[0][1]]); });
+  function freeAt(x,y,w){
+    if(x<2||y<FSI) return false;
+    for(var i=0;i<placed.length;i++){
+      var b=placed[i];
+      if(x<b.x+b.w+FSI*0.4 && b.x<x+w+FSI*0.4 && y-FSI<b.y+FSI*0.3 && b.y-FSI<y+FSI*0.3) return false;
+    }
+    return true;
+  }
+  Object.keys(cand).sort(function(a,b){ return b-a; }).forEach(function(k){
+    var list=cand[k].slice().sort(function(a,b){ return b[0]-a[0]; });
+    var w=String(k).length*0.62*FSI, step=Math.max(1,Math.floor(list.length/60));
+    for(var i=0;i<list.length;i+=step){
+      var x=list[i][0]+3*K, y=list[i][1]-3*K;
+      if(!freeAt(x,y,w)) continue;
+      placed.push({x:x,y:y,w:w});
+      out+='<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" fill="#c7b0e8" font-size="'+FSI+
+           '" font-family="monospace" paint-order="stroke" stroke="#081019" stroke-width="'+
+           (2.6*K).toFixed(1)+'">'+k+'</text>';
+      return;
+    }
   });
   return out;
 }
@@ -613,7 +634,7 @@ function mapScale(){
    as a smudge on a phone held at arm's length in daylight. Width is given in
    RENDERED pixels, a little heavier on a narrow screen where the same line
    has less area to work with. */
-function coastW(K,base){ return +(((K>1.3?base+0.3:base))*K).toFixed(2); }
+function coastW(K,base){ return +(((K>1.3?base+0.25:base))*K).toFixed(2); }
 
 /* Latitude ticks: south of the equator is S, not a negative N. */
 function latTick(g){ return (g<0?(-g)+"S":g+"N"); }
@@ -635,7 +656,7 @@ function overviewMap(storms,others,ref){
   var W=680, H=Math.round(W*(REGION.n-REGION.s)/(REGION.e-REGION.w));
   var K=mapScale();                         // rendered px -> user units
   var FSG=+(10*K).toFixed(1),               // graticule ticks
-      FSL=+(11.5*K).toFixed(1),             // storm and place names
+      FSL=+(12.5*K).toFixed(1),             // storm and place names
       FSO=+(10.5*K).toFixed(1),             // GDACS names
       FSN=+(10*K).toFixed(1),               // the number inside a dot
       RD=+(7.5*K).toFixed(1);               // storm dot radius
@@ -652,7 +673,7 @@ function overviewMap(storms,others,ref){
            '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+latTick(g)+'</text>';
   }
   if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY);
-  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,1.15),"#4a7c97");
+  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,0.95),"#3d6c85");
 
   svg+=equatorSVG(W,PY,REGION.s,REGION.n,K);
 
@@ -730,7 +751,8 @@ function overviewMap(storms,others,ref){
     var pos=placeLabel(p.px,p.py,t);
     LBOX.push(pos);
     svg+='<text x="'+pos.x.toFixed(1)+'" y="'+pos.y.toFixed(1)+
-         '" fill="#ffd489" font-size="'+FSL+'" font-weight="700">'+t+'</text>';
+         '" fill="#ffd489" font-size="'+FSL+'" font-weight="700" paint-order="stroke"'+
+         ' stroke="#081019" stroke-width="'+(3.2*K).toFixed(1)+'">'+t+'</text>';
   });
   (others||[]).forEach(function(o){
     if(o.also_jma||o.lat==null) return;
@@ -742,12 +764,14 @@ function overviewMap(storms,others,ref){
     svg+='<circle cx="'+ox+'" cy="'+oy+'" r="'+(5*K).toFixed(1)+'" fill="none" stroke="'+col+
          '" stroke-width="'+(2*K).toFixed(2)+'"/>'+
          '<text x="'+op.x.toFixed(1)+'" y="'+op.y.toFixed(1)+
-         '" fill="'+col+'" font-size="'+FSO+'">'+ot+'</text>';
+         '" fill="'+col+'" font-size="'+FSO+'" paint-order="stroke" stroke="#081019"'+
+         ' stroke-width="'+(3*K).toFixed(1)+'">'+ot+'</text>';
   });
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="'+(4*K).toFixed(1)+'" fill="#e2ebf4" stroke="#0a1420"'+
        ' stroke-width="'+K.toFixed(2)+'"/>'+
        '<text x="'+(rx+6*K).toFixed(1)+'" y="'+(ry+4*K).toFixed(1)+
-       '" fill="#e2ebf4" font-size="'+FSL+'" font-weight="700">'+refTxt+'</text>';
+       '" fill="#e2ebf4" font-size="'+FSL+'" font-weight="700" paint-order="stroke"'+
+       ' stroke="#081019" stroke-width="'+(3.2*K).toFixed(1)+'">'+refTxt+'</text>';
   return svg+'</svg>';
 }
 
@@ -785,13 +809,22 @@ function trackPlot(s,ref){
 
   var K=mapScale();
   var FSG=+(10*K).toFixed(1), FST=+(11*K).toFixed(1), FSL=+(13*K).toFixed(1);
+  /* "115E" is about four monospace characters wide; a tick every 5 degrees
+     collides with its neighbour as soon as the frame is wide or the screen is
+     narrow. Step up until the gap clears the label with room to breathe. */
+  function tickStep(span, px, chars){
+    var need=chars*0.62*FSG+FSG, steps=[1,2,5,10,15,20,30];
+    for(var i=0;i<steps.length;i++) if(px/(span/steps[i])>need) return steps[i];
+    return 30;
+  }
   var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="track">';
-  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,coastW(K,1.35),"#4a7c97");
-  for(g=Math.ceil(minLo/5)*5; g<=maxLo; g+=5)
+  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,coastW(K,1.15),"#3d6c85");
+  var stepLo=tickStep(maxLo-minLo,W,5), stepLa=tickStep(maxLa-minLa,H,4);
+  for(g=Math.ceil(minLo/stepLo)*stepLo; g<=maxLo; g+=stepLo)
     svg+='<line x1="'+PX(g).toFixed(1)+'" y1="0" x2="'+PX(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
          '<text x="'+(PX(g)+3*K).toFixed(1)+'" y="'+(H-4*K).toFixed(1)+
           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+g+'E</text>';
-  for(g=Math.ceil(minLa/5)*5; g<=maxLa; g+=5){
+  for(g=Math.ceil(minLa/stepLa)*stepLa; g<=maxLa; g+=stepLa){
     svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#16293a"/>';
     if(g!==0)   // the equator carries its own label, drawn next
       svg+='<text x="'+(4*K).toFixed(1)+'" y="'+(PY(g)-4*K).toFixed(1)+
@@ -804,6 +837,7 @@ function trackPlot(s,ref){
          '" fill="none" stroke="#43c2ab" stroke-width="'+(2*K).toFixed(2)+
          '" stroke-dasharray="'+(6*K).toFixed(1)+' '+(5*K).toFixed(1)+'"/>';
   }
+  var TAUBOX=[];
   // Forecast circles first, so the track and dots sit on top of them.
   pts.forEach(function(p){
     if(!p.circle) return;
@@ -814,14 +848,29 @@ function trackPlot(s,ref){
   pts.forEach(function(p,i){
     svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+
          ((i?4:7)*K).toFixed(1)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
-    if(i) svg+='<text x="'+(PX(p.lon)+7*K).toFixed(1)+'" y="'+(PY(p.lat)-6*K).toFixed(1)+
-               '" fill="#9fb3c6" font-size="'+FST+'" font-family="monospace">+'+p.tau+'h</text>';
+    if(i){
+      /* Late forecast points bunch up as the storm slows, and "+117h+93h+69h"
+         printed on top of itself is worse than showing fewer hours. Drop the
+         ones that would collide — the dots are still all there. */
+      var lx=PX(p.lon)+7*K, ly=PY(p.lat)-6*K, lw=String("+"+p.tau+"h").length*0.62*FST, free=true;
+      for(var q=0;q<TAUBOX.length;q++){
+        var bb=TAUBOX[q];
+        if(lx<bb.x+bb.w+FST*0.3 && bb.x<lx+lw+FST*0.3 && ly-FST<bb.y+FST*0.3 && bb.y-FST<ly+FST*0.3){ free=false; break; }
+      }
+      if(free){
+        TAUBOX.push({x:lx,y:ly,w:lw});
+        svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+
+             '" fill="#9fb3c6" font-size="'+FST+'" font-family="monospace" paint-order="stroke"'+
+             ' stroke="#081019" stroke-width="'+(2.8*K).toFixed(1)+'">+'+p.tau+'h</text>';
+      }
+    }
   });
   var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="'+(4*K).toFixed(1)+'" fill="#e2ebf4" stroke="#081019"'+
        ' stroke-width="'+K.toFixed(2)+'"/>'+
        '<text x="'+(rx+6*K).toFixed(1)+'" y="'+(ry+4*K).toFixed(1)+
-       '" fill="#e2ebf4" font-size="'+FST+'">'+
+       '" fill="#e2ebf4" font-size="'+FST+'" paint-order="stroke" stroke="#081019"'+
+       ' stroke-width="'+(3*K).toFixed(1)+'">'+
        X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
   // Name sits with the storm. Western Pacific tracks run up and to the LEFT
   // (northwest), so the forecast dots and their +NNh labels crowd that side.
