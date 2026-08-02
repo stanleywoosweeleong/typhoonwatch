@@ -136,7 +136,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.1";
+var VERSION = "v3.1.2";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -396,15 +396,21 @@ function saffirFrom10min(kt10){
 }
 
 /* ---- DOM helpers ---------------------------------------------------- */
+/* THE render boundary. Almost every string in this app reaches the page
+   through here, so this is where Simplified becomes Traditional — not at
+   each of the sixty-odd call sites, which is how the conversion came to be
+   missed nearly everywhere. X() is a no-op unless lang is "tw", and s2t()
+   is idempotent (no Traditional character is a key in TWMAP), so the few
+   places that already call X() themselves stay correct. */
 function el(tag,cls,txt){
   var n=document.createElement(tag);
   if(cls) n.className=cls;
-  if(txt!==undefined) n.textContent=txt;
+  if(txt!==undefined) n.textContent=X(txt);
   return n;
 }
 function cell(k,v,cls){
   var c=el("div","cell"); c.appendChild(el("div","k",k));
-  var d=el("div","v"+(cls?" "+cls:"")); d.textContent=v; c.appendChild(d);
+  var d=el("div","v"+(cls?" "+cls:"")); d.textContent=X(v); c.appendChild(d);
   return c;
 }
 var DOC=null, OFFLINE=false, LOADERR=null;
@@ -428,12 +434,12 @@ function renderFresh(){
       box.appendChild(el("div","pos",L("loadFail")+" "+LOADERR));
       var a=document.createElement("a");
       a.href=DATA_URL; a.target="_blank"; a.rel="noopener";
-      a.textContent=L("openData"); a.style.color="#ffd7d4";
+      a.textContent=X(L("openData")); a.style.color="#ffd7d4";
       box.appendChild(a);
     }
     return;
   }
-  if(DOC.demo){ box.classList.add("warnish"); box.textContent=L("demo"); return; }
+  if(DOC.demo){ box.classList.add("warnish"); box.textContent=X(L("demo")); return; }
 
   var newest=null;
   (DOC.storms||[]).forEach(function(s){
@@ -456,7 +462,7 @@ function renderFresh(){
     html=fill(L("freshOk"),{t:"—",age:"—",fetch:(DOC.generated||"?")});
   }
   if(OFFLINE) html+=" "+L("offline");
-  box.innerHTML=html;
+  box.innerHTML=X(html);   // built as a string, so it misses el()'s boundary
 }
 
 /* ---- coastline ------------------------------------------------------ */
@@ -602,7 +608,7 @@ function overviewMap(storms,others,ref){
   }
 
   var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
-  var refTxt=(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"");
+  var refTxt=X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"");
   LBOX.push({x:rx-5,y:ry+4,w:10});                 // your place: the dot
   LBOX.push({x:rx+7,y:ry+4,w:labelW(refTxt)});     // your place: its name
 
@@ -700,7 +706,7 @@ function trackPlot(s,ref){
   var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
-       (lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
+       X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
   // Name sits with the storm. Western Pacific tracks run up and to the LEFT
   // (northwest), so the forecast dots and their +NNh labels crowd that side.
   // Default the name below and to the right — the water the storm has already
@@ -725,30 +731,30 @@ function trackPlot(s,ref){
 /* ---- decode --------------------------------------------------------- */
 function decodeList(s){
   var c=s.current||{}, ul=el("ul","decode"), items=[];
-  if(s.issued) items.push([bothT(s.issued), lang==="zh"
+  if(s.issued) items.push([bothT(s.issued), lang!=="en"
     ? "发表时刻（世界时）。气象厅以日本时间发表，本页统一换算成世界时；马来西亚时间＝世界时 +8 小时，日本时间 −1 小时。"
     : "Issue time in UTC. JMA publishes in JST; Malaysia is UTC+8, one hour behind Japan."]);
-  if(c.wind_ms!=null) items.push(["最大風速 "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang==="zh"
+  if(c.wind_ms!=null) items.push(["最大風速 "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang!=="en"
     ? "10 分钟平均风速——和大马气象局同一个标准，可以直接比较。美国 JTWC 用 1 分钟平均，同一个台风会高出约 14%。"
     : "A 10-minute average — the same standard MET Malaysia uses, so the numbers are directly comparable. JTWC's 1-minute average runs about 14% higher for the same storm."]);
-  if(c.gust_ms!=null) items.push(["最大瞬間風速 "+c.gust_ms+" m/s", lang==="zh"
+  if(c.gust_ms!=null) items.push(["最大瞬間風速 "+c.gust_ms+" m/s", lang!=="en"
     ? "瞬间最大值，通常是持续风的 1.3–1.5 倍。吹倒树、掀屋顶的是它，不是平均风。"
     : "The instantaneous peak, typically 1.3–1.5× the sustained wind. This is what takes down trees and roofs."]);
-  if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", lang==="zh"
+  if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", lang!=="en"
     ? "中心气压。数字越低越强——这是气象厅判断强度的主要依据，和风速是一体两面。"
     : "Central pressure. Lower is stronger — JMA's primary intensity measure, the other side of the same coin as wind speed."]);
   if(c.course_jp) items.push([c.course_jp+" "+(c.move_kt!=null?c.move_kt+" kt":(c.speed_note_jp||""))+
-    (c.speed_note_jp?"  = "+jp(c.speed_note_jp):""), lang==="zh"
+    (c.speed_note_jp?"  = "+jp(c.speed_note_jp):""), lang!=="en"
     ? "进行方向是「去向」"+(c.move_deg!=null?"（"+c.move_deg+"°，即朝"+compass(c.move_deg)+"）":"")+"。风向则相反，用「来向」——最容易搞混的地方。速度很慢时气象厅不给数字，只写「ゆっくり」（缓慢）或「ほとんど停滞」（几乎停滞）。"
     : "Course is where it is going"+(c.move_deg!=null?" ("+c.move_deg+"°, toward "+compass(c.move_deg)+")":"")+". Wind direction uses the opposite convention. When movement is slow JMA gives no number, only ゆっくり (slow) or ほとんど停滞 (nearly stationary)."]);
-  if(c.accuracy_jp) items.push(["位置 "+c.accuracy_jp+" = "+jp(c.accuracy_jp), lang==="zh"
+  if(c.accuracy_jp) items.push(["位置 "+c.accuracy_jp+" = "+jp(c.accuracy_jp), lang!=="en"
     ? "定位精度：正確（准确）／ほぼ正確（大致准确）／不確実（不确定）。连现在的位置都分等级，预报位置的不确定只会更大。"
     : "Position accuracy: 正確 exact / ほぼ正確 nearly exact / 不確実 uncertain. Even the present position is graded — forecast positions are looser still."]);
-  if((c.storm_radii||[]).length) items.push(["暴風域 "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang==="zh"
+  if((c.storm_radii||[]).length) items.push(["暴風域 "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
     ? "暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。"
     : "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold."]);
   var f0=(s.forecast||[])[0];
-  if(f0&&f0.circle_km) items.push(["予報円 "+f0.circle_km+" km @ +"+f0.tau+"h", lang==="zh"
+  if(f0&&f0.circle_km) items.push(["予報円 "+f0.circle_km+" km @ +"+f0.tau+"h", lang!=="en"
     ? "预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。"
     : "The forecast circle: a 70% chance the centre falls inside it. A bigger circle means a less predictable track, and says nothing about intensity. Watch it grow with lead time — that is uncertainty made visible."]);
   items.forEach(function(p){
@@ -763,7 +769,7 @@ function decodeList(s){
 function stormLabel(s){
   var n=String(s.typhoon_number||"");
   if(s.name_en && /^\d+$/.test(n))
-    return (lang==="zh"?"台风 "+n.slice(-2)+" 号 ":"Typhoon "+n.slice(-2)+" ")+s.name_en;
+    return (lang!=="en"?"台风 "+n.slice(-2)+" 号 ":"Typhoon "+n.slice(-2)+" ")+s.name_en;
   if(s.name_en) return s.name_en;
   return L("tdLetter")+(n?" "+n:"");
 }
@@ -1030,7 +1036,7 @@ function renderRegion(){
 
   var bar=el("div","maptools");
   var ib=document.createElement("button");
-  ib.type="button"; ib.id="isoBtn"; ib.textContent=L("iso");
+  ib.type="button"; ib.id="isoBtn"; ib.textContent=X(L("iso"));
   ib.setAttribute("aria-pressed",SHOWISO?"true":"false");
   ib.addEventListener("click",function(){
     SHOWISO=!SHOWISO;
@@ -1165,7 +1171,7 @@ function renderAll(){
   document.getElementById("tagline").textContent=X(L("tagline"));
   document.getElementById("langBtn").textContent=NEXTLANG[lang];
   refreshStatus();
-  document.getElementById("hLearn").textContent=L("hLearn");
+  document.getElementById("hLearn").textContent=X(L("hLearn"));
   document.getElementById("credit").innerHTML=X(L("credit"));
   var sel=document.getElementById("refSel"), cur=refPlace().id;
   sel.textContent="";
@@ -1179,10 +1185,10 @@ function renderAll(){
     });
     sel.appendChild(og);
   });
-  document.getElementById("hRegion").textContent=L("hRegion");
-  document.getElementById("hStorms").textContent=L("hStorms");
-  document.getElementById("hOther").textContent=L("hOther");
-  document.getElementById("hTrend").textContent=L("hTrend");
+  document.getElementById("hRegion").textContent=X(L("hRegion"));
+  document.getElementById("hStorms").textContent=X(L("hStorms"));
+  document.getElementById("hOther").textContent=X(L("hOther"));
+  document.getElementById("hTrend").textContent=X(L("hTrend"));
   // The explanation sits first, in front of the reader, then the working
   // below it. No modes: one page, top to bottom.
   renderFresh(); renderSimple(); renderRegion(); renderTrend(); renderStorms(); renderOthers(); renderLearn();
@@ -1214,12 +1220,12 @@ function refreshStatus(){
   var b=document.getElementById("updBtn"), stale=dataAge()>=CYCLE_MIN;
   var due=nextDueClock();
   if(stale||!due){
-    b.textContent=L("reload");
+    b.textContent=X(L("reload"));
     b.disabled=false;
     b.removeAttribute("aria-disabled");
     b.style.opacity="";
   } else {
-    b.textContent=fill(L("nextAt"),{t:due});
+    b.textContent=X(fill(L("nextAt"),{t:due}));
     b.disabled=true;
     b.setAttribute("aria-disabled","true");
     b.style.opacity=".65";
