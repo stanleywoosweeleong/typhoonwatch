@@ -11,7 +11,12 @@
 <style>
 :root{
   --bg:#0a1420; --panel:#0f1f2e; --panel2:#132738; --line:#1e3648;
-  --ink:#dbe7f1; --dim:#7f94a7; --faint:#4e6478;
+  /* Contrast is compressed at BOTH ends for a dark screen read outdoors:
+     nothing goes to pure white, which glares, and nothing sits at the old
+     --faint, which measured 3.0:1 against the background and vanished in
+     sunlight. Ratios against --bg: ink 13.6, hi 14.9, dim 8.6, faint 6.0. */
+  --ink:#d5e2ed; --hi:#e2ebf4; --dim:#9fb3c6; --faint:#7f95a8;
+  --soft:#a8bccd;
   --amber:#ffb020; --red:#ff5b52; --teal:#43c2ab;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
@@ -19,19 +24,19 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
-  font-size:15px;line-height:1.55;padding:0 0 48px;
+  font-size:15.5px;line-height:1.62;padding:0 0 48px;
   padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .wrap{max-width:760px;margin:0 auto;padding:0 14px}
 header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
 h1{margin:0;font-size:27px;font-weight:800;letter-spacing:.22em}
 h1 .lat{letter-spacing:.04em;font-size:19px;color:var(--dim);font-weight:700}
-.sub{color:var(--dim);font-size:12.5px;margin-top:3px;letter-spacing:.04em}
+.sub{color:var(--dim);font-size:13.5px;margin-top:3px;letter-spacing:.04em}
 .tools{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
 button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
   border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer}
 button:hover{border-color:var(--faint)}
 /* Language button: what you are reading now, then what a tap gives you. */
-.nx{color:var(--dim);font-size:12px;margin-left:7px}
+.nx{color:var(--dim);font-size:12.5px;margin-left:7px}
 button:disabled{cursor:default;border-style:dashed}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
@@ -49,52 +54,52 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
   height:20px;padding:0 5px;margin-right:8px;border-radius:10px;background:var(--amber);
   color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:700;position:relative;top:-2px}
 .badges{display:flex;gap:6px;flex-wrap:wrap}
-.badge{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:3px 7px;
+.badge{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:3px 7px;
   border-radius:5px;background:#1d3d55;color:#bfe0f5;white-space:nowrap}
 .badge.hot{background:#4a1d1a;color:#ffb4ae}
 .badge.amb{background:#3a2c0d;color:#ffd489}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;margin-top:12px}
 .cell{background:var(--panel2);border-radius:8px;padding:8px 10px}
-.cell .k{font-size:11px;color:var(--dim);letter-spacing:.05em}
+.cell .k{font-size:12px;color:var(--dim);letter-spacing:.05em}
 .cell .v{font-family:var(--mono);font-size:16px;margin-top:1px}
 .v.hot{color:var(--red);font-weight:700}
 .rangeline{margin-top:12px;font-size:13.5px;background:var(--panel2);border-radius:8px;padding:9px 11px}
 .rangeline .num{font-family:var(--mono);color:var(--amber)}
-.rangeline .note{display:block;color:var(--dim);font-size:12px;margin-top:3px}
-.plain{margin:9px 0 0;font-size:15.5px;line-height:1.65}
-.plain:first-of-type{font-size:18px;font-weight:700;color:#fff}
-.mapwhat{font-size:12.5px;color:#93aabe;margin-top:11px;line-height:1.5}
+.rangeline .note{display:block;color:var(--dim);font-size:13px;margin-top:3px}
+.plain{margin:9px 0 0;font-size:16px;line-height:1.72}
+.plain:first-of-type{font-size:18.5px;font-weight:700;color:var(--hi)}
+.mapwhat{font-size:13.5px;color:var(--soft);margin-top:11px;line-height:1.5}
 .seasonline{font-size:13px;color:var(--dim);margin-bottom:8px}
 .maptools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
-.maptime{font-size:11.5px;color:var(--faint);font-family:var(--mono)}
+.maptime{font-size:12.5px;color:var(--faint);font-family:var(--mono)}
 .plotwrap{margin-top:9px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
 svg.plot{display:block;width:100%;height:auto}
-.caption{font-size:12px;color:#93aabe;margin-top:6px;text-align:right;line-height:1.5}
+.caption{font-size:13px;color:var(--soft);margin-top:6px;text-align:right;line-height:1.5}
 details{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
 summary{cursor:pointer;font-size:13.5px;color:var(--dim);list-style:none}
 summary::-webkit-details-marker{display:none}
 summary:before{content:"▸ ";color:var(--faint)}
 details[open]>summary:before{content:"▾ "}
 summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px}
-pre.tty{font-family:var(--mono);font-size:11.5px;line-height:1.45;color:#a9c6dc;
+pre.tty{font-family:var(--mono);font-size:12.5px;line-height:1.45;color:#a9c6dc;
   background:#070e16;border:1px solid var(--line);border-radius:7px;
   padding:11px;overflow-x:auto;white-space:pre;margin:9px 0 0}
 .decode{margin:9px 0 0;padding:0;list-style:none}
-.decode li{padding:7px 0;border-bottom:1px dashed var(--line)}
+.decode li{padding:8px 0;border-bottom:1px dashed var(--line)}
 .decode li:last-child{border-bottom:0}
-.decode code{font-family:var(--mono);font-size:12.5px;color:var(--amber);display:block}
-.decode span{font-size:13px;color:var(--dim)}
+.decode code{font-family:var(--mono);font-size:13.5px;color:var(--amber);display:block}
+.decode span{font-size:14px;color:var(--dim)}
 .inv{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
   padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
 .inv:last-of-type{border-bottom:0}
-.inv .pos{font-family:var(--mono);color:var(--dim);font-size:12px;margin-top:2px}
-h2{font-size:13px;letter-spacing:.12em;color:var(--dim);font-weight:700;
+.inv .pos{font-family:var(--mono);color:var(--dim);font-size:13px;margin-top:2px}
+h2{font-size:13.5px;letter-spacing:.12em;color:var(--dim);font-weight:700;
   text-transform:uppercase;margin:26px 0 10px}
 .empty{background:var(--panel);border:1px dashed var(--line);border-radius:10px;
-  padding:22px 16px;text-align:center;color:var(--dim);font-size:14px}
+  padding:22px 16px;text-align:center;color:var(--dim);font-size:14.5px}
 footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
-  font-size:11.5px;color:var(--faint);line-height:1.7}
-.stamp{font-family:var(--mono);font-size:10.5px;color:#3d5266;margin-top:8px}
+  font-size:12.5px;color:var(--faint);line-height:1.7}
+.stamp{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
 @media (prefers-reduced-motion:no-preference){.card{animation:rise .25s ease both}}
 @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 </style>
@@ -138,7 +143,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.5";
+var VERSION = "v3.1.9";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -263,7 +268,7 @@ var T = {
       "Usually a transition: mid-level moisture arrives before deep convection, or an outer band is decaying. Pressure barely moves over 24 h. This is the hardest state to call and the worst one to bet on — wait for the next update and see which way it breaks."],
      ["Why 24 hours and not 3",
       "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."]],
-    trendNote:"The rules, written out so you can argue with them: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
+    trendNote:"Here are the rules, so you can judge them for yourself: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
     nextAt:"Next {t}", reload:"Reload", nextDue:"next update about {t}",
     loadFail:"Fetch failed:", openData:"Open the data file directly →",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
@@ -511,7 +516,7 @@ function coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,width,colour){
       } else { drawing=false; }
     }
     if(any) out+='<path d="'+d.trim()+'" fill="none" stroke="'+colour+
-                 '" stroke-width="'+width+'" stroke-linejoin="round"/>';
+                 '" stroke-width="'+width+'" stroke-linejoin="round" stroke-linecap="round"/>';
   }
   return out;
 }
@@ -556,7 +561,8 @@ function isobarPaths(P,PX,PY){
   });
   // Violet, deliberately unlike the blue-grey coastline: on a dark map two
   // line families in the same hue read as one drawing.
-  out+='<path d="'+d2.trim()+'" fill="none" stroke="#a78bd0" stroke-width="1" opacity="0.8"/>';
+  out+='<path d="'+d2.trim()+'" fill="none" stroke="#a78bd0" stroke-width="'+
+       (0.95*mapScale()).toFixed(2)+'" opacity="0.78"/>';
 
   // One value label per level, so a bullseye can be read as 1004 or 1009
   // rather than guessed at. Placed on that level's rightmost segment.
@@ -567,29 +573,56 @@ function isobarPaths(P,PX,PY){
   });
   Object.keys(best).forEach(function(k){
     out+='<text x="'+(best[k][0]+3).toFixed(1)+'" y="'+(best[k][1]-3).toFixed(1)+
-         '" fill="#a78bd0" font-size="9" font-family="monospace" opacity="0.9">'+k+'</text>';
+         '" fill="#a78bd0" font-size="'+(9.5*mapScale()).toFixed(1)+
+         '" font-family="monospace" opacity="0.92">'+k+'</text>';
   });
   return out;
 }
 
 /* ---- regional overview ---------------------------------------------- */
+/* The plots are drawn in a 680-unit viewBox stretched to the column width,
+   so on a phone every label renders at about HALF the size it asks for — an
+   11-unit label lands at 5.6px on a 390px screen. Everything in the plots is
+   therefore sized in rendered pixels and multiplied by this factor, and the
+   label-collision arithmetic uses the same number, so the drawn size and the
+   measured size can never drift apart. */
+function mapScale(){
+  var vw=(typeof window!=="undefined"&&window.innerWidth)||760;
+  var col=Math.min(760,vw)-28-14;          // .wrap padding, then .plotwrap
+  if(!(col>80)) col=680;
+  return Math.max(0.85,Math.min(2.4,680/col));
+}
+
+/* Coastlines carry the whole geography of these maps, and a hairline reads
+   as a smudge on a phone held at arm's length in daylight. Width is given in
+   RENDERED pixels, a little heavier on a narrow screen where the same line
+   has less area to work with. */
+function coastW(K,base){ return +(((K>1.3?base+0.3:base))*K).toFixed(2); }
+
 /* Latitude ticks: south of the equator is S, not a negative N. */
 function latTick(g){ return (g<0?(-g)+"S":g+"N"); }
 
 /* The equator is the whole reason Malaysia is not typhoon country, so it
    belongs on every frame that contains it, not only the region map. It
    also labels itself, which is why the graticule skips its "0N" tick. */
-function equatorSVG(W,PY,minLa,maxLa){
+function equatorSVG(W,PY,minLa,maxLa,K){
   if(minLa>0||maxLa<0) return "";
-  var y=PY(0).toFixed(1);
+  var y=PY(0).toFixed(1), fs=(10.5*K).toFixed(1);
   return '<line x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+
-         '" stroke="#3a5a2e" stroke-width="1" stroke-dasharray="7 6"/>'+
-         '<text x="6" y="'+(PY(0)-5).toFixed(1)+'" fill="#5e8a4a" font-size="10">'+
-         X(lang!=="en"?"赤道":"Equator")+'</text>';
+         '" stroke="#476e39" stroke-width="'+K.toFixed(2)+'" stroke-dasharray="'+
+         (7*K).toFixed(1)+' '+(6*K).toFixed(1)+'"/>'+
+         '<text x="'+(6*K).toFixed(1)+'" y="'+(PY(0)-5*K).toFixed(1)+
+         '" fill="#7aa862" font-size="'+fs+'">'+X(lang!=="en"?"赤道":"Equator")+'</text>';
 }
 
 function overviewMap(storms,others,ref){
   var W=680, H=Math.round(W*(REGION.n-REGION.s)/(REGION.e-REGION.w));
+  var K=mapScale();                         // rendered px -> user units
+  var FSG=+(10*K).toFixed(1),               // graticule ticks
+      FSL=+(11.5*K).toFixed(1),             // storm and place names
+      FSO=+(10.5*K).toFixed(1),             // GDACS names
+      FSN=+(10*K).toFixed(1),               // the number inside a dot
+      RD=+(7.5*K).toFixed(1);               // storm dot radius
   function PX(lo){ return (lo-REGION.w)/(REGION.e-REGION.w)*W; }
   function PY(la){ return H-(la-REGION.s)/(REGION.n-REGION.s)*H; }
   var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="region">';
@@ -599,13 +632,13 @@ function overviewMap(storms,others,ref){
     svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#132030"/>';
     // 0 gets no "0N": the equator is drawn separately below and labels itself.
     if(g!==0)
-      svg+='<text x="3" y="'+(PY(g)-3).toFixed(1)+'" fill="#31465a" font-size="9" font-family="monospace">'+
-           latTick(g)+'</text>';
+      svg+='<text x="'+(3*K).toFixed(1)+'" y="'+(PY(g)-3*K).toFixed(1)+
+           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+latTick(g)+'</text>';
   }
   if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY);
-  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,0.8,"#2b4f63");
+  svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,1.15),"#4a7c97");
 
-  svg+=equatorSVG(W,PY,REGION.s,REGION.n);
+  svg+=equatorSVG(W,PY,REGION.s,REGION.n,K);
 
   /* Colour on this map already says WHAT a thing is — amber = JMA storm,
      hollow ring = GDACS, white = your place — so it cannot also say WHICH
@@ -616,20 +649,21 @@ function overviewMap(storms,others,ref){
   var TRACKDASH=["5 4","2 5","10 4","1 4","8 3 2 3"];
   var LBOX=[];                       // boxes already occupied on the canvas
   for(g=-10;g<=REGION.n;g+=10)       // graticule labels down the left edge
-    if(g!==0) LBOX.push({x:3,y:PY(g)-3,w:22});
-  LBOX.push({x:6,y:PY(0)-5,w:26});   // and the equator caption
+    if(g!==0) LBOX.push({x:3*K,y:PY(g)-3*K,w:2.4*FSG});
+  LBOX.push({x:6*K,y:PY(0)-5*K,w:2.6*FSG});   // and the equator caption
   function labelW(t){
     var w=0,i;
-    for(i=0;i<t.length;i++) w+=(t.charCodeAt(i)>0x2e80?11:6.2);   // CJK is wide
+    for(i=0;i<t.length;i++) w+=FSL*(t.charCodeAt(i)>0x2e80?1:0.56);   // CJK is wide
     return w;
   }
-  /* A label box is x..x+w wide and y-11..y+3 tall (font-size 11, baseline y). */
+  /* A label box is x..x+w wide, one font-size above the baseline and a
+     quarter of one below it — measured from FSL so it follows the scale. */
   function boxHits(a){
-    var top=a.y-11, bot=a.y+3, i, b;
+    var top=a.y-FSL, bot=a.y+FSL*0.27, i, b;
     if(a.x<2||a.x+a.w>W-2||top<0||bot>H) return true;
     for(i=0;i<LBOX.length;i++){
       b=LBOX[i];
-      if(a.x<b.x+b.w && b.x<a.x+a.w && top<b.y+3 && b.y-11<bot) return true;
+      if(a.x<b.x+b.w && b.x<a.x+a.w && top<b.y+FSL*0.27 && b.y-FSL<bot) return true;
     }
     return false;
   }
@@ -637,14 +671,14 @@ function overviewMap(storms,others,ref){
      forecast dots crowd the up-left side. But when below-right is taken by
      a second storm, up-left is exactly the corner that has come free. */
   function placeLabel(px,py,txt){
-    var w=labelW(txt), i, c,
-        cand=[[px+11,py+17],[px-11-w,py-11],[px+11,py-11],[px-11-w,py+17]];
+    var w=labelW(txt), o=RD+3.5*K, d=RD+1.5*FSL*0.62, i, c,
+        cand=[[px+o,py+d],[px-o-w,py-d*0.65],[px+o,py-d*0.65],[px-o-w,py+d]];
     for(i=0;i<cand.length;i++){
       c={x:cand[i][0],y:cand[i][1],w:w};
       if(!boxHits(c)) return c;
     }
     for(i=1;i<=6;i++){                 // last resort: step it down the page
-      c={x:cand[0][0],y:cand[0][1]+14*i,w:w};
+      c={x:cand[0][0],y:cand[0][1]+1.25*FSL*i,w:w};
       if(!boxHits(c)) return c;
     }
     return {x:cand[0][0],y:cand[0][1],w:w};   // overlap rather than drop a name
@@ -663,23 +697,24 @@ function overviewMap(storms,others,ref){
     if(!c||c.lat==null) return;      // no position: no dot. The card still lists it.
     var px=+PX(c.lon).toFixed(1), py=+PY(c.lat).toFixed(1);
     plot.push({s:s,n:i+1,px:px,py:py,c:c});
-    LBOX.push({x:px-8,y:py+4,w:16});
+    LBOX.push({x:px-RD,y:py+FSL*0.27,w:2*RD});
   });
   plot.forEach(function(p){
     var pts=[[p.c.lon,p.c.lat]];
     (p.s.forecast||[]).forEach(function(f){ if(f.lat!=null) pts.push([f.lon,f.lat]); });
     if(pts.length>1)
       svg+='<path d="'+pts.map(function(q,i){return (i?"L":"M")+PX(q[0]).toFixed(1)+" "+PY(q[1]).toFixed(1);}).join(" ")+
-           '" fill="none" stroke="#43c2ab" stroke-width="1.5" stroke-dasharray="'+
-           TRACKDASH[(p.n-1)%TRACKDASH.length]+'"/>';
-    svg+='<circle cx="'+p.px+'" cy="'+p.py+'" r="7.5" fill="#ffb020"/>'+
+           '" fill="none" stroke="#43c2ab" stroke-width="'+(1.6*K).toFixed(2)+
+           '" stroke-dasharray="'+TRACKDASH[(p.n-1)%TRACKDASH.length]
+             .split(" ").map(function(d){return (d*K).toFixed(1);}).join(" ")+'"/>';
+    svg+='<circle cx="'+p.px+'" cy="'+p.py+'" r="'+RD+'" fill="#ffb020"/>'+
          '<text x="'+p.px+'" y="'+p.py+'" dy=".33em" text-anchor="middle" fill="#0a1420"'+
-         ' font-size="10" font-weight="700" font-family="monospace">'+p.n+'</text>';
+         ' font-size="'+FSN+'" font-weight="700" font-family="monospace">'+p.n+'</text>';
     var t=X(stormLabel(p.s)).replace(/[<>&]/g,"");
     var pos=placeLabel(p.px,p.py,t);
     LBOX.push(pos);
     svg+='<text x="'+pos.x.toFixed(1)+'" y="'+pos.y.toFixed(1)+
-         '" fill="#ffd489" font-size="11" font-weight="700">'+t+'</text>';
+         '" fill="#ffd489" font-size="'+FSL+'" font-weight="700">'+t+'</text>';
   });
   (others||[]).forEach(function(o){
     if(o.also_jma||o.lat==null) return;
@@ -688,13 +723,15 @@ function overviewMap(storms,others,ref){
     var ox=+PX(o.lon).toFixed(1), oy=+PY(o.lat).toFixed(1);
     var ot=String(o.name||"").replace(/[<>&]/g,"");
     var op=placeLabel(ox,oy,ot); LBOX.push(op);
-    svg+='<circle cx="'+ox+'" cy="'+oy+'" r="5" fill="none" stroke="'+col+'" stroke-width="2"/>'+
+    svg+='<circle cx="'+ox+'" cy="'+oy+'" r="'+(5*K).toFixed(1)+'" fill="none" stroke="'+col+
+         '" stroke-width="'+(2*K).toFixed(2)+'"/>'+
          '<text x="'+op.x.toFixed(1)+'" y="'+op.y.toFixed(1)+
-         '" fill="'+col+'" font-size="10">'+ot+'</text>';
+         '" fill="'+col+'" font-size="'+FSO+'">'+ot+'</text>';
   });
-  svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#fff" stroke="#0a1420" stroke-width="1"/>'+
-       '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#fff" font-size="11" font-weight="700">'+
-       refTxt+'</text>';
+  svg+='<circle cx="'+rx+'" cy="'+ry+'" r="'+(4*K).toFixed(1)+'" fill="#e2ebf4" stroke="#0a1420"'+
+       ' stroke-width="'+K.toFixed(2)+'"/>'+
+       '<text x="'+(rx+6*K).toFixed(1)+'" y="'+(ry+4*K).toFixed(1)+
+       '" fill="#e2ebf4" font-size="'+FSL+'" font-weight="700">'+refTxt+'</text>';
   return svg+'</svg>';
 }
 
@@ -730,37 +767,45 @@ function trackPlot(s,ref){
   function PY(la){ return H-(la-minLa)/(maxLa-minLa)*H; }
   var kmPerPx=(maxLa-minLa)*111/H;
 
+  var K=mapScale();
+  var FSG=+(10*K).toFixed(1), FST=+(11*K).toFixed(1), FSL=+(13*K).toFixed(1);
   var g,svg='<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="track">';
-  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,1.1,"#2b4f63");
+  svg+=coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,coastW(K,1.35),"#4a7c97");
   for(g=Math.ceil(minLo/5)*5; g<=maxLo; g+=5)
     svg+='<line x1="'+PX(g).toFixed(1)+'" y1="0" x2="'+PX(g).toFixed(1)+'" y2="'+H+'" stroke="#16293a"/>'+
-         '<text x="'+(PX(g)+3).toFixed(1)+'" y="'+(H-4)+'" fill="#3d5266" font-size="10" font-family="monospace">'+g+'E</text>';
+         '<text x="'+(PX(g)+3*K).toFixed(1)+'" y="'+(H-4*K).toFixed(1)+
+          '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+g+'E</text>';
   for(g=Math.ceil(minLa/5)*5; g<=maxLa; g+=5){
     svg+='<line x1="0" y1="'+PY(g).toFixed(1)+'" x2="'+W+'" y2="'+PY(g).toFixed(1)+'" stroke="#16293a"/>';
     if(g!==0)   // the equator carries its own label, drawn next
-      svg+='<text x="4" y="'+(PY(g)-4).toFixed(1)+'" fill="#3d5266" font-size="10" font-family="monospace">'+
-           latTick(g)+'</text>';
+      svg+='<text x="'+(4*K).toFixed(1)+'" y="'+(PY(g)-4*K).toFixed(1)+
+           '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace">'+latTick(g)+'</text>';
   }
-  svg+=equatorSVG(W,PY,minLa,maxLa);
+  svg+=equatorSVG(W,PY,minLa,maxLa,K);
 
   if(pts.length>1){
     svg+='<path d="'+pts.map(function(p,i){return (i?"L":"M")+PX(p.lon).toFixed(1)+" "+PY(p.lat).toFixed(1);}).join(" ")+
-         '" fill="none" stroke="#43c2ab" stroke-width="2" stroke-dasharray="6 5"/>';
+         '" fill="none" stroke="#43c2ab" stroke-width="'+(2*K).toFixed(2)+
+         '" stroke-dasharray="'+(6*K).toFixed(1)+' '+(5*K).toFixed(1)+'"/>';
   }
   // Forecast circles first, so the track and dots sit on top of them.
   pts.forEach(function(p){
     if(!p.circle) return;
     svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+(p.circle/kmPerPx).toFixed(1)+
-         '" fill="rgba(67,194,171,0.07)" stroke="#2d7a6c" stroke-width="1" stroke-dasharray="3 4"/>';
+         '" fill="rgba(67,194,171,0.07)" stroke="#2d7a6c" stroke-width="'+K.toFixed(2)+
+         '" stroke-dasharray="'+(3*K).toFixed(1)+' '+(4*K).toFixed(1)+'"/>';
   });
   pts.forEach(function(p,i){
-    svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+(i?4:7)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
-    if(i) svg+='<text x="'+(PX(p.lon)+7).toFixed(1)+'" y="'+(PY(p.lat)-6).toFixed(1)+
-               '" fill="#7f94a7" font-size="11" font-family="monospace">+'+p.tau+'h</text>';
+    svg+='<circle cx="'+PX(p.lon).toFixed(1)+'" cy="'+PY(p.lat).toFixed(1)+'" r="'+
+         ((i?4:7)*K).toFixed(1)+'" fill="'+(i?"#43c2ab":"#ffb020")+'"/>';
+    if(i) svg+='<text x="'+(PX(p.lon)+7*K).toFixed(1)+'" y="'+(PY(p.lat)-6*K).toFixed(1)+
+               '" fill="#9fb3c6" font-size="'+FST+'" font-family="monospace">+'+p.tau+'h</text>';
   });
   var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
-  svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
-       '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
+  svg+='<circle cx="'+rx+'" cy="'+ry+'" r="'+(4*K).toFixed(1)+'" fill="#e2ebf4" stroke="#081019"'+
+       ' stroke-width="'+K.toFixed(2)+'"/>'+
+       '<text x="'+(rx+6*K).toFixed(1)+'" y="'+(ry+4*K).toFixed(1)+
+       '" fill="#e2ebf4" font-size="'+FST+'">'+
        X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
   // Name sits with the storm. Western Pacific tracks run up and to the LEFT
   // (northwest), so the forecast dots and their +NNh labels crowd that side.
@@ -768,17 +813,19 @@ function trackPlot(s,ref){
   // crossed — and only move it when the frame edge forces the issue.
   if(s._label && pts.length){
     var lbl=X(String(s._label)).replace(/[<>&]/g,"");
-    var wpx=lbl.length*8.2+6;                     // rough advance at 14px bold
+    var wpx=0;
+    for(var wi=0;wi<lbl.length;wi++) wpx+=FSL*(lbl.charCodeAt(wi)>0x2e80?1:0.58);
+    wpx+=6*K;
     var ax=PX(pts[0].lon), ay=PY(pts[0].lat);
-    var lx=ax+13, anchor="start";
-    if(lx+wpx > W-6){ lx=ax-13; anchor="end"; }   // flip to the left instead
-    if(anchor==="start" && lx<6) lx=6;
-    if(anchor==="end" && lx-wpx<6){ lx=ax+13; anchor="start"; }
-    var ly=ay+24;                                  // below by default
-    if(ly > H-8) ly=ay-16;                         // unless it would fall off
-    svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#ffd489" font-size="14"'+
+    var lx=ax+13*K, anchor="start";
+    if(lx+wpx > W-6*K){ lx=ax-13*K; anchor="end"; }   // flip to the left instead
+    if(anchor==="start" && lx<6*K) lx=6*K;
+    if(anchor==="end" && lx-wpx<6*K){ lx=ax+13*K; anchor="start"; }
+    var ly=ay+1.75*FSL;                               // below by default
+    if(ly > H-8*K) ly=ay-1.2*FSL;                     // unless it would fall off
+    svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#ffd489" font-size="'+FSL+'"'+
          ' font-weight="700" text-anchor="'+anchor+'" paint-order="stroke"'+
-         ' stroke="#081019" stroke-width="3.5">'+lbl+'</text>';
+         ' stroke="#081019" stroke-width="'+(3.5*K).toFixed(1)+'">'+lbl+'</text>';
   }
   return svg+'</svg>';
 }
@@ -1315,6 +1362,16 @@ function load(force){
         });
     });
 }
+
+/* Plot text is sized from the viewport, so a rotation or a resized window
+   has to redraw or the labels keep the old scale. Debounced, and only when
+   the width actually changed — iOS fires resize when the URL bar hides. */
+var RSZW=(typeof window!=="undefined"&&window.innerWidth)||0, RSZT=null;
+if(typeof window!=="undefined") window.addEventListener("resize",function(){
+  if(window.innerWidth===RSZW) return;
+  RSZW=window.innerWidth;
+  clearTimeout(RSZT); RSZT=setTimeout(renderAll,250);
+});
 
 document.getElementById("langBtn").addEventListener("click",function(){
   lang = LANGS[(LANGS.indexOf(lang)+1)%LANGS.length];
