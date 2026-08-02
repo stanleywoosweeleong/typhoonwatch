@@ -46,6 +46,10 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
 .fresh.stale{border-left-color:var(--red);background:#26161a;color:#ffd7d4}
 .fresh.warnish{border-left-color:var(--amber);background:#241d10}
 .fresh b{font-family:var(--mono)}
+/* Partial-failure list. The fetcher can succeed overall and still lose a
+   storm, so what it could not get is named here rather than left blank. */
+.probs{display:block;margin-top:7px;font-size:12.5px;line-height:1.55;color:#ffd489;
+  font-family:var(--mono);word-break:break-word}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;
   padding:14px;margin-bottom:16px}
 .cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
@@ -143,7 +147,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.9";
+var VERSION = "v3.1.11";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -206,7 +210,7 @@ var T = {
     nextAt:"下次 {t}", reload:"重新读取", nextDue:"下次更新约 {t}",
     loadFail:"读取失败：", openData:"直接打开数据文件 →",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
-    iso:"等压线", isoAt:"气压场", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
+    iso:"等压线", isoAt:"气压场", presAt:"{place}：<b>{hpa}</b> 百帕",
     presChg:"24 小时 {arrow}{chg} 百帕", presSteady:"24 小时几乎无变化",
     presFalls:"降压最明显：", presNote:"等压线为 ECMWF 模式的海平面气压场（间隔 1 百帕），不是人工分析图，也不是实测。本页不判读、不命名任何低压系统——闭合的等压线请自行判断。热带气压梯度本来就小，所以间隔用 1 百帕而不是天气图常见的 4 百帕。格点间距 1 度（约 110 公里，范围 100–122°E、3°S–22°N）：闭合圈代表模式在该处确有气压低点。这个间距足以画出婆罗洲涡旋量级的系统，但更小的对流性低压仍会画成菱形——形状太尖时，看位置就好，别看形状。",
     presNone:"暂无气压数据。",
@@ -220,7 +224,7 @@ var T = {
     alert:{red:"红色警报",orange:"橙色警报",green:"绿色"},
     away:"距 {place} {km} 公里",
 
-    other:"EN", hLearn:"读懂台风情报 · HOW TO READ",
+    hLearn:"读懂台风情报 · HOW TO READ",
     freshOk:"最新发表 {t}（{age} 前）· 抓取于 {fetch}",
     freshStale:"⚠ 数据可能过时：最新发表 {t}，已经 {age}。气象厅每 3 小时更新一次，超过 {h} 小时未更新请直接查看气象厅官网。",
     freshFail:"⚠ 上一次抓取失败（{when}）。以下是上一次成功的存档，可能已经过时。",
@@ -229,8 +233,7 @@ var T = {
     noStorm:"目前气象厅没有发表中的台风情报。平静期是正常的。",
     unknown:"未知：抓取还没有成功过一次，本页并不知道现在有没有台风。这里的空白不代表平静。请查看 GitHub Actions 日志。",
     pos:"中心位置", wind:"最大风速", gust:"最大瞬间风速", move:"移动",
-    press:"中心气压", tnum:"台风编号", acc:"定位精度", stormR:"暴风域", galeR:"强风域",
-    circle:"预报圆半径",
+    press:"中心气压", tnum:"台风编号", stormR:"暴风域", galeR:"强风域",
     rangeNow:"目前距离 {place} <span class=\"num\">{km} 公里</span>（方位 {dir}）",
     rangeMin:"预报路径最近点：<span class=\"num\">{km} 公里</span>，约 {tau} 小时后",
     rangeNote:"这是球面距离计算，不是对马来西亚的天气预报。距离远不等于没影响——西北太平洋的台风常靠加强东北季风涌流，把大雨送到半岛东岸。",
@@ -243,6 +246,7 @@ var T = {
     saffir:"换算约 {c}",
     problems:"本则情报未能完整解析：",
     demo:"演示数据（非真实情报）",
+    partial:"这次有部分数据没取到，下面列出来；其余照常显示。",
     credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
   en:{
@@ -272,7 +276,7 @@ var T = {
     nextAt:"Next {t}", reload:"Reload", nextDue:"next update about {t}",
     loadFail:"Fetch failed:", openData:"Open the data file directly →",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
-    iso:"Isobars", isoAt:"field", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
+    iso:"Isobars", isoAt:"field", presAt:"{place}: <b>{hpa}</b> hPa",
     presChg:"{arrow}{chg} hPa in 24 h", presSteady:"little change in 24 h",
     presFalls:"Largest falls: ", presNote:"Isobars are the ECMWF model sea-level pressure field at 1 hPa spacing — not a hand analysis and not an observation. This page does not interpret or name any low; a closed contour is yours to read. Tropical pressure gradients are slack, which is why the interval is 1 hPa rather than the 4 hPa of a typical weather chart. Grid spacing is 1 degree (about 110 km, over 100-122E and 3S-22N): a closed contour means the model really does have a pressure minimum there. This spacing resolves a Borneo-vortex-sized system, but anything smaller still renders angular — where the shape looks sharply diamond-like, trust the position and not the shape.",
     presNone:"No pressure data yet.",
@@ -286,7 +290,7 @@ var T = {
     alert:{red:"Red alert",orange:"Orange alert",green:"Green"},
     away:"{km} km from {place}",
 
-    other:"中文", hLearn:"HOW TO READ A TYPHOON BULLETIN",
+    hLearn:"HOW TO READ A TYPHOON BULLETIN",
     freshOk:"Issued {t} ({age} ago) · mirrored {fetch}",
     freshStale:"⚠ Possibly out of date: issued {t}, {age} old. JMA updates every 3 hours — past {h} hours, check JMA directly.",
     freshFail:"⚠ Last fetch failed ({when}). What follows is the last successful mirror and may be out of date.",
@@ -295,8 +299,8 @@ var T = {
     noStorm:"JMA has no active typhoon bulletins right now. Quiet spells are normal.",
     unknown:"Unknown — no fetch has ever succeeded, so this page does not know whether a storm exists. This blank is not a quiet period. Check the GitHub Actions log.",
     pos:"Centre position", wind:"Max sustained", gust:"Max gust", move:"Movement",
-    press:"Central pressure", tnum:"Typhoon number", acc:"Position accuracy",
-    stormR:"Storm area", galeR:"Gale area", circle:"Forecast circle",
+    press:"Central pressure", tnum:"Typhoon number",
+    stormR:"Storm area", galeR:"Gale area",
     rangeNow:"Now <span class=\"num\">{km} km</span> from {place} (bearing {dir})",
     rangeMin:"Closest forecast approach: <span class=\"num\">{km} km</span>, about {tau} h ahead",
     rangeNote:"A great-circle distance, not a forecast for Malaysia. Distant does not mean harmless — West Pacific typhoons often reach the east coast by strengthening the northeast monsoon surge.",
@@ -309,6 +313,7 @@ var T = {
     saffir:"≈ {c} equivalent",
     problems:"This bulletin did not fully parse:",
     demo:"DEMO DATA — not a real bulletin",
+    partial:"Some data did not arrive this time. What is missing is listed below; the rest is showing normally.",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
@@ -374,7 +379,8 @@ var JTERM={
   "最大瞬間風速":{zh:"最大瞬间风速",en:"max gust"},
   "位置":{zh:"位置",en:"position accuracy"},
   "暴風域":{zh:"暴风域",en:"storm-force wind area"},
-  "予報円":{zh:"预报圆",en:"forecast circle"}
+  "予報円":{zh:"预报圆",en:"forecast circle"},
+  "強風域":{zh:"强风域",en:"gale-force wind area"}
 };
 function jterm(t){
   var g=JTERM[t]; if(!g) return t;
@@ -500,6 +506,16 @@ function renderFresh(){
   }
   if(OFFLINE) html+=" "+L("offline");
   box.innerHTML=X(html);   // built as a string, so it misses el()'s boundary
+
+  /* A run can succeed overall and still lose one storm, one GDACS call or the
+     pressure grid — fetch_ok stays true and `generated` advances, so nothing
+     else on the page would show it. Silence there is exactly the failure this
+     app refuses: name what did not arrive, in the fetcher's own words. */
+  var probs=(DOC.errors||[]).filter(function(e){ return e; });
+  if(probs.length){
+    if(!box.classList.contains("stale")) box.classList.add("warnish");
+    box.appendChild(el("span","probs",L("partial")+" "+probs.join(" · ")));
+  }
 }
 
 /* ---- coastline ------------------------------------------------------ */
@@ -859,6 +875,9 @@ function decodeList(s){
   if((c.storm_radii||[]).length) items.push([jterm("暴風域")+" · "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
     ? "暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。"
     : "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold."]);
+  if((c.gale_radii||[]).length) items.push([jterm("強風域")+" · "+c.gale_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
+    ? "强风域＝风速 15 m/s 以上的范围，比暴风域大得多，也是先到的那一圈。同样按方位分开列。"
+    : "The gale area is where winds reach 15 m/s or more. It is much larger than the storm area and it arrives first. Listed per sector, for the same reason."]);
   var f0=(s.forecast||[])[0];
   if(f0&&f0.circle_km) items.push([jterm("予報円")+" · "+f0.circle_km+" km @ +"+f0.tau+"h", lang!=="en"
     ? "预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。"
@@ -1087,15 +1106,20 @@ function stormCard(s,n){
   if(c.lat!=null) g.appendChild(cell(L("pos"), fmtLat(c.lat)+"  "+fmtLon(c.lon)));
   if(c.wind_ms!=null) g.appendChild(cell(L("wind"), c.wind_ms+" "+L("ms")+" / "+c.wind_kt+" "+L("kt"),
     c.wind_ms>=33?"hot":""));
-  if(c.gust_ms!=null) g.appendChild(cell(L("gust"), c.gust_ms+" "+L("ms")));
+  if(c.gust_ms!=null) g.appendChild(cell(L("gust"), c.gust_ms+" "+L("ms")+
+    (c.gust_kt!=null?" / "+c.gust_kt+" "+L("kt"):"")));
   if(c.pressure_hpa!=null) g.appendChild(cell(L("press"), c.pressure_hpa+" "+L("hpa")));
   if(c.move_deg!=null||c.speed_note_jp) g.appendChild(cell(L("move"),
     (c.move_deg!=null?compass(c.move_deg):"—")+" "+
-    (c.move_kt!=null?c.move_kt+" "+L("kt"):jp(c.speed_note_jp))));
+    (c.move_kmh!=null ? c.move_kmh+" "+L("kmh")+(c.move_kt!=null?" ("+c.move_kt+" "+L("kt")+")":"")
+     : c.move_kt!=null ? c.move_kt+" "+L("kt")
+     : jp(c.speed_note_jp))));
   if(s.typhoon_number) g.appendChild(cell(
     /^\d+$/.test(String(s.typhoon_number))?L("tnum"):L("desig"), String(s.typhoon_number)));
   if((c.storm_radii||[]).length) g.appendChild(cell(L("stormR"),
     Math.max.apply(null,c.storm_radii.map(function(r){return r.km;}))+" "+L("km")));
+  if((c.gale_radii||[]).length) g.appendChild(cell(L("galeR"),
+    Math.max.apply(null,c.gale_radii.map(function(r){return r.km;}))+" "+L("km")));
   card.appendChild(g);
 
   if(c.lat!=null){
@@ -1270,6 +1294,13 @@ function renderLearn(){
   });
 }
 
+var UPDREADY=false;
+function renderStamp(){
+  var s=document.getElementById("stamp");
+  s.textContent=(UPDREADY?X(lang!=="en"?"新版待重载 · ":"Update ready — reload · "):"")+
+                "TYPHOONWATCH "+VERSION+" · "+location.origin;
+}
+
 function renderAll(){
   document.documentElement.lang = lang==="tw"?"zh-Hant":lang==="zh"?"zh-Hans":"en";
   var b=document.getElementById("brand");
@@ -1300,6 +1331,7 @@ function renderAll(){
   // The explanation sits first, in front of the reader, then the working
   // below it. No modes: one page, top to bottom.
   renderFresh(); renderSimple(); renderRegion(); renderTrend(); renderStorms(); renderOthers(); renderLearn();
+  renderStamp();
 }
 
 /* The browser never calls a weather API — it fetches this repo's own
@@ -1407,14 +1439,13 @@ if("serviceWorker" in navigator){
       var w=reg.installing; if(!w) return;
       w.addEventListener("statechange",function(){
         if(w.state==="installed" && navigator.serviceWorker.controller){
-          var s=document.getElementById("stamp");
-          s.textContent=X(lang!=="en"?"新版待重载 · ":"Update ready — reload · ")+s.textContent;
+          UPDREADY=true; renderStamp();      // idempotent, and follows the language
         }
       });
     });
   }).catch(function(){});
 }
-document.getElementById("stamp").textContent="TYPHOONWATCH "+VERSION+" · "+location.origin;
+renderStamp();
 </script>
 </body>
 </html>
