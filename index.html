@@ -30,6 +30,7 @@ h1 .lat{letter-spacing:.04em;font-size:19px;color:var(--dim);font-weight:700}
 button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
   border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer}
 button:hover{border-color:var(--faint)}
+button:disabled{cursor:default;border-style:dashed}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
   border:1px solid var(--line);border-radius:7px;padding:6px 9px}
@@ -100,7 +101,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   <div class="sub" id="tagline"></div>
   <div class="tools">
     <button id="langBtn" type="button">EN</button>
-    <button id="refreshBtn" type="button">刷新</button>
+    <button id="updBtn" type="button"></button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
   </div>
 </header>
@@ -132,7 +133,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.0.3";
+var VERSION = "v3.1.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -192,7 +193,7 @@ var T = {
      ["为什么看 24 小时、不看 3 小时",
       "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"]],
     trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
-    upToDate:"已是最新（每 3 小时更新一次）。下次约",
+    nextAt:"下次 {t}", reload:"重新读取", nextDue:"下次更新约 {t}",
     loadFail:"读取失败：", openData:"直接打开数据文件 →",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
     iso:"等压线", isoAt:"气压场", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
@@ -209,7 +210,7 @@ var T = {
     alert:{red:"红色警报",orange:"橙色警报",green:"绿色"},
     away:"距 {place} {km} 公里",
 
-    other:"EN", refresh:"刷新", hLearn:"读懂台风情报 · HOW TO READ",
+    other:"EN", hLearn:"读懂台风情报 · HOW TO READ",
     freshOk:"最新发表 {t}（{age} 前）· 抓取于 {fetch}",
     freshStale:"⚠ 数据可能过时：最新发表 {t}，已经 {age}。气象厅每 3 小时更新一次，超过 {h} 小时未更新请直接查看气象厅官网。",
     freshFail:"⚠ 上一次抓取失败（{when}）。以下是上一次成功的存档，可能已经过时。",
@@ -258,7 +259,7 @@ var T = {
      ["Why 24 hours and not 3",
       "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."]],
     trendNote:"The rules, written out so you can argue with them: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
-    upToDate:"Already current (updates every 3 h). Next due about",
+    nextAt:"Next {t}", reload:"Reload", nextDue:"next update about {t}",
     loadFail:"Fetch failed:", openData:"Open the data file directly →",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
     iso:"Isobars", isoAt:"field", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
@@ -275,7 +276,7 @@ var T = {
     alert:{red:"Red alert",orange:"Orange alert",green:"Green"},
     away:"{km} km from {place}",
 
-    other:"中文", refresh:"Refresh", hLearn:"HOW TO READ A TYPHOON BULLETIN",
+    other:"中文", hLearn:"HOW TO READ A TYPHOON BULLETIN",
     freshOk:"Issued {t} ({age} ago) · mirrored {fetch}",
     freshStale:"⚠ Possibly out of date: issued {t}, {age} old. JMA updates every 3 hours — past {h} hours, check JMA directly.",
     freshFail:"⚠ Last fetch failed ({when}). What follows is the last successful mirror and may be out of date.",
@@ -446,6 +447,8 @@ function renderFresh(){
   } else if(newest!==null){
     html=fill(L("freshOk"),{t:"<b>"+bothT(new Date(newest).toISOString())+"</b>",
       age:ago(now-newest),fetch:DOC.generated?bothT(DOC.generated):"?"});
+    var due=nextDue();
+    if(due) html+=" · "+fill(L("nextDue"),{t:due+" "+L("myt")});
   } else {
     html=fill(L("freshOk"),{t:"—",age:"—",fetch:(DOC.generated||"?")});
   }
@@ -1088,7 +1091,7 @@ function renderAll(){
   b.textContent=X(L("brand")); b.appendChild(el("span","lat",L("lat")));
   document.getElementById("tagline").textContent=X(L("tagline"));
   document.getElementById("langBtn").textContent=NEXTLANG[lang];
-  document.getElementById("refreshBtn").textContent=L("refresh");
+  refreshStatus();
   document.getElementById("hLearn").textContent=L("hLearn");
   document.getElementById("credit").innerHTML=X(L("credit"));
   var sel=document.getElementById("refSel"), cur=refPlace().id;
@@ -1122,9 +1125,32 @@ function dataAge(){
   var t=DOC&&DOC.generated?Date.parse(DOC.generated):NaN;
   return isNaN(t)?Infinity:(Date.now()-t)/6e4;
 }
-function nextDue(){
-  var t=Date.parse(DOC.generated)+3*36e5;
-  return myt(new Date(t).toISOString())+" "+L("myt");
+function nextDue(){          // "08-02 15:45"
+  if(!DOC||!DOC.generated) return null;
+  var t=Date.parse(DOC.generated);
+  if(isNaN(t)) return null;
+  return myt(new Date(t+3*36e5).toISOString());
+}
+function nextDueClock(){     // just "15:45", for the button
+  var s=nextDue();
+  return s?s.slice(6):null;
+}
+/* The control states what it knows even when you never touch it, and only
+   invites a tap when a tap would actually do something. */
+function refreshStatus(){
+  var b=document.getElementById("updBtn"), stale=dataAge()>=CYCLE_MIN;
+  var due=nextDueClock();
+  if(stale||!due){
+    b.textContent=L("reload");
+    b.disabled=false;
+    b.removeAttribute("aria-disabled");
+    b.style.opacity="";
+  } else {
+    b.textContent=fill(L("nextAt"),{t:due});
+    b.disabled=true;
+    b.setAttribute("aria-disabled","true");
+    b.style.opacity=".65";
+  }
 }
 function load(force){
   if(!force && dataAge()<CYCLE_MIN){ renderAll(); return; }
@@ -1155,14 +1181,18 @@ document.getElementById("langBtn").addEventListener("click",function(){
   try{ localStorage.setItem(LS,lang); }catch(e){}
   renderAll();
 });
-document.getElementById("refreshBtn").addEventListener("click",function(){
-  if(dataAge()<CYCLE_MIN){
-    var s=document.getElementById("stamp");
-    s.textContent=L("upToDate")+" "+nextDue()+" · "+s.textContent;
-    renderAll(); return;
-  }
+document.getElementById("updBtn").addEventListener("click",function(){
+  if(dataAge()<CYCLE_MIN){ renderAll(); return; }   // disabled anyway; belt and braces
   load(true);
 });
+
+/* Once the publish window passes, fetch on our own so the page is current
+   without anyone tapping anything. Cheap: it is one file on the same origin,
+   and load() self-guards inside the 2.5 h window. */
+setInterval(function(){
+  if(!document.hidden && dataAge()>=CYCLE_MIN) load(true);
+  else refreshStatus();
+}, 60000);
 document.getElementById("refSel").addEventListener("change",function(e){
   try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
   renderAll();
