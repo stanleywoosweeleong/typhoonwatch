@@ -1,8 +1,8 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-08-02T09:44:48Z",
- "last_attempt": "2026-08-02T09:44:48Z",
+ "generated": "2026-08-02T11:07:24Z",
+ "last_attempt": "2026-08-02T11:07:24Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -619,82 +619,356 @@
   "model": "ECMWF IFS via Open-Meteo",
   "places": {
    "danang": {
-    "change24": 0.0,
-    "hpa": 1004.6
+    "change24": -0.4,
+    "hpa": 1005.2
    },
    "guangzhou": {
-    "change24": -0.6,
-    "hpa": 1005.8
+    "change24": -0.1,
+    "hpa": 1006.9
    },
    "haikou": {
-    "change24": 0.0,
-    "hpa": 1004.6
+    "change24": 0.3,
+    "hpa": 1005.4
    },
    "hongkong": {
-    "change24": -0.3,
-    "hpa": 1006.7
-   },
-   "kagoshima": {
-    "change24": -0.6,
-    "hpa": 1006.2
-   },
-   "kaohsiung": {
-    "change24": -0.1,
+    "change24": 0.3,
     "hpa": 1007.6
    },
+   "kagoshima": {
+    "change24": -0.3,
+    "hpa": 1007.3
+   },
+   "kaohsiung": {
+    "change24": -0.3,
+    "hpa": 1008.6
+   },
    "kb": {
-    "change24": 2.1,
-    "hpa": 1007.8
+    "change24": 0.7,
+    "hpa": 1007.5
    },
    "kk": {
-    "change24": 1.2,
-    "hpa": 1007.9
+    "change24": 1.5,
+    "hpa": 1009.5
    },
    "kuantan": {
-    "change24": 0.3,
-    "hpa": 1006.7
+    "change24": -0.2,
+    "hpa": 1007.1
    },
    "kuching": {
-    "change24": 1.4,
-    "hpa": 1007.0
+    "change24": 1.1,
+    "hpa": 1007.9
    },
    "manila": {
-    "change24": -0.8,
-    "hpa": 1006.7
+    "change24": -1.0,
+    "hpa": 1007.3
    },
    "naha": {
     "change24": -1.0,
-    "hpa": 1007.7
+    "hpa": 1008.4
    },
    "raub": {
     "change24": 0.7,
-    "hpa": 1009.5
+    "hpa": 1010.1
    },
    "sandakan": {
     "change24": 0.3,
-    "hpa": 1007.2
+    "hpa": 1008.4
    },
    "sanya": {
-    "change24": 0.0,
-    "hpa": 1004.5
+    "change24": -0.3,
+    "hpa": 1005.1
    },
    "taipei": {
-    "change24": -0.9,
-    "hpa": 1006.6
+    "change24": -0.8,
+    "hpa": 1007.7
    },
    "tokyo": {
-    "change24": 6.1,
-    "hpa": 1007.4
+    "change24": 7.1,
+    "hpa": 1009.6
    },
    "triang": {
-    "change24": -0.4,
-    "hpa": 1005.8
+    "change24": 0.0,
+    "hpa": 1007.4
    }
   }
  },
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
  "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
  "storms": [
+  {
+   "category": "TD",
+   "current": {
+    "accuracy_jp": "ほぼ正確",
+    "category": "TD",
+    "category_jp": "熱帯低気圧",
+    "circle_km": null,
+    "course_jp": "北北西",
+    "gale_radii": [],
+    "gust_kt": 45.0,
+    "gust_ms": 23.0,
+    "intensity": null,
+    "lat": 15.8,
+    "location_jp": "フィリピンの東",
+    "lon": 124.6,
+    "move_deg": 337.5,
+    "move_kmh": null,
+    "move_kt": null,
+    "part_jp": "実況",
+    "pressure_hpa": 1002.0,
+    "scale": null,
+    "speed_note_jp": "ゆっくり",
+    "storm_radii": [],
+    "tau": 0,
+    "valid": "2026-08-02T09:00:00Z",
+    "wind_kt": 30.0,
+    "wind_ms": 15.0,
+    "wind_note_jp": "中心付近"
+   },
+   "forecast": [
+    {
+     "accuracy_jp": null,
+     "category": "TS",
+     "category_jp": "台風",
+     "circle_km": 110.0,
+     "course_jp": "北西",
+     "gale_radii": [],
+     "gust_kt": 50.0,
+     "gust_ms": 25.0,
+     "intensity": null,
+     "lat": 16.9,
+     "location_jp": "フィリピンの東",
+     "lon": 123.4,
+     "move_deg": 315,
+     "move_kmh": null,
+     "move_kt": null,
+     "part_jp": "予報　２４時間後",
+     "pressure_hpa": 1000.0,
+     "scale": null,
+     "speed_note_jp": "ゆっくり",
+     "storm_radii": [],
+     "tau": 24,
+     "valid": "2026-08-03T09:00:00Z",
+     "wind_kt": 35.0,
+     "wind_ms": 18.0,
+     "wind_note_jp": "中心付近"
+    },
+    {
+     "accuracy_jp": null,
+     "category": "TD",
+     "category_jp": "熱帯低気圧",
+     "circle_km": 200.0,
+     "course_jp": "不定",
+     "gale_radii": [],
+     "gust_kt": 0.0,
+     "gust_ms": 0.0,
+     "intensity": null,
+     "lat": 17.1,
+     "location_jp": "フィリピンの東",
+     "lon": 123.1,
+     "move_deg": null,
+     "move_kmh": null,
+     "move_kt": null,
+     "part_jp": "予報　４５時間後",
+     "pressure_hpa": 1002.0,
+     "scale": null,
+     "speed_note_jp": "ほとんど停滞",
+     "storm_radii": [],
+     "tau": 45,
+     "valid": "2026-08-04T06:00:00Z",
+     "wind_kt": 0.0,
+     "wind_ms": 0.0,
+     "wind_note_jp": null
+    }
+   ],
+   "id": "TC2616",
+   "issued": "2026-08-02T10:15:00Z",
+   "name_en": null,
+   "name_jp": null,
+   "parsed": true,
+   "problems": [],
+   "raw": [
+    {
+     "category": {
+      "en": "TD",
+      "jp": "熱帯低気圧"
+     },
+     "issue": {
+      "JST": "2026-08-02T19:15:00+09:00",
+      "UTC": "2026-08-02T10:15:00Z"
+     },
+     "part": "title",
+     "typhoonNumber": "b"
+    },
+    {
+     "advancedHours": 0,
+     "category": {
+      "en": "TD",
+      "jp": "熱帯低気圧"
+     },
+     "course": "北北西",
+     "intensity": "-",
+     "location": "フィリピンの東",
+     "maximumWind": {
+      "gust": {
+       "kt": "45",
+       "m/s": "23"
+      },
+      "sustained": {
+       "kt": "30",
+       "m/s": "15",
+       "note": "中心付近"
+      }
+     },
+     "part": {
+      "en": "Analysis",
+      "jp": "実況"
+     },
+     "position": {
+      "accuracy": "ほぼ正確",
+      "deg": [
+       15.8,
+       124.6
+      ],
+      "dm": [
+       [
+        15,
+        50
+       ],
+       [
+        124,
+        35
+       ]
+      ]
+     },
+     "pressure": "1002",
+     "scale": "-",
+     "speed": {
+      "note": {
+       "en": "Slow",
+       "jp": "ゆっくり"
+      }
+     },
+     "validtime": {
+      "JST": "2026-08-02T18:00:00+09:00",
+      "UTC": "2026-08-02T09:00:00Z"
+     }
+    },
+    {
+     "advancedHours": 24,
+     "category": {
+      "en": "TS",
+      "jp": "台風"
+     },
+     "course": "北西",
+     "intensity": "-",
+     "location": "フィリピンの東",
+     "maximumWind": {
+      "gust": {
+       "kt": "50",
+       "m/s": "25"
+      },
+      "sustained": {
+       "kt": "35",
+       "m/s": "18",
+       "note": "中心付近"
+      }
+     },
+     "part": {
+      "en": "Forecast for 24 hours ahead",
+      "jp": "予報　２４時間後"
+     },
+     "position": {
+      "deg": [
+       16.9,
+       123.4
+      ],
+      "dm": [
+       [
+        16,
+        55
+       ],
+       [
+        123,
+        25
+       ]
+      ]
+     },
+     "pressure": "1000",
+     "probabilityCircleRadius": {
+      "km": 110,
+      "nm": 60
+     },
+     "speed": {
+      "note": {
+       "en": "Slow",
+       "jp": "ゆっくり"
+      }
+     },
+     "validtime": {
+      "JST": "2026-08-03T18:00:00+09:00",
+      "UTC": "2026-08-03T09:00:00Z"
+     }
+    },
+    {
+     "advancedHours": 45,
+     "category": {
+      "en": "TD",
+      "jp": "熱帯低気圧"
+     },
+     "course": "不定",
+     "intensity": "-",
+     "location": "フィリピンの東",
+     "maximumWind": {
+      "gust": {
+       "kt": "0",
+       "m/s": "0"
+      },
+      "sustained": {
+       "kt": "0",
+       "m/s": "0"
+      }
+     },
+     "part": {
+      "en": "Forecast for 45 hours ahead",
+      "jp": "予報　４５時間後"
+     },
+     "position": {
+      "deg": [
+       17.1,
+       123.1
+      ],
+      "dm": [
+       [
+        17,
+        5
+       ],
+       [
+        123,
+        5
+       ]
+      ]
+     },
+     "pressure": "1002",
+     "probabilityCircleRadius": {
+      "km": 200,
+      "nm": 110
+     },
+     "speed": {
+      "note": {
+       "en": "Almost stationary",
+       "jp": "ほとんど停滞"
+      }
+     },
+     "validtime": {
+      "JST": "2026-08-04T15:00:00+09:00",
+      "UTC": "2026-08-04T06:00:00Z"
+     }
+    }
+   ],
+   "target_category": "TD",
+   "target_issue": "2026-08-02T19:15:00+09:00",
+   "typhoon_number": "b"
+  },
   {
    "category": "TY",
    "current": {
@@ -1435,280 +1709,6 @@
    "target_category": "TY",
    "target_issue": "2026-08-02T18:45:00+09:00",
    "typhoon_number": "2613"
-  },
-  {
-   "category": "TD",
-   "current": {
-    "accuracy_jp": "ほぼ正確",
-    "category": "TD",
-    "category_jp": "熱帯低気圧",
-    "circle_km": null,
-    "course_jp": "北西",
-    "gale_radii": [],
-    "gust_kt": 45.0,
-    "gust_ms": 23.0,
-    "intensity": null,
-    "lat": 15.3,
-    "location_jp": "フィリピンの東",
-    "lon": 124.7,
-    "move_deg": 315,
-    "move_kmh": null,
-    "move_kt": null,
-    "part_jp": "実況",
-    "pressure_hpa": 1002.0,
-    "scale": null,
-    "speed_note_jp": "ゆっくり",
-    "storm_radii": [],
-    "tau": 0,
-    "valid": "2026-08-02T06:00:00Z",
-    "wind_kt": 30.0,
-    "wind_ms": 15.0,
-    "wind_note_jp": "中心付近"
-   },
-   "forecast": [
-    {
-     "accuracy_jp": null,
-     "category": "TS",
-     "category_jp": "台風",
-     "circle_km": 110.0,
-     "course_jp": "北西",
-     "gale_radii": [],
-     "gust_kt": 50.0,
-     "gust_ms": 25.0,
-     "intensity": null,
-     "lat": 16.8,
-     "location_jp": "フィリピンの東",
-     "lon": 123.5,
-     "move_deg": 315,
-     "move_kmh": null,
-     "move_kt": null,
-     "part_jp": "予報　２４時間後",
-     "pressure_hpa": 1000.0,
-     "scale": null,
-     "speed_note_jp": "ゆっくり",
-     "storm_radii": [],
-     "tau": 24,
-     "valid": "2026-08-03T06:00:00Z",
-     "wind_kt": 35.0,
-     "wind_ms": 18.0,
-     "wind_note_jp": "中心付近"
-    },
-    {
-     "accuracy_jp": null,
-     "category": "TD",
-     "category_jp": "熱帯低気圧",
-     "circle_km": 200.0,
-     "course_jp": "不定",
-     "gale_radii": [],
-     "gust_kt": 0.0,
-     "gust_ms": 0.0,
-     "intensity": null,
-     "lat": 17.1,
-     "location_jp": "フィリピンの東",
-     "lon": 123.1,
-     "move_deg": null,
-     "move_kmh": null,
-     "move_kt": null,
-     "part_jp": "予報　４８時間後",
-     "pressure_hpa": 1002.0,
-     "scale": null,
-     "speed_note_jp": "ほとんど停滞",
-     "storm_radii": [],
-     "tau": 48,
-     "valid": "2026-08-04T06:00:00Z",
-     "wind_kt": 0.0,
-     "wind_ms": 0.0,
-     "wind_note_jp": null
-    }
-   ],
-   "id": "TC2616",
-   "issued": "2026-08-02T07:15:00Z",
-   "name_en": null,
-   "name_jp": null,
-   "parsed": true,
-   "problems": [],
-   "raw": [
-    {
-     "category": {
-      "en": "TD",
-      "jp": "熱帯低気圧"
-     },
-     "issue": {
-      "JST": "2026-08-02T16:15:00+09:00",
-      "UTC": "2026-08-02T07:15:00Z"
-     },
-     "part": "title",
-     "typhoonNumber": "b"
-    },
-    {
-     "advancedHours": 0,
-     "category": {
-      "en": "TD",
-      "jp": "熱帯低気圧"
-     },
-     "course": "北西",
-     "intensity": "-",
-     "location": "フィリピンの東",
-     "maximumWind": {
-      "gust": {
-       "kt": "45",
-       "m/s": "23"
-      },
-      "sustained": {
-       "kt": "30",
-       "m/s": "15",
-       "note": "中心付近"
-      }
-     },
-     "part": {
-      "en": "Analysis",
-      "jp": "実況"
-     },
-     "position": {
-      "accuracy": "ほぼ正確",
-      "deg": [
-       15.3,
-       124.7
-      ],
-      "dm": [
-       [
-        15,
-        20
-       ],
-       [
-        124,
-        40
-       ]
-      ]
-     },
-     "pressure": "1002",
-     "scale": "-",
-     "speed": {
-      "note": {
-       "en": "Slow",
-       "jp": "ゆっくり"
-      }
-     },
-     "validtime": {
-      "JST": "2026-08-02T15:00:00+09:00",
-      "UTC": "2026-08-02T06:00:00Z"
-     }
-    },
-    {
-     "advancedHours": 24,
-     "category": {
-      "en": "TS",
-      "jp": "台風"
-     },
-     "course": "北西",
-     "intensity": "-",
-     "location": "フィリピンの東",
-     "maximumWind": {
-      "gust": {
-       "kt": "50",
-       "m/s": "25"
-      },
-      "sustained": {
-       "kt": "35",
-       "m/s": "18",
-       "note": "中心付近"
-      }
-     },
-     "part": {
-      "en": "Forecast for 24 hours ahead",
-      "jp": "予報　２４時間後"
-     },
-     "position": {
-      "deg": [
-       16.8,
-       123.5
-      ],
-      "dm": [
-       [
-        16,
-        50
-       ],
-       [
-        123,
-        30
-       ]
-      ]
-     },
-     "pressure": "1000",
-     "probabilityCircleRadius": {
-      "km": 110,
-      "nm": 60
-     },
-     "speed": {
-      "note": {
-       "en": "Slow",
-       "jp": "ゆっくり"
-      }
-     },
-     "validtime": {
-      "JST": "2026-08-03T15:00:00+09:00",
-      "UTC": "2026-08-03T06:00:00Z"
-     }
-    },
-    {
-     "advancedHours": 48,
-     "category": {
-      "en": "TD",
-      "jp": "熱帯低気圧"
-     },
-     "course": "不定",
-     "intensity": "-",
-     "location": "フィリピンの東",
-     "maximumWind": {
-      "gust": {
-       "kt": "0",
-       "m/s": "0"
-      },
-      "sustained": {
-       "kt": "0",
-       "m/s": "0"
-      }
-     },
-     "part": {
-      "en": "Forecast for 48 hours ahead",
-      "jp": "予報　４８時間後"
-     },
-     "position": {
-      "deg": [
-       17.1,
-       123.1
-      ],
-      "dm": [
-       [
-        17,
-        5
-       ],
-       [
-        123,
-        5
-       ]
-      ]
-     },
-     "pressure": "1002",
-     "probabilityCircleRadius": {
-      "km": 200,
-      "nm": 110
-     },
-     "speed": {
-      "note": {
-       "en": "Almost stationary",
-       "jp": "ほとんど停滞"
-      }
-     },
-     "validtime": {
-      "JST": "2026-08-04T15:00:00+09:00",
-      "UTC": "2026-08-04T06:00:00Z"
-     }
-    }
-   ],
-   "target_category": "TD",
-   "target_issue": "2026-08-02T16:15:00+09:00",
-   "typhoon_number": "b"
   }
  ],
  "wind_averaging": "10-minute sustained"
