@@ -100,7 +100,6 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   <div class="sub" id="tagline"></div>
   <div class="tools">
     <button id="langBtn" type="button">EN</button>
-    <button id="modeBtn" type="button">详细</button>
     <button id="refreshBtn" type="button">刷新</button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
   </div>
@@ -133,7 +132,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v2.7.1";
+var VERSION = "v3.0.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -174,8 +173,7 @@ var T = {
     tagline:"日本气象厅 RSMC 东京 · 台风情报 · 离线可读",
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
-    modeFull:"详细", modeSimple:"简易",
-    simpleNote:"这是根据气压走向的判读，不是天气预报。会不会真的下雨还要看水气、辐合、地形。官方警报请以马来西亚气象局（MET Malaysia）为准。想看图和数字，按上面的「详细」。",
+    simpleNote:"这是根据气压走向的判读，不是天气预报。会不会真的下雨还要看水气、辐合、地形。官方警报请以马来西亚气象局（MET Malaysia）为准。下面还有地图、气压走向和每个台风的详情。",
     mapWhatRegion:"这张图看：台风在哪里、离你多远，还有气压高低（圈圈越密，风越大）。",
     mapWhatTrack:"这张图看：这个台风预计往哪里走。虚线圈是它「可能在圈内」的范围，越往后越大，代表越不确定。",
     hTrend:"天气走向 · OUTLOOK", trendRegion:"区域其他地点",
@@ -194,6 +192,7 @@ var T = {
      ["为什么看 24 小时、不看 3 小时",
       "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"]],
     trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
+    upToDate:"已是最新（每 3 小时更新一次）。下次约",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
     iso:"等压线", isoAt:"气压场", presTitle:"海平面气压", presAt:"{place}：<b>{hpa}</b> 百帕",
     presChg:"24 小时 {arrow}{chg} 百帕", presSteady:"24 小时几乎无变化",
@@ -239,8 +238,7 @@ var T = {
     tagline:"JMA · RSMC Tokyo Typhoon Center · readable offline",
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
-    modeFull:"Detailed", modeSimple:"Simple",
-    simpleNote:"This is a reading of the pressure trend, not a forecast. Whether rain actually falls also depends on moisture, convergence and terrain. For official warnings, MET Malaysia is the authority. For the maps and numbers, tap Detailed above.",
+    simpleNote:"This is a reading of the pressure trend, not a forecast. Whether rain actually falls also depends on moisture, convergence and terrain. For official warnings, MET Malaysia is the authority. The maps, the outlook table and each storm follow below.",
     mapWhatRegion:"This map shows: where the typhoons are, how far from you, and the pressure pattern (the tighter the rings, the stronger the wind).",
     mapWhatTrack:"This map shows: where this storm is expected to go. The dashed circles are where its centre might be — they grow with time because the further ahead, the less certain.",
     hTrend:"OUTLOOK", trendRegion:"Other places in the region",
@@ -259,6 +257,7 @@ var T = {
      ["Why 24 hours and not 3",
       "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."]],
     trendNote:"The rules, written out so you can argue with them: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
+    upToDate:"Already current (updates every 3 h). Next due about",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
     iso:"Isobars", isoAt:"field", presTitle:"Sea-level pressure", presAt:"{place}: <b>{hpa}</b> hPa",
     presChg:"{arrow}{chg} hPa in 24 h", presSteady:"little change in 24 h",
@@ -300,8 +299,29 @@ var T = {
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
-var lang="zh";
-function L(k){ return T[lang][k]; }
+var NEXTLANG={zh:"繁體",tw:"EN",en:"简体"};
+var lang="zh";                     // zh = 简体, tw = 繁體, en = English
+var LANGS=["zh","tw","en"];
+/* Traditional rendering is derived from the Simplified text at the render
+   boundary, so there is one source of truth for Chinese copy. The map was
+   generated with OpenCC over this file's own strings, then corrected where
+   OpenCC is wrong in this domain: 干 is always "dry" here (乾, not 幹), 里
+   inside a phrase is 裡 while 公里 keeps 里, 台风 is 颱風 while 台湾/台北
+   keep 台. Regenerate with scripts/make_tw.py after editing Chinese copy. */
+var TWMAP={"与":"與","专":"專","东":"東","两":"兩","严":"嚴","个":"個","为":"為","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","们":"們","会":"會","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","则":"則","别":"別","务":"務","动":"動","劳":"勞","势":"勢","区":"區","协":"協","单":"單","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","场":"場","处":"處","头":"頭","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","径":"徑","志":"誌","总":"總","报":"報","换":"換","据":"據","数":"數","断":"斷","无":"無","时":"時","显":"顯","晋":"晉","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","构":"構","标":"標","树":"樹","样":"樣","档":"檔","检":"檢","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","涌":"湧","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","点":"點","热":"熱","牵":"牽","状":"狀","环":"環","现":"現","画":"畫","着":"著","码":"碼","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","范":"範","萨":"薩","虚":"虛","补":"補","见":"見","观":"觀","规":"規","览":"覽","计":"計","认":"認","讯":"訊","讲":"講","许":"許","词":"詞","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","谈":"談","谨":"謹","负":"負","责":"責","败":"敗","贴":"貼","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","载":"載","较":"較","辐":"輻","边":"邊","达":"達","过":"過","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","镜":"鏡","长":"長","闭":"閉","间":"間","闷":"悶","阴":"陰","阶":"階","陆":"陸","随":"隨","难":"難","静":"靜","页":"頁","顶":"頂","项":"項","预":"預","风":"風","飘":"飄","马":"馬","鲁":"魯"};
+var TWPROT=[["公里","公里"],["台风","颱風"]];
+function s2t(s){
+  if(typeof s!=="string") return s;
+  var i,out=s;
+  for(i=0;i<TWPROT.length;i++) out=out.split(TWPROT[i][0]).join("\ue000"+String.fromCharCode(0xe001+i));
+  var r="";
+  for(i=0;i<out.length;i++){ var c=out.charAt(i); r+=(TWMAP[c]||c); }
+  for(i=0;i<TWPROT.length;i++) r=r.split("\ue000"+String.fromCharCode(0xe001+i)).join(TWPROT[i][1]);
+  return r;
+}
+/* Everything Chinese passes through here on its way to the DOM. */
+function X(s){ return lang==="tw" ? s2t(s) : s; }
+function L(k){ return T[lang==="tw"?"zh":lang][k]; }
 /* JMA writes these as free text. Translate the known set; anything
    unrecognised falls through as the original Japanese rather than a guess. */
 var JP={
@@ -318,7 +338,7 @@ var JP={
   "北東":{zh:"东北",en:"northeast"},"南東":{zh:"东南",en:"southeast"},
   "南西":{zh:"西南",en:"southwest"},"北西":{zh:"西北",en:"northwest"}
 };
-function jp(s){ return (s&&JP[s]) ? JP[s][lang] : (s||""); }
+function jp(s){ return (s&&JP[s]) ? X(JP[s][lang==="tw"?"zh":lang]) : (s||""); }
 function fill(s,o){ return s.replace(/\{(\w+)\}/g,function(_,k){ return o[k]!==undefined?o[k]:"{"+k+"}"; }); }
 
 /* ---- geometry ------------------------------------------------------- */
@@ -336,14 +356,14 @@ function bearing(a,b,c,d){
 var CMP={zh:["北","东北偏北","东北","东北偏东","东","东南偏东","东南","东南偏南",
              "南","西南偏南","西南","西南偏西","西","西北偏西","西北","西北偏北"],
          en:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]};
-function compass(deg){ return CMP[lang][Math.round(deg/22.5)%16]; }
+function compass(deg){ return X(CMP[lang==="tw"?"zh":lang][Math.round(deg/22.5)%16]); }
 function fmtLat(v){ return Math.abs(v).toFixed(1)+(v<0?"S":"N"); }
 function fmtLon(v){ return Math.abs(v).toFixed(1)+(v<0?"W":"E"); }
 function ago(ms){
   var h=ms/36e5;
-  if(h<1) return Math.max(0,Math.round(h*60))+(lang==="zh"?" 分钟":" min");
-  if(h<48) return h.toFixed(1)+(lang==="zh"?" 小时":" h");
-  return (h/24).toFixed(1)+(lang==="zh"?" 天":" d");
+  if(h<1) return Math.max(0,Math.round(h*60))+X(lang!=="en"?" 分钟":" min");
+  if(h<48) return h.toFixed(1)+X(lang!=="en"?" 小时":" h");
+  return (h/24).toFixed(1)+X(lang!=="en"?" 天":" d");
 }
 function shortT(iso){
   var d=new Date(iso);
@@ -383,8 +403,6 @@ function cell(k,v,cls){
 }
 var DOC=null, OFFLINE=false;
 var SHOWISO=true;
-var MODE="simple";                      // farmers open this cold; words first
-try{ MODE = localStorage.getItem("twatch.mode")==="full" ? "full" : "simple"; }catch(e){}
 try{ SHOWISO = localStorage.getItem("twatch.iso")!=="0"; }catch(e){}
 function refPlace(){
   var id=null;
@@ -516,7 +534,7 @@ function overviewMap(storms,others,ref){
   svg+='<line x1="0" y1="'+Y(0).toFixed(1)+'" x2="'+W+'" y2="'+Y(0).toFixed(1)+
        '" stroke="#3a5a2e" stroke-width="1" stroke-dasharray="7 6"/>'+
        '<text x="6" y="'+(Y(0)-5).toFixed(1)+'" fill="#5e8a4a" font-size="10">'+
-       (lang==="zh"?"赤道":"Equator")+'</text>';
+       X(lang!=="en"?"赤道":"Equator")+'</text>';
 
   (storms||[]).forEach(function(s){
     var c=s.current; if(!c||c.lat==null) return;
@@ -528,7 +546,7 @@ function overviewMap(storms,others,ref){
     svg+='<circle cx="'+X(c.lon).toFixed(1)+'" cy="'+Y(c.lat).toFixed(1)+'" r="6" fill="#ffb020"/>'+
          '<text x="'+(X(c.lon)+9).toFixed(1)+'" y="'+(Y(c.lat)+16).toFixed(1)+
          '" fill="#ffd489" font-size="11" font-weight="700">'+
-         stormLabel(s).replace(/[<>&]/g,"")+'</text>';
+         X(stormLabel(s)).replace(/[<>&]/g,"")+'</text>';
   });
   (others||[]).forEach(function(o){
     if(o.also_jma||o.lat==null) return;
@@ -542,7 +560,7 @@ function overviewMap(storms,others,ref){
   var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#fff" stroke="#0a1420" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#fff" font-size="11" font-weight="700">'+
-       (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
+       (lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
   return svg+'</svg>';
 }
 
@@ -597,13 +615,13 @@ function trackPlot(s,ref){
   var rx=+X(ref.lon).toFixed(1), ry=+Y(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="3.5" fill="#dbe7f1" stroke="#081019" stroke-width="1"/>'+
        '<text x="'+(rx+7)+'" y="'+(ry+4)+'" fill="#dbe7f1" font-size="11">'+
-       (lang==="zh"?ref.zh:ref.en).replace(/[<>&]/g,"")+'</text>';
+       (lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
   // Name sits with the storm. Western Pacific tracks run up and to the LEFT
   // (northwest), so the forecast dots and their +NNh labels crowd that side.
   // Default the name below and to the right — the water the storm has already
   // crossed — and only move it when the frame edge forces the issue.
   if(s._label && pts.length){
-    var lbl=String(s._label).replace(/[<>&]/g,"");
+    var lbl=X(String(s._label)).replace(/[<>&]/g,"");
     var wpx=lbl.length*8.2+6;                     // rough advance at 14px bold
     var ax=X(pts[0].lon), ay=Y(pts[0].lat);
     var lx=ax+13, anchor="start";
@@ -675,7 +693,7 @@ function plainLines(ref,P,nchg){
   if(!e) return null;
   var chg=e.change24;
   var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
-  var g=regime(chg,surge), out=[], W=lang==="zh";
+  var g=regime(chg,surge), out=[], W=lang!=="en";
   if(!g) return null;
 
   if(g.k==="wet"){
@@ -703,9 +721,9 @@ function plainLines(ref,P,nchg){
               :(ph==="ne"?"It is northeast monsoon season, so the rain usually lands first on Kelantan, Terengganu and east Pahang."
                         :"It is southwest monsoon season, so the rain tends to favour the west coast and Sarawak."));
 
-  // Simple mode names only the nearest storm, but must say how many exist —
-  // otherwise a second system in the basin is invisible to a reader who
-  // never opens Detailed. Detailed mode lists every one of them.
+  // The lead card names only the nearest storm, but must say how many exist,
+  // so a second system in the basin is never invisible to someone who reads
+  // the top of the page and stops there.
   var near=null, count=0;
   ((DOC&&DOC.storms)||[]).forEach(function(s){
     var c=s.current; if(!c||c.lat==null) return;
@@ -717,11 +735,11 @@ function plainLines(ref,P,nchg){
     var many = count>1;
     out.push(W?((many?("目前区域内有 "+count+" 个系统，最近的是"):"目前最近的台风是")+
                 stormLabel(near.s)+"，在 "+Math.round(near.d).toLocaleString()+" 公里外。"+
-                (many?"其余的按「详细」可以看到。":"")+
+                (many?"其余的在下面的台风情报里都有。":"")+
                 "台风本身几乎不会打到马来西亚，影响我们的是它把季风变强。")
               :((many?("There are "+count+" systems in the region; the nearest is "):"The nearest typhoon is ")+
                 stormLabel(near.s)+", "+Math.round(near.d).toLocaleString()+" km away. "+
-                (many?"Tap Detailed to see the rest. ":"")+
+                (many?"The rest are listed below. ":"")+
                 "Typhoons themselves almost never reach Malaysia; what reaches us is the monsoon they strengthen."));
   }
   return {lines:out,g:g,chg:chg,surge:surge};
@@ -737,7 +755,7 @@ function renderSimple(){
   var r=plainLines(ref,P,northChange(P));
   if(!r){ box.appendChild(el("div",null,L("presNone"))); return; }
   var head=el("div","cardhead");
-  head.appendChild(el("div","sname",(lang==="zh"?ref.zh:ref.en)));
+  head.appendChild(el("div","sname",(lang==="en"?ref.en:ref.zh)));
   head.appendChild(el("span","badge"+(r.g.k==="wet"?" amb":r.g.k==="dry"?" hot":""),
     L("reg")[r.g.k]+(r.g.strong?L("regStrong"):"")));
   box.appendChild(head);
@@ -808,7 +826,7 @@ function renderTrend(){
       var surge=(nchg===null||e.change24===null||e.change24===undefined)?null:+(nchg-e.change24).toFixed(1);
       var g=regime(e.change24,surge);
       var row=el("div","inv"), left=el("div");
-      left.appendChild(el("div",null,(lang==="zh"?r.zh:r.en)));
+      left.appendChild(el("div",null,(lang==="en"?r.en:r.zh)));
       var bits=[e.hpa.toFixed(1)+" "+L("hpa")];
       if(e.change24!==null&&e.change24!==undefined)
         bits.push("24h "+(e.change24<0?"▼":"▲")+Math.abs(e.change24).toFixed(1));
@@ -882,8 +900,8 @@ function stormCard(s){
   if(c.lat!=null){
     var d0=hav(c.lat,c.lon,ref.lat,ref.lon), line=el("div","rangeline");
     var p1=document.createElement("div");
-    p1.innerHTML=fill(L("rangeNow"),{km:Math.round(d0).toLocaleString(),
-      place:(lang==="zh"?ref.zh:ref.en), dir:compass(bearing(ref.lat,ref.lon,c.lat,c.lon))});
+    p1.innerHTML=X(fill(L("rangeNow"),{km:Math.round(d0).toLocaleString(),
+      place:(lang==="en"?ref.en:ref.zh), dir:compass(bearing(ref.lat,ref.lon,c.lat,c.lon))}));
     line.appendChild(p1);
     var best=null;
     (s.forecast||[]).forEach(function(f){
@@ -893,7 +911,7 @@ function stormCard(s){
     });
     if(best&&best.d<d0-25){
       var p2=document.createElement("div");
-      p2.innerHTML=fill(L("rangeMin"),{km:Math.round(best.d).toLocaleString(),tau:best.tau});
+      p2.innerHTML=X(fill(L("rangeMin"),{km:Math.round(best.d).toLocaleString(),tau:best.tau}));
       line.appendChild(p2);
     }
     line.appendChild(el("span","note",L(ref.grp==="my"?"rangeNote":"rangeNoteGen")));
@@ -950,7 +968,7 @@ function renderRegion(){
     var here=P.places[ref.id];
     if(here){
       var line=document.createElement("div");
-      var txt=fill(L("presAt"),{place:(lang==="zh"?ref.zh:ref.en),hpa:here.hpa.toFixed(1)});
+      var txt=fill(L("presAt"),{place:(lang==="en"?ref.en:ref.zh),hpa:here.hpa.toFixed(1)});
       if(here.change24===null||here.change24===undefined){
         txt+=" · "+L("presSteady");
       } else if(Math.abs(here.change24)<0.5){
@@ -959,7 +977,7 @@ function renderRegion(){
         txt+=" · "+fill(L("presChg"),{arrow:here.change24<0?"▼ ":"▲ ",
           chg:Math.abs(here.change24).toFixed(1)});
       }
-      line.innerHTML=txt;
+      line.innerHTML=X(txt);
       strip.appendChild(line);
     }
     // Falling pressure elsewhere is the lead indicator, so surface the top three.
@@ -971,7 +989,7 @@ function renderRegion(){
       .sort(function(a,b){ return a.c-b.c; }).slice(0,3);
     if(falls.length){
       strip.appendChild(el("div","pos",L("presFalls")+falls.map(function(f){
-        return (lang==="zh"?f.r.zh:f.r.en)+" ▼"+Math.abs(f.c).toFixed(1);
+        return (lang==="en"?f.r.en:f.r.zh)+" ▼"+Math.abs(f.c).toFixed(1);
       }).join(" · ")));
     }
     if(P.stale) strip.appendChild(el("div","pos",L("offline")));
@@ -995,7 +1013,7 @@ function renderOthers(){
     left.appendChild(el("div",null,title));
     var bits=[fmtLat(o.lat)+" "+fmtLon(o.lon),
               fill(L("away"),{km:Math.round(o._d).toLocaleString(),
-                              place:(lang==="zh"?ref.zh:ref.en)})];
+                              place:(lang==="en"?ref.en:ref.zh)})];
     if(o.severity!=null) bits.push(o.severity+" "+(o.severity_unit||""));
     left.appendChild(el("div","pos",bits.join(" · ")));
     row.appendChild(left);
@@ -1045,41 +1063,29 @@ en:[
 
 function renderLearn(){
   var box=document.getElementById("learn"); box.textContent="";
-  GLOSS[lang].forEach(function(p){
+  GLOSS[lang==="tw"?"zh":lang].forEach(function(p){
     var d=el("details"); d.appendChild(el("summary",null,p[0]));
     d.appendChild(el("div",null,p[1])); box.appendChild(d);
   });
 }
 
-var FULL_IDS=["hRegion","region","hTrend","trend","hStorms","storms",
-              "hOther","others","hLearn","learn"];
-
-function applyMode(){
-  var simple = MODE==="simple";
-  FULL_IDS.forEach(function(id){
-    var n=document.getElementById(id); if(n) n.hidden=simple;
-  });
-  document.getElementById("simple").hidden=!simple;
-  document.getElementById("modeBtn").textContent=simple?L("modeFull"):L("modeSimple");
-}
-
 function renderAll(){
-  document.documentElement.lang = lang==="zh"?"zh":"en";
+  document.documentElement.lang = lang==="tw"?"zh-Hant":lang==="zh"?"zh-Hans":"en";
   var b=document.getElementById("brand");
-  b.textContent=L("brand"); b.appendChild(el("span","lat",L("lat")));
-  document.getElementById("tagline").textContent=L("tagline");
-  document.getElementById("langBtn").textContent=L("other");
+  b.textContent=X(L("brand")); b.appendChild(el("span","lat",L("lat")));
+  document.getElementById("tagline").textContent=X(L("tagline"));
+  document.getElementById("langBtn").textContent=NEXTLANG[lang];
   document.getElementById("refreshBtn").textContent=L("refresh");
   document.getElementById("hLearn").textContent=L("hLearn");
-  document.getElementById("credit").innerHTML=L("credit");
+  document.getElementById("credit").innerHTML=X(L("credit"));
   var sel=document.getElementById("refSel"), cur=refPlace().id;
   sel.textContent="";
   [["my","grpMY"],["reg","grpReg"]].forEach(function(pair){
-    var og=document.createElement("optgroup"); og.label=L(pair[1]);
+    var og=document.createElement("optgroup"); og.label=X(L(pair[1]));
     REFS.forEach(function(r){
       if(r.grp!==pair[0]) return;
       var o=document.createElement("option"); o.value=r.id;
-      o.textContent=(lang==="zh"?r.zh:r.en); if(r.id===cur) o.selected=true;
+      o.textContent=X(lang==="en"?r.en:r.zh); if(r.id===cur) o.selected=true;
       og.appendChild(o);
     });
     sel.appendChild(og);
@@ -1088,13 +1094,27 @@ function renderAll(){
   document.getElementById("hStorms").textContent=L("hStorms");
   document.getElementById("hOther").textContent=L("hOther");
   document.getElementById("hTrend").textContent=L("hTrend");
-  renderFresh();
-  applyMode();
-  if(MODE==="simple"){ renderSimple(); return; }   // one screen, nothing else
-  renderRegion(); renderTrend(); renderStorms(); renderOthers(); renderLearn();
+  // The explanation sits first, in front of the reader, then the working
+  // below it. No modes: one page, top to bottom.
+  renderFresh(); renderSimple(); renderRegion(); renderTrend(); renderStorms(); renderOthers(); renderLearn();
 }
 
-function load(){
+/* The browser never calls a weather API — it fetches this repo's own
+   data/typhoon.json. Open-Meteo and JMA are called by the GitHub Actions
+   runner a few times a day. Even so, there is no point re-fetching inside
+   the 3-hourly publish cycle, so Refresh short-circuits while the data we
+   hold is younger than that, and says when the next one is due. */
+var CYCLE_MIN=150;                 // 2.5 h — early enough to catch a late run
+function dataAge(){
+  var t=DOC&&DOC.generated?Date.parse(DOC.generated):NaN;
+  return isNaN(t)?Infinity:(Date.now()-t)/6e4;
+}
+function nextDue(){
+  var t=Date.parse(DOC.generated)+3*36e5;
+  return myt(new Date(t).toISOString())+" "+L("myt");
+}
+function load(force){
+  if(!force && dataAge()<CYCLE_MIN){ renderAll(); return; }
   var url=/[?&]demo=1/.test(location.search)?"./data/typhoon.sample.json":DATA_URL;
   fetch(url+"?t="+Date.now(),{cache:"no-store"})
     .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
@@ -1107,22 +1127,24 @@ function load(){
 }
 
 document.getElementById("langBtn").addEventListener("click",function(){
-  lang = lang==="zh"?"en":"zh";
+  lang = LANGS[(LANGS.indexOf(lang)+1)%LANGS.length];
   try{ localStorage.setItem(LS,lang); }catch(e){}
   renderAll();
 });
-document.getElementById("refreshBtn").addEventListener("click",load);
-document.getElementById("modeBtn").addEventListener("click",function(){
-  MODE = MODE==="simple" ? "full" : "simple";
-  try{ localStorage.setItem("twatch.mode",MODE); }catch(e){}
-  renderAll();
+document.getElementById("refreshBtn").addEventListener("click",function(){
+  if(dataAge()<CYCLE_MIN){
+    var s=document.getElementById("stamp");
+    s.textContent=L("upToDate")+" "+nextDue()+" · "+s.textContent;
+    renderAll(); return;
+  }
+  load(true);
 });
 document.getElementById("refSel").addEventListener("change",function(e){
   try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
   renderAll();
 });
-try{ var sv=localStorage.getItem(LS); if(sv==="en"||sv==="zh") lang=sv; }catch(e){}
-renderAll(); load();
+try{ var sv=localStorage.getItem(LS); if(LANGS.indexOf(sv)>-1) lang=sv; }catch(e){}
+renderAll(); load(true);   // first paint always fetches
 
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js").then(function(reg){
@@ -1135,7 +1157,7 @@ if("serviceWorker" in navigator){
       w.addEventListener("statechange",function(){
         if(w.state==="installed" && navigator.serviceWorker.controller){
           var s=document.getElementById("stamp");
-          s.textContent=(lang==="zh"?"新版待重载 · ":"Update ready — reload · ")+s.textContent;
+          s.textContent=X(lang!=="en"?"新版待重载 · ":"Update ready — reload · ")+s.textContent;
         }
       });
     });
