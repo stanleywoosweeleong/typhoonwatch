@@ -47,6 +47,11 @@ UA = ("TyphoonWatch/2.0 (+https://github.com/stanleywoosweeleong/typhoonwatch; "
 HEADERS = {"User-Agent": UA, "Accept": "application/json,*/*", "Accept-Encoding": "identity"}
 TIMEOUT = 30
 RETRIES = 3
+# GDACS runs a search behind its event-list endpoint and is much slower
+# than JMA's static JSON. Give it longer and one more go before the run
+# gives up on the secondary source.
+GDACS_TIMEOUT = 75
+GDACS_RETRIES = 4
 
 # JMA writes movement direction as a Japanese compass word.
 COURSE_DEG = {
@@ -64,22 +69,31 @@ SCALE = {"-": None, "大型": "large", "超大型": "very_large"}
 
 # ---------------------------------------------------------------- networking
 
-def get(url):
+def get(url, timeout=None, retries=None):
+    """Fetch a URL as text.
+
+    timeout/retries can be raised per call. GDACS's event-list endpoint is
+    routinely slow — it is a search, not a static file — and 30 s x 3 was
+    losing the whole secondary source to "The read operation timed out"
+    while JMA came back fine.
+    """
     last = None
-    for attempt in range(RETRIES):
+    tmo = TIMEOUT if timeout is None else timeout
+    tries = RETRIES if retries is None else retries
+    for attempt in range(tries):
         try:
             req = urllib.request.Request(url, headers=HEADERS)
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            with urllib.request.urlopen(req, timeout=tmo) as r:
                 return r.read().decode("utf-8", "replace")
         except Exception as e:  # noqa: BLE001
             last = e
-            if attempt < RETRIES - 1:
+            if attempt < tries - 1:
                 time.sleep(2 ** attempt * 3)
     raise last
 
 
-def get_json(url):
-    return json.loads(get(url))
+def get_json(url, timeout=None, retries=None):
+    return json.loads(get(url, timeout, retries))
 
 
 # ------------------------------------------------------------------- parsing
@@ -646,7 +660,8 @@ def main():
 
     others = []
     try:
-        events, probs = parse_gdacs(get_json(GDACS_URL))
+        events, probs = parse_gdacs(get_json(GDACS_URL, timeout=GDACS_TIMEOUT,
+                                             retries=GDACS_RETRIES))
         others = tag_duplicates(events, storms)
         errors.extend(probs)
         print("GDACS current TC events: %d (%d also in JMA)"
