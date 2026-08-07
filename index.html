@@ -170,7 +170,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.20";
+var VERSION = "v3.1.21";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -572,7 +572,7 @@ function coastPaths(minLo,maxLo,minLa,maxLa,PX,PY,width,colour){
    is classified. A closed contour off Borneo is for you to read, not for the
    app to label. Tropical pressure gradients are slack, so the interval is
    1 hPa rather than the 4 hPa of a mid-latitude chart. */
-function isobarPaths(P,PX,PY){
+function isobarPaths(P,PX,PY,W,H){
   if(!P||!P.grid||!P.grid.values) return "";
   var g=P.grid, v=g.values, nx=g.nx, ny=g.ny, out="", lvl, i, j;
   function at(ix,iy){ var t=v[iy*nx+ix]; return (t===null||t===undefined)?NaN:t; }
@@ -624,7 +624,12 @@ function isobarPaths(P,PX,PY){
   var FSI=+(10*K).toFixed(1), placed=[], cand={};
   segs.forEach(function(s){ (cand[s[2]]=cand[s[2]]||[]).push([s[0][0],s[0][1]]); });
   function freeAt(x,y,w){
-    if(x<2||y<FSI) return false;
+    /* All FOUR edges. Candidates are walked east-most first, which is exactly
+       where a label runs off the canvas — and content outside the viewBox is
+       clipped, so an unbounded placer "places" a label nobody can read and then
+       returns, never trying the room available further west. Bounding the right
+       and bottom edges is what makes the drop rule mean what it says. */
+    if(x<2||y<FSI||x+w>W-2||y>H-2) return false;
     for(var i=0;i<placed.length;i++){
       var b=placed[i];
       if(x<b.x+b.w+FSI*0.4 && b.x<x+w+FSI*0.4 && y-FSI<b.y+FSI*0.3 && b.y-FSI<y+FSI*0.3) return false;
@@ -705,7 +710,7 @@ function overviewMap(storms,others,ref){
            '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace" paint-order="stroke"'+
            ' stroke="#081019" stroke-width="'+(2.4*K).toFixed(1)+'">'+latTick(g)+'</text>';
   }
-  if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY);
+  if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY,W,H);
   svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,0.85),"#2b4f63");
 
   svg+=equatorSVG(W,PY,REGION.s,REGION.n,K);
