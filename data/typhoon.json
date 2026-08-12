@@ -1,8 +1,10 @@
 {
- "errors": [],
- "fetch_ok": true,
+ "errors": [
+  "targetTc.json fetch failed: HTTP Error 404: Not Found"
+ ],
+ "fetch_ok": false,
  "generated": "2026-08-11T22:24:32Z",
- "last_attempt": "2026-08-11T22:24:32Z",
+ "last_attempt": "2026-08-12T03:11:14Z",
  "others": [
   {
    "alert": "orange",
