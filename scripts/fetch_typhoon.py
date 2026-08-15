@@ -359,7 +359,9 @@ def selftest():
 
     # --- pressure ---
     refs = parse_refs(open(os.path.join(ROOT, "index.html"), encoding="utf-8").read())
-    check("refs.n", len(refs), 18)
+    # Bump when REFS changes in index.html. The fixed number is the point:
+    # it catches a regex regression that silently drops places.
+    check("refs.n", len(refs), 30)
     check("refs.ids_unique", len({r["id"] for r in refs}), len(refs))
     check("refs.first", refs[0]["id"], "triang")
     check("refs.coords_numeric",
@@ -485,7 +487,7 @@ def tag_duplicates(events, storms, radius_km=350):
 # no invented index. Isobars are a standard rendering of a model field, and
 # a pressure tendency is an observation, not a diagnosis.
 #
-#   1. pressure + 24 h change at every reference place  (every run, 18 pts)
+#   1. pressure + 24 h change at every reference place  (every run, 30 pts)
 #   2. a coarse MSLP grid for contouring                (every 6 h, 208 pts)
 #
 # The grid is deliberately a Malaysia-focused box rather than the whole
@@ -518,6 +520,78 @@ def grid_points():
 def _as_list(payload):
     """Open-Meteo returns an object for one location, a list for many."""
     return payload if isinstance(payload, list) else [payload]
+
+
+def parse_cnames(html):
+    """Read the CNAME keys out of index.html — same single-source-of-truth trick
+    as parse_refs. Returns the set of English names the app can render in
+    Chinese."""
+    m = re.search(r"var CNAME\s*=\s*\{(.*?)\n\};", html, re.S)
+    if not m:
+        raise ValueError("CNAME block not found in index.html")
+    return set(re.findall(r'"([^"]+)"\s*:\s*\[', m.group(1)))
+
+
+GONE_KEEP_H = 24        # how long a departed system stays listed
+
+
+def track_gone(storms, prev, now):
+    """JMA's targetTc.json IS the monitoring list: a system on it is being
+    monitored, and when JMA is done the entry disappears. Until now the card
+    just vanished from the app, which looks exactly like the app losing track
+    of it. So compare this run's ids against the last run's and carry the
+    departures for a day, with the time each was last seen. This reports a
+    change in what the SOURCE published — it decides nothing about the storm.
+    """
+    here = {s.get("id") for s in storms if s.get("id")}
+    gone = []
+    for g in (prev.get("gone") or []):          # keep recent ones, drop old
+        if g.get("id") in here:
+            continue
+        try:
+            age = (datetime.fromisoformat(now.replace("Z", "+00:00"))
+                   - datetime.fromisoformat(g["last_seen"].replace("Z", "+00:00")))
+            if age.total_seconds() <= GONE_KEEP_H * 3600:
+                gone.append(g)
+        except Exception:  # noqa: BLE001
+            pass
+    known = {g.get("id") for g in gone}
+    for p in (prev.get("storms") or []):        # on the last list, not on this one
+        pid = p.get("id")
+        if not pid or pid in here or pid in known:
+            continue
+        gone.append({"id": pid,
+                     "name_en": p.get("name_en"),
+                     "typhoon_number": p.get("typhoon_number"),
+                     "last_seen": p.get("issued") or prev.get("generated") or now})
+    gone.sort(key=lambda g: g.get("last_seen") or "", reverse=True)
+    if gone:
+        print("gone: %s" % ", ".join((g.get("name_en") or g["id"]) for g in gone))
+    return gone
+
+
+def check_names(storms, html, errors):
+    """The Typhoon Committee retires names every year and the replacements can
+    be used the moment they are adopted, so a hand-maintained table WILL go out
+    of date. The app already fails safe — an unknown name shows romanised only,
+    never a transliterated guess — but silently, which is the failure mode this
+    project refuses. So the moment JMA uses a name the app cannot render, say
+    so in `errors`, which surfaces as the amber banner on the page. That turns
+    "remember to check every year" into "the app tells you the day it matters".
+    """
+    try:
+        known = parse_cnames(html)
+    except Exception as e:  # noqa: BLE001
+        errors.append("name table: %s" % e)
+        return
+    missing = sorted({s.get("name_en") for s in storms
+                      if s.get("name_en") and s["name_en"] not in known})
+    for n in missing:
+        errors.append("no Chinese name for %s — refresh CNAME from hko.gov.hk" % n)
+    if missing:
+        print("name table: MISSING %s" % ", ".join(missing))
+    else:
+        print("name table: %d names, all current storms covered" % len(known))
 
 
 def parse_refs(html):
@@ -669,10 +743,17 @@ def main():
     except Exception as e:  # noqa: BLE001
         errors.append("GDACS: %s" % e)     # secondary source: never fatal
 
+    try:
+        app_html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+    except Exception as e:  # noqa: BLE001
+        app_html = ""
+        errors.append("index.html: %s" % e)
+    if app_html:
+        check_names(storms, app_html, errors)
+
     pressure = None
     try:
-        with open(os.path.join(ROOT, "index.html"), "r", encoding="utf-8") as f:
-            refs = parse_refs(f.read())
+        refs = parse_refs(app_html)
         prev_grid = ((prev.get("pressure") or {}).get("grid")) or None
         # refresh on the 6-hourly slot, or straight away if we have none yet
         want_grid = (datetime.now(timezone.utc).hour % GRID_EVERY_H == 0) or not prev_grid
@@ -689,6 +770,7 @@ def main():
             pressure["stale"] = True
 
     save({
+        "gone": track_gone(storms, prev, now),
         "generated": now,
         "last_attempt": now,
         "fetch_ok": True,
