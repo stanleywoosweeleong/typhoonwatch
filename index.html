@@ -39,6 +39,9 @@ button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid v
 button:hover{border-color:var(--faint)}
 /* Language button: what you are reading now, then what a tap gives you. */
 .nx{color:var(--dim);font-size:12.5px;margin-left:7px}
+.gpsnote{font-size:12.5px;color:var(--dim);line-height:1.5;margin-top:7px;width:100%}
+.gpsnote.warn{color:#ffd489}
+.gpsnote .co{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 button:disabled{cursor:default;border-style:dashed}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
@@ -133,6 +136,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
     <button id="langBtn" type="button">简体<span class="nx">→ 繁體</span></button>
     <button id="updBtn" type="button"></button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
+    <div id="gpsNote" class="gpsnote"></div>
   </div>
 </header>
 <div id="fresh" class="fresh">…</div>
@@ -170,7 +174,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.1.21";
+var VERSION = "v3.2.2";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -191,6 +195,22 @@ var REFS = [
   {id:"kuching", grp:"my", zh:"古晋，砂拉越",   en:"Kuching, Sarawak",     lat:1.55,  lon:110.34},
   {id:"kk",      grp:"my", zh:"亚庇，沙巴",     en:"Kota Kinabalu, Sabah", lat:5.98,  lon:116.07},
   {id:"sandakan",grp:"my", zh:"山打根，沙巴",   en:"Sandakan, Sabah",      lat:5.84,  lon:118.12},
+  /* Added for the location feature: with only seven places a GPS fix in
+     Johor or Perak snapped to something 300 km away, which is no answer at
+     all. The fetcher reads this array out of this file, so these cost one
+     more coordinate each on the existing Open-Meteo places call. */
+  {id:"alorsetar",grp:"my",zh:"亚罗士打，吉打", en:"Alor Setar, Kedah",    lat:6.12,  lon:100.37},
+  {id:"penang",  grp:"my", zh:"槟城",           en:"Penang",               lat:5.41,  lon:100.34},
+  {id:"ipoh",    grp:"my", zh:"怡保，霹雳",     en:"Ipoh, Perak",          lat:4.60,  lon:101.09},
+  {id:"kl",      grp:"my", zh:"吉隆坡",         en:"Kuala Lumpur",         lat:3.14,  lon:101.69},
+  {id:"seremban",grp:"my", zh:"芙蓉，森美兰",   en:"Seremban, N. Sembilan",lat:2.73,  lon:101.94},
+  {id:"melaka",  grp:"my", zh:"马六甲",         en:"Melaka",               lat:2.20,  lon:102.25},
+  {id:"jb",      grp:"my", zh:"新山，柔佛",     en:"Johor Bahru, Johor",   lat:1.49,  lon:103.74},
+  {id:"kt",      grp:"my", zh:"瓜拉登嘉楼",     en:"Kuala Terengganu",     lat:5.33,  lon:103.14},
+  {id:"sibu",    grp:"my", zh:"诗巫，砂拉越",   en:"Sibu, Sarawak",        lat:2.29,  lon:111.83},
+  {id:"bintulu", grp:"my", zh:"民都鲁，砂拉越", en:"Bintulu, Sarawak",     lat:3.17,  lon:113.04},
+  {id:"miri",    grp:"my", zh:"美里，砂拉越",   en:"Miri, Sarawak",        lat:4.40,  lon:114.00},
+  {id:"tawau",   grp:"my", zh:"斗湖，沙巴",     en:"Tawau, Sabah",         lat:4.24,  lon:117.89},
   /* Where these tracks actually end. All inside JMA's area of responsibility. */
   {id:"danang",  grp:"reg", zh:"岘港，越南",     en:"Da Nang, Vietnam",     lat:16.05, lon:108.22},
   {id:"haikou",  grp:"reg", zh:"海口，海南",     en:"Haikou, Hainan",       lat:20.04, lon:110.32},
@@ -250,6 +270,7 @@ var T = {
 
     hLearn:"读懂台风情报 · HOW TO READ",
     freshOk:"最新发表 {t}（{age} 前）· 抓取于 {fetch}",
+    freshQuiet:"抓取于 {fetch}（{age} 前）· 目前没有在发布中的台风情报",
     freshStale:"⚠ 数据可能过时：最新发表 {t}，已经 {age}。气象厅每 3 小时更新一次，超过 {h} 小时未更新请直接查看气象厅官网。",
     freshFail:"⚠ 上一次抓取失败（{when}）。以下是上一次成功的存档，可能已经过时。",
     freshNoData:"尚未取得任何数据。GitHub Action 至少要成功跑一次。",
@@ -270,9 +291,20 @@ var T = {
     saffir:"换算约 {c}",
     problems:"本则情报未能完整解析：",
     demo:"演示数据（非真实情报）",
+    ended:"最后一报", endedNote:"气象厅已停止对这个系统发布预报。上面是它最后一次发表的实况，位置和强度都不会再更新了。它还留在这里是因为气象厅名单上还有；名单一撤，这张卡片就会消失。",
+    goneT:"已从气象厅名单撤下", goneOne:"{n}：最后一次出现在 {t}。",
     footTitle:"关于本页 · 来源与二维码",
+    gpsUse:"📍 用我的位置", gpsBusy:"正在定位…",
+    gpsAt:"我的位置 {lat} {lon}（{age}取得）",
+    gpsBase:"气压走向取自最近的参考点：{place}，{km} 公里外。",
+    gpsFar:"最近的参考点是{place}，{km} 公里外——太远了，这个距离的气压走向说明不了你那里的情况，所以这一段不显示。台风距离和地图照常。",
+    gpsPrivate:"· 坐标只留在这台手机上，不会送出去。",
+    gpsRough:"隔了这么远，只能当个大概。",
+    gpsDenied:"浏览器没有给定位权限。可以在网站设置里打开，或直接从下拉选一个地点。",
+    gpsFailed:"这次定位没成功。可以再选一次「用我的位置」重试，或直接选一个地点。",
+    gpsNoSupport:"这个浏览器不支持定位。请从下拉选一个地点。",
     qrCap:"扫码打开本页。也可以直接输入网址：",
-    partial:"这次有部分数据没取到，下面列出来；其余照常显示。",
+    partial:"这次有几项没取到或显示不全，下面列出来；其余照常显示。",
     credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
   en:{
@@ -319,6 +351,7 @@ var T = {
 
     hLearn:"HOW TO READ A TYPHOON BULLETIN",
     freshOk:"Issued {t} ({age} ago) · mirrored {fetch}",
+    freshQuiet:"Mirrored {fetch} ({age} ago) · nothing currently being bulletined",
     freshStale:"⚠ Possibly out of date: issued {t}, {age} old. JMA updates every 3 hours — past {h} hours, check JMA directly.",
     freshFail:"⚠ Last fetch failed ({when}). What follows is the last successful mirror and may be out of date.",
     freshNoData:"No data yet. The GitHub Action needs one successful run.",
@@ -340,9 +373,20 @@ var T = {
     saffir:"≈ {c} equivalent",
     problems:"This bulletin did not fully parse:",
     demo:"DEMO DATA — not a real bulletin",
+    ended:"Final bulletin", endedNote:"JMA has stopped forecasting this system. What is above is the last analysis it published — the position and strength will not be updated again. It is still listed here because JMA still carries it; when JMA drops it, this card disappears.",
+    goneT:"Dropped from JMA's list", goneOne:"{n}: last seen {t}.",
     footTitle:"About this page · sources and QR",
+    gpsUse:"📍 Use my location", gpsBusy:"Locating…",
+    gpsAt:"My location {lat} {lon} (fixed {age} ago)",
+    gpsBase:"Pressure trend taken from the nearest reference: {place}, {km} km away.",
+    gpsFar:"The nearest reference is {place}, {km} km away — too far for its pressure trend to say anything about where you are, so that section is hidden. Storm distances and the maps are unaffected.",
+    gpsPrivate:"· the coordinates stay on this phone and are never sent anywhere.",
+    gpsRough:"At that distance treat it as a rough stand-in.",
+    gpsDenied:"The browser did not grant location permission. You can enable it in site settings, or just pick a place from the list.",
+    gpsFailed:"Could not get a fix this time. Choose \u201cUse my location\u201d again to retry, or pick a place from the list.",
+    gpsNoSupport:"This browser cannot provide a location. Please pick a place from the list.",
     qrCap:"Scan to open this page, or type the address:",
-    partial:"Some data did not arrive this time. What is missing is listed below; the rest is showing normally.",
+    partial:"A few items did not arrive or could not be fully shown this time; they are listed below. Everything else is showing normally.",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
@@ -359,8 +403,15 @@ var LANGS=["zh","tw","en"];
    OpenCC is wrong in this domain: 干 is always "dry" here (乾, not 幹), 里
    inside a phrase is 裡 while 公里 keeps 里, 台风 is 颱風 while 台湾/台北
    keep 台. Regenerate with scripts/make_tw.py after editing Chinese copy. */
-var TWMAP={"与":"與","专":"專","东":"東","两":"兩","严":"嚴","个":"個","为":"為","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","们":"們","会":"會","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","则":"則","别":"別","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","协":"協","单":"單","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","场":"場","处":"處","头":"頭","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","断":"斷","无":"無","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","构":"構","标":"標","树":"樹","样":"樣","档":"檔","检":"檢","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","涌":"湧","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","点":"點","热":"熱","牵":"牽","状":"狀","环":"環","现":"現","画":"畫","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","范":"範","萨":"薩","虚":"虛","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雾":"霧","静":"靜","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飘":"飄","马":"馬","鲁":"魯"};
-var TWPROT=[["公里","公里"],["台风","颱風"]];
+var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","苏":"蘇","范":"範","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","轮":"輪","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥"};
+var TWPROT=[["公里","公里"],["台风","颱風"],
+  /* Five storm names whose published Traditional form is NOT what the
+     character map would produce: 里 normally becomes 裡, 范 becomes 範,
+     and HKO writes 杰拉華 and 蝎虎 with the characters below. Both forms
+     are listed where they differ, so a name is safe whichever script it
+     arrives in — the label already carries the published Traditional. */
+  ["百里嘉","百里嘉"],["布里","布里"],["范斯高","范斯高"],
+  ["蝎虎","蝎虎"],["杰拉华","杰拉華"],["杰拉華","杰拉華"]];
 function s2t(s){
   if(typeof s!=="string") return s;
   var i,out=s;
@@ -488,11 +539,78 @@ function cell(k,v,cls){
 var DOC=null, OFFLINE=false, LOADERR=null;
 var SHOWISO=true;
 try{ SHOWISO = localStorage.getItem("twatch.iso")!=="0"; }catch(e){}
+/* ---- your own position ------------------------------------------------
+   The coordinates NEVER leave the device. They are read by the browser,
+   kept in localStorage, and used for arithmetic here: distance and bearing
+   to each storm, and where the white dot sits. The app still makes exactly
+   one network call, to its own data file, and that call carries nothing
+   about you.
+
+   What GPS cannot do is give you a pressure trend. Only the reference
+   places have a 24 h change computed for them, so the outlook is taken
+   from the NEAREST of them and the distance is stated. Interpolating a
+   trend for an arbitrary point would be inventing a number the data does
+   not contain. */
+var GPSKEY="twatch.gps", GPSFIX=null, GPSERR=null, GPSBUSY=false;
+try{
+  var _g=JSON.parse(localStorage.getItem(GPSKEY)||"null");
+  if(_g && typeof _g.lat==="number" && typeof _g.lon==="number") GPSFIX=_g;
+}catch(e){}
+
+/* Nearest reference that actually HAS pressure data this run. The twelve
+   places added for this feature carry no numbers until the fetcher next
+   runs, and a reference with nothing in it is not a reference — snapping to
+   one would show "no pressure data" to someone standing next to a place
+   that has it. Falls back to nearest-of-all when the payload is missing, so
+   the geometry still works before the first load. */
+function nearestRef(lat,lon){
+  var pl=(DOC&&DOC.pressure&&DOC.pressure.places)||null;
+  function scan(needData){
+    var best=null,bd=1e9;
+    for(var i=0;i<REFS.length;i++){
+      if(needData && !(pl&&pl[REFS[i].id])) continue;
+      var d=hav(lat,lon,REFS[i].lat,REFS[i].lon);
+      if(d<bd){ bd=d; best=REFS[i]; }
+    }
+    return best?{ref:best,km:bd}:null;
+  }
+  return (pl && scan(true)) || scan(false);
+}
+function gpsRef(){
+  if(!GPSFIX) return null;
+  var n=nearestRef(GPSFIX.lat,GPSFIX.lon);
+  return {id:"__gps", gps:true, grp:n.ref.grp, lat:GPSFIX.lat, lon:GPSFIX.lon,
+          acc:GPSFIX.acc, at:GPSFIX.t, base:n.ref, baseKm:n.km,
+          zh:"我的位置", en:"My location"};
+}
 function refPlace(){
   var id=null;
   try{ id=localStorage.getItem(LSR); }catch(e){}
+  if(id==="__gps"){ var g=gpsRef(); if(g) return g; }
   for(var i=0;i<REFS.length;i++) if(REFS[i].id===id) return REFS[i];
   return REFS[0];
+}
+/* Which reference the PRESSURE numbers come from. Everything geometric uses
+   ref.lat/lon; only the places table needs a real id. */
+function presRef(ref){ return ref && ref.base ? ref.base : ref; }
+/* Beyond this the nearest reference is too far for its trend to say
+   anything about where you are standing, so no outlook is shown. */
+var GPS_MAXKM=300;
+
+function askGPS(cb){
+  if(!navigator.geolocation){ GPSERR="unsupported"; cb&&cb(); return; }
+  GPSBUSY=true; GPSERR=null;
+  navigator.geolocation.getCurrentPosition(function(p){
+    GPSBUSY=false;
+    GPSFIX={lat:+p.coords.latitude.toFixed(4), lon:+p.coords.longitude.toFixed(4),
+            acc:p.coords.accuracy?Math.round(p.coords.accuracy):null, t:Date.now()};
+    try{ localStorage.setItem(GPSKEY,JSON.stringify(GPSFIX)); }catch(e){}
+    cb&&cb();
+  }, function(err){
+    GPSBUSY=false;
+    GPSERR=(err&&err.code===1)?"denied":"failed";
+    cb&&cb();
+  }, {enableHighAccuracy:false, timeout:12000, maximumAge:600000});
 }
 
 /* ---- freshness ------------------------------------------------------ */
@@ -513,11 +631,23 @@ function renderFresh(){
   }
   if(DOC.demo){ box.classList.add("warnish"); box.textContent=X(L("demo")); return; }
 
+  /* Only storms JMA is still forecasting can tell us whether OUR mirror has
+     fallen behind. A system on its final bulletin stops advancing by design,
+     so letting it set the clock painted a red stale banner over a fetch that
+     had just succeeded — crying wolf, which costs the banner its meaning on
+     the day something is really wrong. If every storm has finished, fall back
+     to the fetch time, which is then the only honest measure of freshness. */
   var newest=null;
   (DOC.storms||[]).forEach(function(s){
+    if(stormEnded(s)) return;
     var t=Date.parse(s.issued||"");
     if(!isNaN(t) && (newest===null||t>newest)) newest=t;
   });
+  var quiet=false;                 // clock came from our fetch, not a bulletin
+  if(newest===null){
+    var g=Date.parse(DOC.generated||"");
+    if(!isNaN(g)){ newest=g; quiet=true; }
+  }
   var now=Date.now(), html;
   if(DOC.fetch_ok===false){
     box.classList.add("stale");
@@ -526,8 +656,11 @@ function renderFresh(){
     box.classList.add("stale");
     html=fill(L("freshStale"),{t:bothT(new Date(newest).toISOString()),age:ago(now-newest),h:STALE_H});
   } else if(newest!==null){
-    html=fill(L("freshOk"),{t:"<b>"+bothT(new Date(newest).toISOString())+"</b>",
-      age:ago(now-newest),fetch:DOC.generated?bothT(DOC.generated):"?"});
+    html=quiet
+      ? fill(L("freshQuiet"),{fetch:"<b>"+bothT(new Date(newest).toISOString())+"</b>",
+                              age:ago(now-newest)})
+      : fill(L("freshOk"),{t:"<b>"+bothT(new Date(newest).toISOString())+"</b>",
+          age:ago(now-newest),fetch:DOC.generated?bothT(DOC.generated):"?"});
     var due=nextDue();
     if(due) html+=" · "+fill(L("nextDue"),{t:due+" "+L("myt")});
   } else {
@@ -1032,6 +1165,7 @@ function decodeList(s){
   if((c.gale_radii||[]).length) items.push([jterm("強風域")+" · "+c.gale_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
     ? "强风域＝风速 15 m/s 以上的范围，比暴风域大得多，也是先到的那一圈。同样按方位分开列。"
     : "The gale area is where winds reach 15 m/s or more. It is much larger than the storm area and it arrives first. Listed per sector, for the same reason."]);
+  if(stormEnded(s)) items.push([L("ended"), L("endedNote")]);
   var f0=(s.forecast||[])[0];
   if(f0&&f0.circle_km) items.push([jterm("予報円")+" · "+f0.circle_km+" km @ +"+f0.tau+"h", lang!=="en"
     ? "预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。"
@@ -1045,11 +1179,77 @@ function decodeList(s){
 /* Display name. JMA names storms only once they reach tropical-storm grade;
    below that they carry a lowercase letter (a, b, c...) instead of a number,
    so "b" is JMA's own designation, not a placeholder. */
-function stormLabel(s){
-  var n=String(s.typhoon_number||"");
-  if(s.name_en && /^\d+$/.test(n))
-    return (lang!=="en"?"台风 "+n.slice(-2)+" 号 ":"Typhoon "+n.slice(-2)+" ")+s.name_en;
-  if(s.name_en) return s.name_en;
+/* The 140 names of the WMO Typhoon Committee list, with the Chinese
+   renderings agreed jointly by CMA, the Hong Kong Observatory and Macao —
+   the ones Malaysian Chinese papers print. Both scripts are stored as
+   PUBLISHED rather than derived through TWMAP, because a name is the one
+   string where a plausible-looking conversion is not good enough.
+   Built by zipping HKO's English / 简体 / 繁體 tables, which share one
+   layout, and cross-checked against HKO's 2026 press release: the nine
+   names added that year all landed on the right rows.
+   CURRENT AS OF THE 2026 LIST. The committee retires names every year, so
+   when JMA uses one that is not here the app falls through to the romanised
+   name — it never transliterates a guess. Refresh from hko.gov.hk. */
+var CNAME={
+  "Aere":["艾利","艾利"],"Ampil":["安比","安比"],"Amuyao":["阿穆丘","阿穆丘"],"Atsani":["艾莎尼","艾莎尼"],
+  "Bailu":["白鹿","白鹿"],"Bang-Lang":["班朗","班朗"],"Banyan":["榕树","榕樹"],"Barijat":["百里嘉","百里嘉"],
+  "Bavi":["巴威","巴威"],"Bebinca":["贝碧嘉","貝碧嘉"],"Bolaven":["布拉万","布拉萬"],"Bori":["布里","布里"],
+  "Bualoi":["博罗依","博羅依"],"Burapha":["布拉帕","布拉帕"],"Cempaka":["查帕卡","查帕卡"],"Chaba":["暹芭","暹芭"],
+  "Champi":["蔷琵","薔琵"],"Chan-hom":["灿鸿","燦鴻"],"Chanthu":["灿都","燦都"],"Choi-wan":["彩云","彩雲"],
+  "Cimaron":["西马仑","西馬侖"],"Co-May":["竹节草","竹節草"],"Damrey":["达维","達維"],"Danas":["丹娜丝","丹娜絲"],
+  "Dianmu":["电母","電母"],"Dim-sum":["点心","點心"],"Dolphin":["白海豚","白海豚"],"Dujuan":["杜鹃","杜鵑"],
+  "Etau":["艾涛","艾濤"],"Fengshen":["风神","風神"],"Francisco":["范斯高","范斯高"],"Fung-wong":["凤凰","鳳凰"],
+  "Gaeguri":["简古维","簡古維"],"Gaemi":["格美","格美"],"Gaenari":["简拉维","簡拉維"],"Gosari":["古莎莉","古莎莉"],
+  "Guchol":["古超","古超"],"Hagupit":["黑格比","黑格比"],"Haishen":["海神","海神"],"Haitang":["海棠","海棠"],
+  "Halong":["夏浪","夏浪"],"Hebi":["希比","希比"],"Higos":["海高斯","海高斯"],"Hoaban":["花斑","花斑"],
+  "Hodu":["核桃","核桃"],"In-fa":["烟花","煙花"],"Jamjari":["蜻蜓","蜻蜓"],"Jangmi":["蔷薇","薔薇"],
+  "Jelawat":["杰拉华","杰拉華"],"Jongdari":["云雀","雲雀"],"Kajiki":["剑鱼","劍魚"],"Kalmaegi":["海鸥","海鷗"],
+  "Khanun":["卡努","卡努"],"Kirogi":["鸿雁","鴻雁"],"Koguma":["小熊","小熊"],"Koinu":["小犬","小犬"],
+  "Koki":["高基","高基"],"Koto":["天琴","天琴"],"Krosa":["罗莎","羅莎"],"Krovanh":["科罗旺","科羅旺"],
+  "Kujira":["鲸鱼","鯨魚"],"Kulap":["玫瑰","玫瑰"],"Lan":["兰恩","蘭恩"],"Leepi":["丽琵","麗琵"],
+  "Lingling":["玲玲","玲玲"],"Lionrock":["狮子山","獅子山"],"Luc-Binh":["浮莲","浮蓮"],"Lupit":["卢碧","盧碧"],
+  "Maliksi":["马力斯","馬力斯"],"Malou":["玛瑙","瑪瑙"],"Maria":["玛莉亚","瑪莉亞"],"Matmo":["麦德姆","麥德姆"],
+  "Mawar":["玛娃","瑪娃"],"Maysak":["美莎克","美莎克"],"Meari":["米雷","米雷"],"Mekkhala":["米克拉","米克拉"],
+  "Merbok":["苗柏","苗柏"],"Mindulle":["蒲公英","蒲公英"],"Mirinae":["银河","銀河"],"Mitag":["米娜","米娜"],
+  "Muifa":["梅花","梅花"],"Mulan":["木兰","木蘭"],"Mun":["木恩","木恩"],"Nakri":["娜基莉","娜基莉"],
+  "Namtheun":["南川","南川"],"Nangka":["浪卡","浪卡"],"Nanmadol":["南玛都","南瑪都"],"Narae":["娜尼","娜尼"],
+  "Nari":["百合","百合"],"Narra":["紫檀","紫檀"],"Neoguri":["浣熊","浣熊"],"Nepartak":["尼伯特","尼伯特"],
+  "Nesat":["纳沙","納沙"],"Nida":["妮妲","妮妲"],"Nokaen":["洛鞍","洛鞍"],"Nongfa":["蓝湖","藍湖"],
+  "Noul":["红霞","紅霞"],"Nuri":["鹦鹉","鸚鵡"],"Nyatoh":["妮亚图","妮亞圖"],"Omais":["奥麦斯","奧麥斯"],
+  "Ong-mang":["坡鹿","坡鹿"],"Pabuk":["帕布","帕布"],"Pakhar":["帕卡","帕卡"],"Peilou":["琵鹭","琵鷺"],
+  "Peipah":["琵琶","琵琶"],"Penha":["西望洋","西望洋"],"Podul":["杨柳","楊柳"],"Prapiroon":["派比安","派比安"],
+  "Pulasan":["普拉桑","普拉桑"],"Ragasa":["桦加沙","樺加沙"],"Roke":["洛克","洛克"],"Sanba":["三巴","三巴"],
+  "Sanvu":["珊瑚","珊瑚"],"Saobien":["海星","海星"],"Sarbul":["沙布尔","沙布爾"],"Saudel":["沙德尔","沙德爾"],
+  "Sepat":["圣帕","聖帕"],"Shanshan":["珊珊","珊珊"],"Sinlaku":["森拉克","森拉克"],"Son-Tinh":["山神","山神"],
+  "Sonca":["桑卡","桑卡"],"Songda":["桑达","桑達"],"Soulik":["苏力","蘇力"],"Surigae":["舒力基","舒力基"],
+  "Talas":["塔拉斯","塔拉斯"],"Talim":["泰利","泰利"],"Tapah":["塔巴","塔巴"],"Tianma":["天马","天馬"],
+  "Tirou":["蒂鲁","蒂魯"],"Tokage":["蝎虎","蝎虎"],"Tokei":["道玑","道璣"],"Tomo":["船尾","船尾"],
+  "Trases":["翠丝","翠絲"],"Tsing-ma":["青马","青馬"],"Wipha":["韦帕","韋帕"],"Wukong":["悟空","悟空"],
+  "Wutip":["蝴蝶","蝴蝶"],"Yamaneko":["山猫","山貓"],"Yinxing":["银杏","銀杏"],"Yun-yeung":["鸳鸯","鴛鴦"]
+};
+function cname(en){
+  var e=CNAME[en]; if(!e) return null;
+  return lang==="tw"?e[1]:e[0];
+}
+/* JMA's final advisory for a system has a distinctive shape: an analysis is
+   published, and the forecast part is simply absent. That is JMA saying it has
+   stopped forecasting, so this reads their output rather than deciding
+   anything — no rule about age, no guess at dissipation. A system that is
+   merely between bulletins still carries its forecast points. */
+function stormEnded(s){
+  return !!(s && s.parsed && s.current && s.current.lat!=null &&
+            !((s.forecast||[]).length));
+}
+
+/* full=true on the storm card, where there is room for both scripts. The
+   map and the plain-language line get the short form. */
+function stormLabel(s,full){
+  var n=String(s.typhoon_number||""), c=s.name_en?cname(s.name_en):null;
+  if(s.name_en && /^\d+$/.test(n)){
+    if(lang==="en") return "Typhoon "+n.slice(-2)+" "+s.name_en;
+    return "台风 "+n.slice(-2)+" 号 "+(c?c+(full?" "+s.name_en:""):s.name_en);
+  }
+  if(s.name_en) return lang!=="en"&&c ? c+(full?" "+s.name_en:"") : s.name_en;
   return L("tdLetter")+(n?" "+n:"");
 }
 
@@ -1059,7 +1259,8 @@ function stormLabel(s){
    are not" teaches something that survives the next event, where a bare
    verdict does not. Still not a forecast, and it says so.               */
 function plainLines(ref,P,nchg){
-  var e=P.places[ref.id];
+  if(ref.gps && ref.baseKm>GPS_MAXKM) return null;   // too far to mean anything
+  var e=P.places[presRef(ref).id];
   if(!e) return null;
   var chg=e.change24;
   var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
@@ -1130,7 +1331,13 @@ function renderSimple(){
     L("reg")[r.g.k]+(r.g.strong?L("regStrong"):"")));
   box.appendChild(head);
   r.lines.forEach(function(t){ box.appendChild(el("p","plain",t)); });
-  box.appendChild(el("div","pos",L("hpa")+" "+P.places[ref.id].hpa.toFixed(1)+
+  if(ref.gps){
+    var bl=el("div","pos",fill(L("gpsBase"),
+      {place:(lang==="en"?ref.base.en:ref.base.zh),km:Math.round(ref.baseKm)}));
+    if(ref.baseKm>120){ bl.textContent+=" "+X(L("gpsRough")); bl.style.color="#ffd489"; }
+    box.appendChild(bl);
+  }
+  box.appendChild(el("div","pos",L("hpa")+" "+P.places[presRef(ref).id].hpa.toFixed(1)+
     " · 24h "+(r.chg<0?"▼":"▲")+Math.abs(r.chg).toFixed(1)+
     (r.surge!==null?" · "+L("surgeShort")+" "+(r.surge>0?"+":"")+r.surge.toFixed(1):"")));
   var n=el("div","rangeline"); n.appendChild(el("span","note",L("simpleNote")));
@@ -1235,7 +1442,7 @@ function stormCard(s,n){
   // The badge carries the same number as the dot on the region map above.
   var nm=el("div","sname");
   if(n) nm.appendChild(el("span","snum",String(n)));
-  nm.appendChild(document.createTextNode(X(stormLabel(s))));
+  nm.appendChild(document.createTextNode(X(stormLabel(s,true))));
   head.appendChild(nm);
   var bs=el("div","badges");
   var catCode=c.category||s.category;
@@ -1243,6 +1450,7 @@ function stormCard(s,n){
     var strong = catCode==="TY";
     bs.appendChild(el("span","badge"+(strong?" hot":" amb"), (L("cat")[catCode]||catCode)));
   }
+  if(stormEnded(s)) bs.appendChild(el("span","badge","· "+L("ended")));
   if(c.intensity) bs.appendChild(el("span","badge hot", L("intens")[c.intensity]));
   if(c.scale) bs.appendChild(el("span","badge amb", L("scale")[c.scale]));
   var sf=saffirFrom10min(c.wind_kt);
@@ -1344,7 +1552,7 @@ function renderRegion(){
   if(!P||!P.places||!Object.keys(P.places).length){
     strip.appendChild(el("div",null,L("presNone")));
   } else {
-    var here=P.places[ref.id];
+    var here=P.places[presRef(ref).id];
     if(here){
       var line=document.createElement("div");
       var txt=fill(L("presAt"),{place:(lang==="en"?ref.en:ref.zh),hpa:here.hpa.toFixed(1)});
@@ -1419,9 +1627,27 @@ function renderStorms(){
     var ever=!!(DOC&&DOC.generated);
     var e=el("div","empty",L(ever?"noStorm":"unknown"));
     if(!ever) e.style.borderColor="#5a2b2b";
-    box.appendChild(e); return;
+    box.appendChild(e); renderGone(box); return;
   }
   list.forEach(function(s,i){ box.appendChild(stormCard(s,i+1)); });
+  renderGone(box);
+}
+
+/* When JMA drops a system from its list the card simply vanished, which looks
+   the same as the app losing it. The fetcher notes what left, so say so for a
+   day afterwards — then let it go quietly. */
+function renderGone(box){
+  var gone=(DOC&&DOC.gone)||[];
+  if(!gone.length) return;
+  var d=el("div","empty");
+  d.style.textAlign="left";
+  d.appendChild(el("div","k",X(L("goneT"))));
+  gone.forEach(function(g){
+    d.appendChild(el("div",null,X(fill(L("goneOne"),
+      {n:(lang!=="en"&&cname(g.name_en)?cname(g.name_en)+" ":"")+(g.name_en||g.id||"?"),
+       t:bothT(g.last_seen)}))));
+  });
+  box.appendChild(d);
 }
 
 var GLOSS={
@@ -1435,6 +1661,7 @@ zh:[
  ["中心气压","气象厅判断强度的主要依据。920 hPa 比 970 hPa 强得多。气压和风速是一体两面，但气压是直接测得的，风速多半是推算的。"],
  ["热带低压的字母编号（a、b、c）","气象厅只有在气旋达到热带风暴级（10 分钟风速 17 m/s）时才给号码和名字。还没到这一级的热带低压，用小写字母排序：a、b、c……所以「热带低压 b」里的 b 是气象厅的正式编号，不是缺资料。\n这跟美国的 INVEST（90W–99W）不是同一件事：INVEST 只是「值得盯的一团云」，连中心闭合环流都不一定有；气象厅的热带低压已经是判定成立的系统，会正式发报。换句话说，INVEST 是观察名单，热带低压是已经点名的。"],
  ["GDACS 是什么","GDACS（全球灾害预警与协调系统）是欧盟联合研究中心（JRC）与联合国人道事务协调厅（OCHA）从 2004 年起合办的平台，服务对象是救灾单位。它本身不是气象机构，也不做预报：它把别人的观测和路径接进来，再按人口与基础设施估算会影响到多少人，算出绿／橙／红。\n那个颜色是影响分数，不是强度分级——猛烈台风在大洋中央可以是绿色，弱系统压在人口稠密的海岸可以是橙色，路径稍微一改，两天内从红跳回绿也不稀奇。它的气旋路径主要取自美国 JTWC 与 NOAA，分级用萨菲尔-辛普森（1 分钟风速），所以同一个台风看起来会比气象厅（10 分钟风速）高约一级。\n本页用它补一个洞：气象厅只为它正式发报的气旋编号，南海那些没到台风级的低压不会出现在上面那一节，GDACS 有时候会有。所以看它是看「那里有没有一个系统」，颜色留给救灾单位去用。"],
+ ["台风的中文名","名字由日本气象厅给，只给到热带风暴级（17 米/秒）以上；名单是世界气象组织台风委员会的 140 个名字，14 个成员各出 10 个，用完一轮从头再来。\n中文名不是气象厅给的，也不是本页翻的。中国气象局、香港天文台、澳门地球物理暨气象局三家协商，定出一套统一译名——就是马来西亚华文报上看到的那一套。本页直接收录这份公布的名单（简繁都是公布的原文，不是本页转换的），所以 Dolphin 是「白海豚」，Nangka 是「浪卡」。\n两点要知道。一，台湾中央气象署自己翻译，部分名字跟这套不一样，同一个台风可能有两个中文名。二，造成重大伤亡的名字会被除名换新，2026 年就换掉了九个（摩羯、山陀儿、潭美、万宜等）。所以名单是有日期的：气象厅用到本页没有的名字时，本页只显示英文原名，不会自己音译一个出来。"],
  ["对照天上的云","这一页给的是气压走向。天上的云是另一半，而且不用花钱就能核对——出门抬头看一眼，就知道这三档写得准不准。\n转干：台风把空气抽上去，抽走的总要沉回来，常常就沉在我们头顶。中层被压住，云长不高。天上多的是从台风那边飘过来的卷云、卷层云，薄薄一层像牛奶，太阳有时带一圈晕；底下的积云是扁的，午后堆一堆也长不上去，傍晚就散掉。霾积着不散。闷热、灰白、不下雨。\n转湿（涌流拉开）：云是一层一层压过来的，不是一朵朵长上去。灰色低云从海上某一个方向推进来，云底只有几百米，来了就不走；雨是连续的中雨，不是雷雨那种一阵一阵；风也是持续地吹，不是先狂后静。看方向和持久度：从海上来、天黑了还不散，那就是涌流。\n平稳：就是平常的日循环。清早晴或有雾，上午积云开始长，下午某几朵长得起来变雷雨，落点很碰运气——这条山谷下 20 毫米，隔壁一滴都没有。\n最容易看错的一件事：台风的卷云罩常常伸出一千公里以上。东北方向飘来高云，并不代表东西要来了——那是它的出流，而且底下往往正在下沉，反而偏干。「天色乳白＝要变天」这个直觉，在这里多半是反的。\n值得记的一条：平稳的日子，留意积云是扁的还是长得起来。这一档本页的证据最少，而天空免费告诉你答案。"],
  ["马来西亚为什么要看台风","半岛几乎不会被台风正面登陆——纬度太低，科氏力太弱，气旋转不起来。真正的影响是间接的：西北太平洋或南海的台风会拉紧气压梯度、加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前几天看季风涌。"]
 ],
@@ -1448,6 +1675,7 @@ en:[
  ["Central pressure","JMA's primary intensity measure. 920 hPa is far stronger than 970 hPa. Pressure and wind are two sides of one coin, but pressure is measured more directly while wind is usually estimated."],
  ["Lettered depressions (a, b, c)","JMA assigns a number and a name only once a system reaches tropical-storm grade (17 m/s, 10-minute). Depressions below that are lettered in sequence instead: a, b, c. So the b in \"Tropical depression b\" is JMA's own official designation, not missing data.\nThis is not the same as a US INVEST (90W-99W). An INVEST is merely an area worth watching and may not even have a closed circulation; a JMA tropical depression is an assessed system that gets formal bulletins. INVEST is the watchlist; a lettered depression is already named."],
  ["What GDACS is","GDACS — the Global Disaster Alert and Coordination System — is a platform run jointly by the European Commission's Joint Research Centre and the UN Office for the Coordination of Humanitarian Affairs, going since 2004. Its audience is relief agencies. It is not a weather service and it issues no forecasts: it ingests other people's observations and tracks, then estimates how many people and how much infrastructure lie in the way, and scores that as green, orange or red.\nThat colour is an impact score, not a strength grade — a violent typhoon in the middle of the ocean can be green, a weak system sitting on a crowded coast can be orange, and a small shift in the predicted track can take an alert from red back to green inside two days. Its cyclone tracks come mainly from the US JTWC and NOAA, and it grades on Saffir-Simpson using 1-minute winds, so the same storm reads about a category higher than JMA's 10-minute basis.\nThis page uses it to fill one gap: JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade never appears in the section above, and GDACS sometimes has it. Read it for whether something is there. The colour is for the relief agencies."],
+ ["Chinese names for the storms","JMA assigns the name, and only from tropical-storm grade (17 m/s) upward. The list itself belongs to the WMO Typhoon Committee: 140 names, ten from each of fourteen members, used in order and then started again.\nThe Chinese name is not JMA's and is not this page's translation. CMA, the Hong Kong Observatory and the Macao Meteorological Bureau agree one common rendering between them — the one Malaysian Chinese newspapers print. This page carries that published list verbatim in both scripts rather than converting one into the other, so Dolphin is 白海豚 and Nangka is 浪卡.\nTwo things to know. Taiwan's CWA translates independently and some of its names differ, so one storm can have two Chinese names. And names that cause serious loss are retired and replaced — nine were replaced for 2026. The list therefore has a date on it: when JMA uses a name this page does not hold, the page shows the romanised name alone rather than inventing a transliteration."],
  ["Checking it against the sky","This page gives you a pressure trend. The clouds are the other half, and they cost nothing — step outside, look up, and you can judge whether the three readings are any good.\nDrier: the typhoon pulls air upward and what goes up has to come down, often over us. That descent warms and dries the middle levels and puts a lid on convection. So the sky fills with cirrus and cirrostratus streaming over from the storm — a thin milky layer, sometimes a halo around the sun — while the cumulus underneath stay flat-bottomed and stunted, building a little after noon, never getting tall, gone by evening. Haze settles in because nothing washes it out. Hot, grey-white, no rain.\nWetter (the surge gap opening): cloud arrives in layers rather than growing in towers. A grey low deck pushes in from one direction off the sea, bases only a few hundred metres up, and it stays. The rain is continuous and moderate, not the burst-and-stop of a thunderstorm, and the wind blows steadily instead of gusting then dropping. Read the direction and the persistence: in off the sea, still there after dark, that is a surge.\nSteady: the ordinary daily cycle. Clear or misty at dawn, cumulus building through the morning, a few towers reaching thunderstorm size in the afternoon, and where they land is luck — 20 mm in this valley, nothing in the next.\nThe easiest thing to get backwards: a typhoon's cirrus shield routinely reaches a thousand kilometres or more beyond the centre. High cloud drifting in from the northeast is not evidence that something is coming. It is the storm's outflow, and there is often subsidence underneath it, which means drier rather than wetter. The instinct that a milky sky means a change on the way is usually inverted here.\nWorth logging: on steady days, note whether the cumulus stayed flat or went tall. That is the reading this page has the least evidence for, and the sky answers it for free."],
  ["Why Malaysia watches typhoons","The peninsula is almost never struck directly — too near the equator for Coriolis to spin one up. The real effect is indirect: a typhoon in the West Pacific or South China Sea tightens the pressure gradient and strengthens the northeast monsoon surge that pushes days of rain onto Kelantan, Terengganu and east Pahang. Watching typhoons is watching the surge a few days early."]
 ]};
@@ -1474,6 +1702,27 @@ function renderFoot(){
   var cap=document.getElementById("qrCap");
   cap.textContent=X(L("qrCap"));   // direct assignment: misses el()'s boundary
   cap.appendChild(el("span","u",QRURL));
+}
+
+function renderGpsNote(){
+  var box=document.getElementById("gpsNote");
+  box.textContent=""; box.className="gpsnote";
+  var ref=refPlace();
+  if(GPSBUSY){ box.textContent=X(L("gpsBusy")); return; }
+  if(GPSERR){
+    box.className="gpsnote warn";
+    box.textContent=X(L(GPSERR==="denied"?"gpsDenied":GPSERR==="unsupported"?"gpsNoSupport":"gpsFailed"));
+    return;
+  }
+  if(!ref.gps) return;
+  box.appendChild(el("span",null,fill(L("gpsAt"),
+    {lat:fmtLat(ref.lat),lon:fmtLon(ref.lon),age:ago(Date.now()-(ref.at||Date.now()))})));
+  if(ref.baseKm>GPS_MAXKM){
+    box.className="gpsnote warn";
+    box.appendChild(el("span",null," "+fill(L("gpsFar"),
+      {place:(lang==="en"?ref.base.en:ref.base.zh),km:Math.round(ref.baseKm)})));
+  }
+  box.appendChild(el("span","co"," "+L("gpsPrivate")));
 }
 
 function renderLearn(){
@@ -1503,6 +1752,11 @@ function renderAll(){
   document.getElementById("hLearn").textContent=X(L("hLearn"));
   var sel=document.getElementById("refSel"), cur=refPlace().id;
   sel.textContent="";
+  var oGps=document.createElement("option");
+  oGps.value="__gps";
+  oGps.textContent=X(GPSBUSY?L("gpsBusy"):L("gpsUse"));
+  if(cur==="__gps") oGps.selected=true;
+  sel.appendChild(oGps);
   [["my","grpMY"],["reg","grpReg"]].forEach(function(pair){
     var og=document.createElement("optgroup"); og.label=X(L(pair[1]));
     REFS.forEach(function(r){
@@ -1513,6 +1767,7 @@ function renderAll(){
     });
     sel.appendChild(og);
   });
+  renderGpsNote();
   document.getElementById("hRegion").textContent=X(L("hRegion"));
   document.getElementById("hStorms").textContent=X(L("hStorms"));
   document.getElementById("hOther").textContent=X(L("hOther"));
@@ -1617,11 +1872,30 @@ setInterval(function(){
   else refreshStatus();
 }, 60000);
 document.getElementById("refSel").addEventListener("change",function(e){
-  try{ localStorage.setItem(LSR,e.target.value); }catch(err){}
+  var v=e.target.value;
+  if(v==="__gps"){
+    // Re-ask every time it is chosen, so picking it again is how you refresh.
+    renderAll();                     // paints the "locating" label first
+    askGPS(function(){
+      if(GPSFIX){ try{ localStorage.setItem(LSR,"__gps"); }catch(err){} }
+      renderAll();
+    });
+    return;
+  }
+  try{ localStorage.setItem(LSR,v); }catch(err){}
   renderAll();
 });
 try{ var sv=localStorage.getItem(LS); if(LANGS.indexOf(sv)>-1) lang=sv; }catch(e){}
 renderAll(); load(true);   // first paint always fetches
+
+/* Already in location mode: quietly re-fix on launch. The browser does not
+   re-prompt once permission is granted, and maximumAge lets it hand back a
+   recent cached position instead of waking the GPS. A failure here is not
+   worth an error — the stored fix is still shown, with its age. */
+try{
+  if(localStorage.getItem(LSR)==="__gps" && GPSFIX)
+    askGPS(function(){ GPSERR=null; renderAll(); });
+}catch(e){}
 
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js").then(function(reg){
