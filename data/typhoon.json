@@ -1,9 +1,16 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-08-15T09:59:06Z",
- "gone": [],
- "last_attempt": "2026-08-15T09:59:06Z",
+ "generated": "2026-08-15T13:18:00Z",
+ "gone": [
+  {
+   "id": "TC2620",
+   "last_seen": "2026-08-14T12:45:00Z",
+   "name_en": "Nangka",
+   "typhoon_number": "2617"
+  }
+ ],
+ "last_attempt": "2026-08-15T13:18:00Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -620,230 +627,129 @@
   "model": "ECMWF IFS via Open-Meteo",
   "places": {
    "alorsetar": {
-    "change24": -1.0,
-    "hpa": 1008.7
+    "change24": 0.0,
+    "hpa": 1011.1
    },
    "bintulu": {
-    "change24": 1.4,
-    "hpa": 1009.6
+    "change24": 0.9,
+    "hpa": 1011.8
    },
    "danang": {
-    "change24": 0.8,
-    "hpa": 1002.1
+    "change24": 1.9,
+    "hpa": 1006.0
    },
    "guangzhou": {
-    "change24": 0.7,
-    "hpa": 1001.5
+    "change24": -0.4,
+    "hpa": 1003.0
    },
    "haikou": {
-    "change24": 1.1,
-    "hpa": 1002.0
+    "change24": 1.0,
+    "hpa": 1004.1
    },
    "hongkong": {
-    "change24": 0.5,
-    "hpa": 1002.0
+    "change24": -0.1,
+    "hpa": 1003.2
    },
    "ipoh": {
-    "change24": -1.7,
-    "hpa": 1008.9
+    "change24": 0.0,
+    "hpa": 1011.2
    },
    "jb": {
-    "change24": 0.2,
-    "hpa": 1008.9
+    "change24": -0.3,
+    "hpa": 1010.9
    },
    "kagoshima": {
-    "change24": 0.3,
-    "hpa": 1006.3
+    "change24": 0.2,
+    "hpa": 1007.8
    },
    "kaohsiung": {
-    "change24": -0.3,
-    "hpa": 1004.4
+    "change24": -0.1,
+    "hpa": 1005.7
    },
    "kb": {
-    "change24": -0.2,
-    "hpa": 1008.7
+    "change24": 0.5,
+    "hpa": 1010.8
    },
    "kk": {
-    "change24": 0.7,
-    "hpa": 1009.4
+    "change24": 0.8,
+    "hpa": 1011.8
    },
    "kl": {
-    "change24": -1.4,
-    "hpa": 1009.7
+    "change24": 0.3,
+    "hpa": 1012.0
    },
    "kt": {
-    "change24": -1.4,
-    "hpa": 1008.3
+    "change24": -0.3,
+    "hpa": 1010.7
    },
    "kuantan": {
-    "change24": -1.2,
-    "hpa": 1008.6
+    "change24": -0.9,
+    "hpa": 1010.8
    },
    "kuching": {
-    "change24": 2.3,
-    "hpa": 1010.5
+    "change24": 0.8,
+    "hpa": 1011.7
    },
    "manila": {
-    "change24": 0.4,
-    "hpa": 1008.7
+    "change24": 0.2,
+    "hpa": 1010.4
    },
    "melaka": {
-    "change24": -0.5,
-    "hpa": 1008.6
+    "change24": -0.6,
+    "hpa": 1010.9
    },
    "miri": {
-    "change24": 0.6,
-    "hpa": 1009.1
+    "change24": 0.7,
+    "hpa": 1011.5
    },
    "naha": {
-    "change24": -0.3,
-    "hpa": 1004.2
+    "change24": -0.1,
+    "hpa": 1005.8
    },
    "penang": {
-    "change24": -1.4,
-    "hpa": 1008.7
+    "change24": 0.0,
+    "hpa": 1011.1
    },
    "raub": {
-    "change24": -1.7,
-    "hpa": 1011.3
+    "change24": 0.4,
+    "hpa": 1013.7
    },
    "sandakan": {
-    "change24": 0.9,
-    "hpa": 1009.5
+    "change24": 0.7,
+    "hpa": 1011.9
    },
    "sanya": {
-    "change24": 0.9,
-    "hpa": 1002.7
+    "change24": 1.4,
+    "hpa": 1004.9
    },
    "seremban": {
-    "change24": -0.7,
-    "hpa": 1009.5
+    "change24": -0.3,
+    "hpa": 1011.8
    },
    "sibu": {
-    "change24": 2.2,
-    "hpa": 1010.2
+    "change24": 0.9,
+    "hpa": 1011.6
    },
    "taipei": {
-    "change24": 0.2,
-    "hpa": 1003.5
+    "change24": -0.8,
+    "hpa": 1004.7
    },
    "tawau": {
     "change24": 0.7,
-    "hpa": 1009.5
+    "hpa": 1012.1
    },
    "tokyo": {
     "change24": 1.8,
-    "hpa": 1011.0
+    "hpa": 1012.8
    },
    "triang": {
-    "change24": -1.5,
-    "hpa": 1008.5
+    "change24": -0.7,
+    "hpa": 1010.6
    }
   }
  },
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
  "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
- "storms": [
-  {
-   "category": "TD",
-   "current": {
-    "accuracy_jp": null,
-    "category": "TD",
-    "category_jp": "熱帯低気圧",
-    "circle_km": null,
-    "course_jp": "南南東",
-    "gale_radii": [],
-    "gust_kt": null,
-    "gust_ms": null,
-    "intensity": null,
-    "lat": 28.0,
-    "location_jp": "南鳥島近海",
-    "lon": 155.0,
-    "move_deg": 157.5,
-    "move_kmh": null,
-    "move_kt": null,
-    "part_jp": "実況",
-    "pressure_hpa": 996.0,
-    "scale": null,
-    "speed_note_jp": "ゆっくり",
-    "storm_radii": [],
-    "tau": 0,
-    "valid": "2026-08-14T12:00:00Z",
-    "wind_kt": null,
-    "wind_ms": null,
-    "wind_note_jp": null
-   },
-   "forecast": [],
-   "id": "TC2620",
-   "issued": "2026-08-14T12:45:00Z",
-   "name_en": "Nangka",
-   "name_jp": "ナンカー",
-   "parsed": true,
-   "problems": [],
-   "raw": [
-    {
-     "category": {
-      "en": "TD",
-      "jp": "熱帯低気圧"
-     },
-     "issue": {
-      "JST": "2026-08-14T21:45:00+09:00",
-      "UTC": "2026-08-14T12:45:00Z"
-     },
-     "name": {
-      "en": "Nangka",
-      "jp": "ナンカー"
-     },
-     "part": "title",
-     "typhoonNumber": "2617"
-    },
-    {
-     "advancedHours": 0,
-     "category": {
-      "en": "TD",
-      "jp": "熱帯低気圧"
-     },
-     "course": "南南東",
-     "intensity": "-",
-     "location": "南鳥島近海",
-     "part": {
-      "en": "Analysis",
-      "jp": "実況"
-     },
-     "position": {
-      "deg": [
-       28.0,
-       155.0
-      ],
-      "dm": [
-       [
-        28,
-        0
-       ],
-       [
-        155,
-        0
-       ]
-      ]
-     },
-     "pressure": "996",
-     "scale": "-",
-     "speed": {
-      "note": {
-       "en": "Slow",
-       "jp": "ゆっくり"
-      }
-     },
-     "validtime": {
-      "JST": "2026-08-14T21:00:00+09:00",
-      "UTC": "2026-08-14T12:00:00Z"
-     }
-    }
-   ],
-   "target_category": "TD",
-   "target_issue": "2026-08-14T21:45:00+09:00",
-   "typhoon_number": "2617"
-  }
- ],
+ "storms": [],
  "wind_averaging": "10-minute sustained"
 }
