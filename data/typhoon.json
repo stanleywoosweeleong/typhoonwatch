@@ -1,8 +1,8 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-08-15T04:14:20Z",
- "last_attempt": "2026-08-15T04:14:20Z",
+ "generated": "2026-08-15T07:21:27Z",
+ "last_attempt": "2026-08-15T07:21:27Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -619,76 +619,76 @@
   "model": "ECMWF IFS via Open-Meteo",
   "places": {
    "danang": {
-    "change24": 2.4,
-    "hpa": 1004.9
+    "change24": 2.2,
+    "hpa": 1003.4
    },
    "guangzhou": {
-    "change24": 1.5,
-    "hpa": 1003.9
+    "change24": 0.5,
+    "hpa": 1002.0
    },
    "haikou": {
     "change24": 2.6,
-    "hpa": 1004.7
+    "hpa": 1003.6
    },
    "hongkong": {
-    "change24": 1.1,
-    "hpa": 1004.1
+    "change24": 1.0,
+    "hpa": 1002.8
    },
    "kagoshima": {
-    "change24": 1.2,
-    "hpa": 1007.1
+    "change24": 0.9,
+    "hpa": 1006.5
    },
    "kaohsiung": {
-    "change24": 1.4,
-    "hpa": 1006.6
+    "change24": 0.9,
+    "hpa": 1005.4
    },
    "kb": {
-    "change24": 0.3,
-    "hpa": 1012.5
+    "change24": -0.2,
+    "hpa": 1010.0
    },
    "kk": {
-    "change24": 1.5,
-    "hpa": 1012.1
+    "change24": 1.3,
+    "hpa": 1010.3
    },
    "kuantan": {
-    "change24": 0.7,
-    "hpa": 1012.7
+    "change24": 0.2,
+    "hpa": 1010.2
    },
    "kuching": {
-    "change24": 1.3,
-    "hpa": 1012.6
+    "change24": 1.6,
+    "hpa": 1010.5
    },
    "manila": {
-    "change24": -0.2,
-    "hpa": 1009.4
+    "change24": 0.3,
+    "hpa": 1008.7
    },
    "naha": {
-    "change24": 1.4,
-    "hpa": 1005.9
+    "change24": 0.8,
+    "hpa": 1005.1
    },
    "raub": {
-    "change24": 0.4,
-    "hpa": 1015.1
+    "change24": -0.8,
+    "hpa": 1012.8
    },
    "sandakan": {
-    "change24": 1.3,
-    "hpa": 1011.6
+    "change24": 0.9,
+    "hpa": 1009.6
    },
    "sanya": {
-    "change24": 2.6,
-    "hpa": 1005.5
+    "change24": 2.2,
+    "hpa": 1004.2
    },
    "taipei": {
     "change24": 1.3,
-    "hpa": 1004.4
+    "hpa": 1003.9
    },
    "tokyo": {
-    "change24": 2.3,
-    "hpa": 1010.7
+    "change24": 1.8,
+    "hpa": 1010.5
    },
    "triang": {
-    "change24": 1.2,
-    "hpa": 1012.6
+    "change24": 0.5,
+    "hpa": 1010.2
    }
   }
  },
