@@ -1,9 +1,9 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-08-17T02:09:17Z",
+ "generated": "2026-08-17T04:25:52Z",
  "gone": [],
- "last_attempt": "2026-08-17T02:09:17Z",
+ "last_attempt": "2026-08-17T04:25:52Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -620,124 +620,124 @@
   "model": "ECMWF IFS via Open-Meteo",
   "places": {
    "alorsetar": {
-    "change24": 0.1,
+    "change24": 0.0,
     "hpa": 1013.0
    },
    "bintulu": {
-    "change24": -0.3,
-    "hpa": 1013.8
+    "change24": 0.4,
+    "hpa": 1013.1
    },
    "danang": {
-    "change24": -0.2,
-    "hpa": 1005.4
+    "change24": -0.4,
+    "hpa": 1004.7
    },
    "guangzhou": {
-    "change24": 1.0,
-    "hpa": 1004.5
+    "change24": 1.2,
+    "hpa": 1003.9
    },
    "haikou": {
-    "change24": 0.1,
-    "hpa": 1004.5
+    "change24": 0.3,
+    "hpa": 1004.0
    },
    "hongkong": {
-    "change24": 0.5,
-    "hpa": 1004.6
+    "change24": 0.6,
+    "hpa": 1004.1
    },
    "ipoh": {
     "change24": 0.8,
-    "hpa": 1013.4
+    "hpa": 1013.3
    },
    "jb": {
     "change24": 1.4,
-    "hpa": 1014.4
+    "hpa": 1014.0
    },
    "kagoshima": {
-    "change24": 2.2,
+    "change24": 2.7,
     "hpa": 1009.8
    },
    "kaohsiung": {
-    "change24": -0.5,
-    "hpa": 1004.6
+    "change24": -0.3,
+    "hpa": 1004.2
    },
    "kb": {
-    "change24": 0.7,
-    "hpa": 1013.0
-   },
-   "kk": {
-    "change24": 0.4,
+    "change24": 0.6,
     "hpa": 1012.8
    },
-   "kl": {
+   "kk": {
     "change24": 0.8,
-    "hpa": 1014.6
+    "hpa": 1012.2
+   },
+   "kl": {
+    "change24": 0.7,
+    "hpa": 1014.4
    },
    "kt": {
-    "change24": 0.8,
-    "hpa": 1013.2
-   },
-   "kuantan": {
-    "change24": 0.9,
-    "hpa": 1013.9
-   },
-   "kuching": {
-    "change24": 1.0,
-    "hpa": 1014.2
-   },
-   "manila": {
-    "change24": -0.4,
-    "hpa": 1008.2
-   },
-   "melaka": {
-    "change24": 1.0,
-    "hpa": 1014.1
-   },
-   "miri": {
-    "change24": -0.2,
+    "change24": 0.5,
     "hpa": 1013.0
    },
+   "kuantan": {
+    "change24": 1.1,
+    "hpa": 1013.7
+   },
+   "kuching": {
+    "change24": 1.2,
+    "hpa": 1013.2
+   },
+   "manila": {
+    "change24": 0.1,
+    "hpa": 1007.9
+   },
+   "melaka": {
+    "change24": 0.7,
+    "hpa": 1013.8
+   },
+   "miri": {
+    "change24": 0.2,
+    "hpa": 1012.6
+   },
    "naha": {
-    "change24": 1.6,
-    "hpa": 1007.0
+    "change24": 1.7,
+    "hpa": 1006.9
    },
    "penang": {
     "change24": 0.5,
     "hpa": 1013.1
    },
    "raub": {
-    "change24": 0.4,
+    "change24": 0.8,
     "hpa": 1015.9
    },
    "sandakan": {
-    "change24": 0.0,
-    "hpa": 1012.3
+    "change24": 0.3,
+    "hpa": 1011.2
    },
    "sanya": {
-    "change24": 0.2,
-    "hpa": 1005.4
-   },
-   "seremban": {
-    "change24": 1.0,
-    "hpa": 1014.6
-   },
-   "sibu": {
-    "change24": 0.2,
-    "hpa": 1014.0
-   },
-   "taipei": {
-    "change24": 1.1,
+    "change24": 0.3,
     "hpa": 1004.9
    },
+   "seremban": {
+    "change24": 0.8,
+    "hpa": 1014.5
+   },
+   "sibu": {
+    "change24": 0.9,
+    "hpa": 1013.1
+   },
+   "taipei": {
+    "change24": 0.9,
+    "hpa": 1004.2
+   },
    "tawau": {
-    "change24": 0.0,
-    "hpa": 1013.0
+    "change24": 0.5,
+    "hpa": 1012.3
    },
    "tokyo": {
     "change24": 1.2,
-    "hpa": 1014.6
+    "hpa": 1014.2
    },
    "triang": {
-    "change24": 1.0,
-    "hpa": 1014.1
+    "change24": 0.9,
+    "hpa": 1013.7
    }
   }
  },
