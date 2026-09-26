@@ -17,6 +17,7 @@ on:
   push:
     paths:
       - "scripts/fetch_typhoon.py"
+      - "scripts/squall.js"
       - ".github/workflows/typhoon-watch.yml"
 
 permissions:
@@ -39,6 +40,20 @@ jobs:
         with:
           python-version: "3.12"
 
+      # scripts/squall.js runs the Sumatra Squall app's own scoring engine
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # A copy of the live SumatraSquall page for the self-test, so the squall
+      # bridge is tested against the engine it will actually run. If that site
+      # is down, the self-test skips the squall part (and says so) instead of
+      # stopping the typhoon data from updating.
+      - name: Get SumatraSquall page for self-test
+        if: ${{ !inputs.probe }}
+        continue-on-error: true
+        run: curl -fsS --max-time 60 -o "$RUNNER_TEMP/ssw.html" https://stanleywoosweeleong.github.io/SumatraSquall/index.html
+
       - name: Connection probe
         if: inputs.probe
         run: python scripts/fetch_typhoon.py --probe
@@ -46,6 +61,16 @@ jobs:
       - name: Parser self-test
         if: ${{ !inputs.probe }}
         run: python scripts/fetch_typhoon.py --selftest
+
+      # Separate and non-blocking: a change in the SumatraSquall app must never
+      # stop the typhoon data from updating. A real squall failure still shows
+      # on the page, because the fetch below records it in `errors`.
+      - name: Squall bridge self-test
+        if: ${{ !inputs.probe }}
+        continue-on-error: true
+        env:
+          SQUALL_HTML: ${{ runner.temp }}/ssw.html
+        run: python scripts/fetch_typhoon.py --selftest-squall
 
       - name: Fetch JMA typhoon data
         if: ${{ !inputs.probe }}
