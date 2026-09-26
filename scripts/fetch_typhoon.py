@@ -505,6 +505,38 @@ def selftest():
     hole = {"hourly": {"time": rt, "precipitation": [0.0] * 10 + [None] + [0.0] * 37}}
     check("rain.null_is_unknown", rain_window(hole, "2026-08-02T04:00Z"), (None, None))
 
+    # --- cold surge index (Chang, Harr & Chen 2005) ---
+    la, lo = surge_points()
+    check("surge.points", (len(lo), lo[0], lo[-1], set(la)), (16, 110.0, 117.5, {15.0}))
+    t_s = datetime(2026, 11, 20, 4, 10, tzinfo=timezone.utc)
+    st = [(datetime(2026, 11, 18, 16, tzinfo=timezone.utc).timestamp() + 3600 * i) for i in range(24 * 7)]
+    st = [datetime.fromtimestamp(x, timezone.utc).strftime("%Y-%m-%dT%H:%M") for x in st]
+
+    def sfix(spd, dirn, pts=16, drop=None):
+        ents = []
+        for k in range(pts):
+            sp = [spd] * len(st)
+            if drop and k < drop[1]:
+                sp = [None if i >= drop[0] else x for i, x in enumerate(sp)]
+            ents.append({"hourly": {"time": st, "wind_speed_925hPa": sp,
+                                    "wind_direction_925hPa": [dirn] * len(st)}})
+        return ents
+    su = surge_index(sfix(11.0, 0.0), t_s)
+    check("surge.northerly_now", su["now"], 11.0)
+    check("surge.defn_travels", (su["threshold"], su["bands"], su["level"]), (8.0, [8.0, 10.0, 12.0], "925hPa"))
+    check("surge.myt_days_full_only", [d["date"] for d in su["days"]][:2], ["2026-11-19", "2026-11-20"])
+    check("surge.day_value", su["days"][0]["v"], 11.0)
+    check("surge.from_ne_45deg", surge_index(sfix(10.0, 45.0), t_s)["now"], 7.1)
+    check("surge.southerly_negative", surge_index(sfix(6.0, 180.0), t_s)["now"], -6.0)
+    # 4 of 16 points missing from hour 60 on: still >= 80 %, still counted
+    check("surge.cover_ok", surge_index(sfix(9.0, 0.0, drop=(60, 4)), t_s)["days"][-1]["v"], 9.0)
+    # 5 of 16 missing: those hours drop out, and a day short of 24 h is not reported
+    thin = surge_index(sfix(9.0, 0.0, drop=(60, 5)), t_s)
+    check("surge.cover_thin_drops_days", all(d["date"] < "2026-11-21" for d in thin["days"]), True)
+    check("surge.no_wind_raises", _raises(lambda: surge_index(sfix(None, 0.0), t_s)), True)
+    check("surge.old_series_raises",
+          _raises(lambda: surge_index(sfix(9.0, 0.0), datetime(2027, 1, 1, tzinfo=timezone.utc))), True)
+
     check("aslist.object", len(_as_list({"a": 1})), 1)
     check("aslist.array", len(_as_list([{"a": 1}, {"b": 2}])), 2)
 
@@ -1008,6 +1040,82 @@ def fetch_grid(now):
             "values": vals, "time": _stamp(t)}
 
 
+# -------------------------------------------------------------- cold surge
+# The north-east monsoon's cold surge, measured the way the literature does,
+# instead of by a rule of our own. Chang, Harr & Chen (2005, Mon. Wea. Rev.
+# 133) define it as the 925 hPa meridional wind averaged along 15N between
+# 110E and 117.5E: a northerly stronger than 8 m/s is a surge, and the usual
+# grading is weak 8-10, moderate 10-12, strong above 12 m/s. The index is a
+# WIND over the northern South China Sea, days upwind of Kelantan and
+# Terengganu; it says nothing by itself about rain at any one place. The
+# definition travels in the data so the page prints exactly what was used.
+
+SURGE = {"lat": 15.0, "w": 110.0, "e": 117.5, "step": 0.5, "level": "925hPa",
+         "threshold": 8.0, "bands": [8.0, 10.0, 12.0],
+         "ref": "Chang, Harr & Chen (2005), Monthly Weather Review 133",
+         "model": OM_MODEL}
+SURGE_COVER = 0.8          # share of the 16 points an hour needs to count
+
+
+def surge_points():
+    n = int(round((SURGE["e"] - SURGE["w"]) / SURGE["step"])) + 1
+    return [SURGE["lat"]] * n, [round(SURGE["w"] + i * SURGE["step"], 2) for i in range(n)]
+
+
+def surge_hourly(entries):
+    """-> sorted [(aware datetime, line-mean NORTHERLY wind m/s)]. Northerly is
+    positive: the wind blows FROM `dir`, so its southward component is
+    speed x cos(dir)."""
+    import math
+    lv = SURGE["level"]
+    acc = {}
+    for e in entries:
+        h = e.get("hourly") or {}
+        ts, sp, dr = h.get("time") or [], h.get("wind_speed_" + lv) or [], h.get("wind_direction_" + lv) or []
+        for t, s, d in zip(ts, sp, dr):
+            if s is None or d is None:
+                continue
+            tt = _utc(t)
+            if tt is None:
+                continue
+            acc.setdefault(tt, []).append(float(s) * math.cos(math.radians(float(d))))
+    need = SURGE_COVER * len(entries)
+    return sorted((t, sum(v) / len(v)) for t, v in acc.items() if len(v) >= need)
+
+
+def surge_index(entries, now):
+    """-> the `surge` block: the mean over the 24 h ending now, and one mean
+    per Malaysian calendar day (00-23 MYT), full days only."""
+    from datetime import timedelta
+    hrs = surge_hourly(entries)
+    if not hrs:
+        raise ValueError("no %s wind from the model at 15N" % SURGE["level"])
+    past = [(t, v) for t, v in hrs if t <= now]
+    if not past or (now - past[-1][0]).total_seconds() > PRES_MAX_AGE_H * 3600:
+        raise ValueError("%s wind series is not current" % SURGE["level"])
+    last24 = [v for t, v in past if (now - t).total_seconds() < 24 * 3600]
+    days = {}
+    for t, v in hrs:
+        days.setdefault((t + timedelta(hours=8)).strftime("%Y-%m-%d"), []).append(v)
+    out = dict(SURGE)
+    out.update({
+        "time": _stamp(now),
+        "now": round(sum(last24) / len(last24), 1) if len(last24) >= 20 else None,
+        "days": [{"date": d, "v": round(sum(v) / len(v), 1)}
+                 for d, v in sorted(days.items()) if len(v) == 24],
+    })
+    return out
+
+
+def fetch_surge(now=None):
+    now = now or datetime.now(timezone.utc)
+    la, lo = surge_points()
+    lv = SURGE["level"]
+    entries = fetch_series(la, lo, "hourly=wind_speed_%s,wind_direction_%s&wind_speed_unit=ms"
+                           "&past_days=2&forecast_days=6" % (lv, lv))
+    return surge_index(entries, now)
+
+
 # ------------------------------------------------------------------ squall
 # The Sumatra squall setup index, computed by SumatraSquall's OWN engine. The
 # engine is loaded out of that app's published page at run time (see
@@ -1217,8 +1325,21 @@ def main():
         # Open-Meteo counts every location as a call, 600 a minute on the free
         # tier. The grid just used ~600; the squall set is another ~360. Wait
         # out the minute rather than lose the squall run to HTTP 429. Daily
-        # total stays ~5,500 of 10,000 (places 30x8, grid 598x4, squall 363x8).
+        # total stays ~5,700 of 10,000 (places 30x8, grid 598x4, surge 16x8,
+        # squall 363x8).
         time.sleep(61)
+
+    surge = None
+    try:
+        surge = fetch_surge()
+        print("cold surge: now %s m/s, days %s" % (surge["now"],
+              ", ".join("%s %.1f" % (d["date"][5:], d["v"]) for d in surge["days"])))
+    except Exception as e:  # noqa: BLE001
+        errors.append("cold surge: %s" % e)
+        if prev.get("surge"):
+            surge = dict(prev["surge"])    # its own `time` dates it; the app ages it out
+            surge["stale"] = True
+
     try:
         squall = fetch_squall(datetime.now(timezone.utc).timestamp(), errors)
         n0 = squall["nights"][0]
@@ -1233,6 +1354,7 @@ def main():
     save({
         "gone": track_gone(storms, prev, now, target_ids(targets)),
         "squall": squall,
+        "surge": surge,
         "generated": now,
         "last_attempt": now,
         "fetch_ok": True,
