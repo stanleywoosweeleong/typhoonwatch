@@ -177,7 +177,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.4.0";
+var VERSION = "v3.5.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -254,7 +254,7 @@ var T = {
       "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"],
      ["为什么气压看不到飑线",
       "苏门答腊飑线是夜里在马六甲海峡形成的一条雷暴线，只有几十公里宽，几个小时就扫过西海岸。它引起的气压变化小，来得快、去得也快，在 24 小时的气压变化里几乎留不下痕迹；模式的格点（约 28 公里）也画不出这么窄的一条线。所以气压走向说「平稳」甚至偏干的晚上，西海岸照样可以被飑线淹。飑线要看的是另一组条件——引导风、不稳定度、海峡上的辐合——那是「苏门答腊飑线」软件的工作。本页把它的结果附在半岛地点下面，数字和那个软件一模一样。"]],
-    trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。转干还要多过一关：同一个模式未来 24 小时在当地的雨量要少于 5 毫米、而且没有任何一小时达到 2.5 毫米，今晚的苏门答腊飑线条件也要低于「留意」；过不了就显示「不判转干」，并写出原因。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
+    trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。转干还要多过一关：同一个模式未来 24 小时在当地的雨量要少于 5 毫米、而且没有任何一小时达到 2.5 毫米，今晚的苏门答腊飑线条件也要低于「留意」；东北季风冷涌影响的地点，今天起三天内冷涌指数也不能越过门槛；过不了就显示「不判转干」，并写出原因。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
     nextAt:"下次 {t}", reload:"重新读取", nextDue:"下次更新约 {t}",
     loadFail:"读取失败：", openData:"直接打开数据文件 →",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
@@ -337,6 +337,21 @@ var T = {
     sqNote:"这是「苏门答腊飑线」软件的配置指数：同一套程序、同一组门槛，在服务器上用 ECMWF 模式资料算出，数字和那个软件一样。它看的是飑线形成和推进的条件齐不齐，不是预报，也不是警报——模式画不出飑线本身。官方警报以马来西亚气象局（MET Malaysia）为准。",
     sqOpen:"打开苏门答腊飑线软件（雷达、卫星、地图）→",
     sqBadge:"飑线 · {lv}", rain24:"模式雨 24h {mm} 毫米",
+    csTitle:"东北季风冷涌",
+    csGrade:{none:"无冷涌",weak:"弱冷涌",mod:"中等冷涌",strong:"强冷涌"},
+    csNow:"南海北部（北纬 15°，东经 110–117.5°）925 百帕的北风，过去 24 小时平均 {v} 米/秒，冷涌门槛 {th} 米/秒。",
+    csSouth:"南海北部（北纬 15°，东经 110–117.5°）925 百帕过去 24 小时平均吹南风 {v} 米/秒——没有冷涌。",
+    csNowNone:"过去 24 小时的资料不全，现在的数值不给出。",
+    csDays:"模式逐日（马来西亚时间日平均，米/秒）：",
+    csSoon:"模式预计 {date} 北风超过 {th} 米/秒（{g}）。",
+    csOff:"现在不是东北季风季（11–3 月），这个指数平时很少越过门槛。",
+    csWho:"冷涌主要把雨推到吉兰丹、丁加奴、彭亨和西砂拉越（本页的哥打巴鲁、瓜拉登嘉楼、关丹、直凉、古晋）。",
+    csNote:"冷涌指数照 Chang、Harr、Chen（2005，《Monthly Weather Review》）的定义：925 百帕的南北向风在北纬 15°、东经 110–117.5° 一线的平均，北风超过 8 米/秒算冷涌；8–10 弱、10–12 中等、12 以上强。风来自 ECMWF 模式，今天以后的是模式预报的风，不是降雨预报。冷涌是在南海北部量的风，通常要一两天才压到马来西亚，会不会下大雨还要看当地。官方警报以马来西亚气象局（MET Malaysia）为准。",
+    csStale:"冷涌指数已过时（{t}，{age} 前），这里不显示。",
+    csFail:"冷涌指数这一次没算成，原因列在页面顶端。",
+    csBadge:"冷涌 · {g}",
+    scsNow:"在南海", scsFc:"{tau} 小时后在南海",
+    scsLineNow:"（已在南海）", scsLineFc:"（气象厅预报 {tau} 小时后的位置在南海）",
     credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
   en:{
@@ -364,7 +379,7 @@ var T = {
       "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."],
      ["Why pressure cannot see a squall",
       "A Sumatra squall is a line of thunderstorms that forms at night over the Strait of Malacca. It is only tens of kilometres wide and sweeps across the west coast in a few hours. The pressure change it causes is small and comes and goes quickly, so it leaves almost no trace in a 24-hour pressure change, and the model grid (about 28 km) cannot draw a line that narrow. So on a night when the pressure trend reads Steady, or even drier, the west coast can still be flooded by a squall. A squall has its own ingredients — steering wind, instability, convergence over the Strait — and reading them is the Sumatra Squall app's job. This page shows that app's result under each Peninsula place, with exactly the same numbers."]],
-    trendNote:"Here are the rules, so you can judge them for yourself: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. Drier has one more gate: the same model must have under 5 mm at that place over the next 24 h with no single hour at 2.5 mm or more, and tonight's Sumatra squall setup must be below Watch. If either fails, the reading shows No \u201cdrier\u201d call and says why. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
+    trendNote:"Here are the rules, so you can judge them for yourself: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. Drier has one more gate: the same model must have under 5 mm at that place over the next 24 h with no single hour at 2.5 mm or more, tonight's Sumatra squall setup must be below Watch, and for the places a north-east monsoon cold surge reaches, the cold surge index must stay under its threshold today and for the next two days. If either fails, the reading shows No \u201cdrier\u201d call and says why. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
     nextAt:"Next {t}", reload:"Reload", nextDue:"next update about {t}",
     loadFail:"Fetch failed:", openData:"Open the data file directly →",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
@@ -448,6 +463,21 @@ var T = {
     sqNote:"This is the setup index from the Sumatra Squall app — the same code and thresholds, run on the server with ECMWF model data, so the numbers match that app. It says whether the conditions for a squall line to form and move are in place. It is not a forecast and not a warning; the model cannot draw the line itself. For official warnings, MET Malaysia is the authority.",
     sqOpen:"Open the Sumatra Squall app (radar, satellite, map) →",
     sqBadge:"Squall · {lv}", rain24:"model rain 24 h {mm} mm",
+    csTitle:"North-east monsoon cold surge",
+    csGrade:{none:"No surge",weak:"Weak surge",mod:"Moderate surge",strong:"Strong surge"},
+    csNow:"Northerly wind at 925 hPa over the northern South China Sea (15°N, 110–117.5°E), 24-hour mean {v} m/s; the surge threshold is {th} m/s.",
+    csSouth:"Over the northern South China Sea (15°N, 110–117.5°E) the 925 hPa wind has averaged a southerly {v} m/s over 24 hours — no surge.",
+    csNowNone:"The last 24 hours are incomplete, so no current value is given.",
+    csDays:"Model, day by day (Malaysian-time daily mean, m/s):",
+    csSoon:"The model has the northerly above {th} m/s on {date} ({g}).",
+    csOff:"It is not north-east monsoon season (Nov–Mar); outside it the index rarely crosses the threshold.",
+    csWho:"A cold surge mainly pushes rain onto Kelantan, Terengganu, Pahang and west Sarawak (on this page: Kota Bharu, Kuala Terengganu, Kuantan, Triang, Kuching).",
+    csNote:"The cold surge index follows Chang, Harr & Chen (2005, Monthly Weather Review): the 925 hPa north-south wind averaged along 15°N from 110°E to 117.5°E; a northerly above 8 m/s is a surge, graded weak 8–10, moderate 10–12, strong above 12. The wind comes from the ECMWF model, and days after today are the model's forecast of the wind — not a rain forecast. The index is measured over the northern South China Sea and usually takes a day or two to push down to Malaysia; whether heavy rain follows depends on local conditions too. For official warnings, MET Malaysia is the authority.",
+    csStale:"The cold surge index is out of date ({t}, {age} ago), so it is not shown.",
+    csFail:"The cold surge index could not be computed this time; the reason is listed at the top of the page.",
+    csBadge:"Surge · {g}",
+    scsNow:"In the South China Sea", scsFc:"In the South China Sea by +{tau} h",
+    scsLineNow:" (already in the South China Sea)", scsLineFc:" (JMA's +{tau} h position is in the South China Sea)",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
@@ -464,8 +494,8 @@ var LANGS=["zh","tw","en"];
    OpenCC is wrong in this domain: 干 is always "dry" here (乾, not 幹), 里
    inside a phrase is 裡 while 公里 keeps 里, 台风 is 颱風 while 台湾/台北
    keep 台. Regenerate with scripts/make_tw.py after editing Chinese copy. */
-var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","卫":"衛","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宽":"寬","宾":"賓","对":"對","导":"導","尔":"爾","层":"層","岘":"峴","岛":"島","峡":"峽","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","旧":"舊","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槛":"檻","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","监":"監","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","结":"結","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","腊":"臘","节":"節","苏":"蘇","范":"範","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","轮":"輪","软":"軟","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","迹":"跡","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飑":"颮","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥","齐":"齊"};
-var TWPROT=[["公里","公里"],["台风","颱風"],
+var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","卫":"衛","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宽":"寬","宾":"賓","对":"對","导":"導","尔":"爾","层":"層","岘":"峴","岛":"島","峡":"峽","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","旧":"舊","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槛":"檻","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","献":"獻","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","监":"監","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","签":"籤","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","结":"結","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","腊":"臘","节":"節","苏":"蘇","范":"範","荡":"蕩","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","跃":"躍","车":"車","转":"轉","轮":"輪","软":"軟","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","迹":"跡","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飑":"颮","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥","齐":"齊"};
+var TWPROT=[["公里","公里"],["台风","颱風"],["振荡","振盪"],
   /* Five storm names whose published Traditional form is NOT what the
      character map would produce: 里 normally becomes 裡, 范 becomes 範,
      and HKO writes 杰拉華 and 蝎虎 with the characters below. Both forms
@@ -1398,25 +1428,112 @@ function nightLabel(n){
     (eve.getUTCMonth()===mor.getUTCMonth()?"":(mor.getUTCMonth()+1)+"月")+mor.getUTCDate()+"日早上";
 }
 
+/* ---- north-east monsoon cold surge ----------------------------------
+   Chang, Harr & Chen (2005): 925 hPa meridional wind along 15N, 110-117.5E,
+   northerly > 8 m/s. Computed by the fetcher; the definition (threshold and
+   grade bands) arrives WITH the numbers, so the page prints what was used. */
+var SURGE_PLACES=["kb","kt","kuantan","triang","kuching"];   // named in csWho
+function surgeGrade(v,S){
+  var b=(S&&S.bands)||[8,10,12];
+  if(v===null||v===undefined||v<b[0]) return "none";
+  return v<b[1]?"weak":v<b[2]?"mod":"strong";
+}
+function mytDate(ms){ return new Date(ms+8*36e5).toISOString().slice(0,10); }
+function surgeState(){
+  var S=DOC&&DOC.surge;
+  if(!S) return {none:true};
+  var t=Date.parse(S.time||""), age=isNaN(t)?Infinity:(Date.now()-t)/36e5;
+  if(S.stale||age>STALE_H) return {S:S,stale:true,t:t,age:age};
+  var today=mytDate(Date.now()), d2=mytDate(Date.now()+2*864e5);
+  var ahead=(S.days||[]).filter(function(d){ return d.date>=today; });
+  var soon=null;                   // today or the next two days over the threshold
+  ahead.forEach(function(d){ if(!soon&&d.date<=d2&&surgeGrade(d.v,S)!=="none") soon=d; });
+  var nowOn=S.now!=null&&surgeGrade(S.now,S)!=="none";
+  return {S:S,ahead:ahead,soon:soon,nowOn:nowOn,today:today};
+}
+function surgeActive(st){ return !!(st&&!st.none&&!st.stale&&(st.nowOn||st.soon)); }
+function surgePlace(ref){ return SURGE_PLACES.indexOf(presRef(ref).id)>-1; }
+function dayLabel(iso){
+  var p=iso.split("-");
+  return lang==="en"?(+p[2])+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1]-1]
+                    :(+p[1])+"月"+(+p[2])+"日";
+}
+/* One block, used in the outlook (always) and on the top card of the places
+   a surge reaches (in season, or whenever a surge is on or near). */
+function surgeBox(){
+  var st=surgeState(), box=el("div","sqbox");
+  if(st.none){
+    var failed=((DOC&&DOC.errors)||[]).some(function(e){ return /^cold surge/i.test(String(e)); });
+    if(!failed) return null;       // a data file from before this feature
+    box.appendChild(el("div","k",L("csTitle")));
+    box.appendChild(el("div",null,L("csFail")));
+    return box;
+  }
+  var S=st.S, head=el("div","cardhead");
+  head.appendChild(el("div","k",L("csTitle")));
+  box.appendChild(head);
+  if(st.stale){
+    box.appendChild(el("div",null,fill(L("csStale"),{t:isNaN(st.t)?"—":bothT(new Date(st.t).toISOString()),
+      age:isFinite(st.age)?ago(st.age*36e5):"—"})));
+    return box;
+  }
+  var g=surgeGrade(S.now,S);
+  head.appendChild(el("span","badge"+(g==="strong"||g==="mod"?" hot":g==="weak"?" amb":""),L("csGrade")[g]));
+  box.appendChild(el("p","plain", S.now===null||S.now===undefined ? L("csNowNone")
+    : S.now>=0 ? fill(L("csNow"),{v:S.now.toFixed(1),th:S.threshold})
+               : fill(L("csSouth"),{v:Math.abs(S.now).toFixed(1)})));
+  if(st.soon&&!st.nowOn)
+    box.appendChild(el("p","plain",fill(L("csSoon"),{date:dayLabel(st.soon.date),th:S.threshold,
+      g:L("csGrade")[surgeGrade(st.soon.v,S)]})));
+  if(st.ahead.length){
+    box.appendChild(el("div","pos",L("csDays")+" "+st.ahead.map(function(d){
+      var gg=surgeGrade(d.v,S);
+      return dayLabel(d.date)+" "+(d.v>=0?"":"−")+Math.abs(d.v).toFixed(1)+(gg!=="none"?" "+L("csGrade")[gg]:"");
+    }).join(" · ")));
+  }
+  if(monsoon(DOC&&DOC.generated)!=="ne") box.appendChild(el("div","pos",L("csOff")));
+  box.appendChild(el("div","pos",L("csWho")));
+  var nt=el("div","rangeline"); nt.appendChild(el("span","note",L("csNote"))); box.appendChild(nt);
+  return box;
+}
+
+/* ---- South China Sea -------------------------------------------------
+   A drawn box (3-23N, 105-120E, Gulf of Tonkin included), stated in the
+   glossary. Reads JMA's own analysis and forecast points; decides nothing. */
+var SCS={s:3,n:23,w:105,e:120};
+function scsLine(s){
+  var i=scsInfo(s); if(!i) return "";
+  return i.now?L("scsLineNow"):fill(L("scsLineFc"),{tau:i.tau});
+}
+function inSCS(p){ return !!(p&&p.lat!=null&&p.lat>=SCS.s&&p.lat<=SCS.n&&p.lon>=SCS.w&&p.lon<=SCS.e); }
+function scsInfo(s){
+  if(!s||s.unavailable||!s.parsed) return null;
+  if(inSCS(s.current)) return {now:true};
+  var f=(s.forecast||[]).filter(inSCS)[0];
+  return f?{tau:f.tau}:null;
+}
+
 /* 转干 is the one reading that can do harm when wrong: a farmer who reads
    "drier" sprays, fertilises and leaves the drains. So it must clear two more
    checks than the pressure rule, and when it cannot, the page says which. */
 var DRY_RAIN_MM=5, DRY_RATE_MM=2.5;          // printed in trendNote
-function holdDry(e,lat,lon){
+function holdDry(e,lat,lon,id){
   var why=[];
   if(e.rain24===null||e.rain24===undefined) why.push({k:"norain"});
   else if(e.rain24>=DRY_RAIN_MM||(e.rainmax!=null&&e.rainmax>=DRY_RATE_MM))
     why.push({k:"rain",mm:e.rain24,max:e.rainmax});
   var q=squallFor(lat,lon);
   if(squallOn(q)) why.push({k:"squall",q:q});
+  var cs=surgeState();
+  if(id&&SURGE_PLACES.indexOf(id)>-1&&surgeActive(cs)) why.push({k:"surge",cs:cs});
   return why;
 }
-function reading(e,nchg,lat,lon){
+function reading(e,nchg,lat,lon,id){
   var chg=e.change24;
   var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
   var g=regime(chg,surge);
   if(g&&g.k==="dry"){
-    var why=holdDry(e,lat,lon);
+    var why=holdDry(e,lat,lon,id);
     if(why.length) g={k:"held",strong:false,why:why};
   }
   return {chg:chg,surge:surge,g:g};
@@ -1503,7 +1620,7 @@ function plainLines(ref,P,nchg){
   if(ref.gps && ref.baseKm>GPS_MAXKM) return null;   // too far to mean anything
   var e=P.places[presRef(ref).id];
   if(!e || !presFresh(P,e)) return null;   // never read a stale trend
-  var rd=reading(e,nchg,ref.lat,ref.lon), chg=rd.chg, surge=rd.surge, g=rd.g, out=[], W=lang!=="en";
+  var rd=reading(e,nchg,ref.lat,ref.lon,presRef(ref).id), chg=rd.chg, surge=rd.surge, g=rd.g, out=[], W=lang!=="en";
   if(!g) return null;
   var active=((DOC&&DOC.storms)||[]).some(function(s){ return !s.unavailable&&!stormEnded(s); });
 
@@ -1533,6 +1650,11 @@ function plainLines(ref,P,nchg){
       if(w.k==="rain")
         out.push(W?("同一个模式未来 24 小时在这里仍有 "+w.mm.toFixed(1)+" 毫米雨"+(w.max!=null?"（最大的一小时 "+w.max.toFixed(1)+" 毫米）":"")+"，所以不说转干。")
                   :("the same model still has "+w.mm.toFixed(1)+" mm of rain here over the next 24 hours"+(w.max!=null?" (wettest hour "+w.max.toFixed(1)+" mm)":"")+", so this is not called drier."));
+      else if(w.k==="surge"){
+        var S_=w.cs.S, v_=w.cs.nowOn?S_.now:w.cs.soon.v;
+        out.push(W?("南海北部的东北季风冷涌指数"+(w.cs.nowOn?"现在":"预计 "+dayLabel(w.cs.soon.date)+" ")+"达到「"+L("csGrade")[surgeGrade(v_,S_)]+"」（北风 "+v_.toFixed(1)+" 米/秒，门槛 "+S_.threshold+"）。冷涌会把季风的雨推到这里；详情在下面。")
+                  :("the north-east monsoon cold surge index "+(w.cs.nowOn?"is now":"is forecast for "+dayLabel(w.cs.soon.date)+" to be")+" at "+L("csGrade")[surgeGrade(v_,S_)].toLowerCase()+" (northerly "+v_.toFixed(1)+" m/s, threshold "+S_.threshold+"). A surge pushes the monsoon's rain onto this area; details below."));
+      }
       else if(w.k==="squall")
         out.push(W?("今晚苏门答腊飑线的条件是「"+L("sqLv")[w.q.n.level]+"」（"+w.q.n.score+" 分）。飑线只有几十公里宽，气压走向看不到它；详情在下面。")
                   :("tonight's Sumatra squall setup is "+L("sqLv")[w.q.n.level]+" ("+w.q.n.score+"/100). A squall is tens of km wide and the pressure trend cannot see it; details below."));
@@ -1567,11 +1689,11 @@ function plainLines(ref,P,nchg){
   if(near){
     var many = count>1;
     out.push(W?((many?("目前区域内有 "+count+" 个系统，最近的是"):"目前最近的台风是")+
-                stormLabel(near.s)+"，在 "+Math.round(near.d).toLocaleString()+" 公里外。"+
+                stormLabel(near.s)+"，在 "+Math.round(near.d).toLocaleString()+" 公里外"+scsLine(near.s)+"。"+
                 (many?"其余的在下面的台风情报里都有。":"")+
                 "台风本身几乎不会打到马来西亚，影响我们的是它把季风变强。")
               :((many?("There are "+count+" systems in the region; the nearest is "):"The nearest typhoon is ")+
-                stormLabel(near.s)+", "+Math.round(near.d).toLocaleString()+" km away. "+
+                stormLabel(near.s)+", "+Math.round(near.d).toLocaleString()+" km away"+scsLine(near.s)+". "+
                 (many?"The rest are listed below. ":"")+
                 "Typhoons themselves almost never reach Malaysia; what reaches us is the monsoon they strengthen."));
   }
@@ -1583,7 +1705,13 @@ function renderSimple(){
   var ref=refPlace(), P=(DOC&&DOC.pressure)||null;
   // The squall block does not depend on the pressure data, so it is shown
   // whatever happened to that — a stale pressure file must not hide it.
-  function withSquall(){ var sb=squallBox(ref); if(sb) box.appendChild(sb); }
+  function withSquall(){
+    var sb=squallBox(ref); if(sb) box.appendChild(sb);
+    // the cold surge on the places it reaches: in season, or whenever one is on or near
+    if(surgePlace(ref)&&(monsoon(DOC&&DOC.generated)==="ne"||surgeActive(surgeState()))){
+      var cb=surgeBox(); if(cb) box.appendChild(cb);
+    }
+  }
   if(!P||!P.places){
     box.appendChild(el("div",null,DOC&&DOC.generated?L("presNone"):L("unknown")));
     withSquall(); return;
@@ -1604,6 +1732,11 @@ function renderSimple(){
   var q=squallFor(ref.lat,ref.lon);
   if(squallOn(q)) hb.appendChild(el("span","badge"+(q.n.level==="watch"?" amb":" hot"),
     fill(L("sqBadge"),{lv:L("sqLv")[q.n.level]})));
+  var cs=surgeState();
+  if(surgePlace(ref)&&surgeActive(cs)){
+    var cg=surgeGrade(cs.nowOn?cs.S.now:cs.soon.v,cs.S);
+    hb.appendChild(el("span","badge"+(cg==="weak"?" amb":" hot"),fill(L("csBadge"),{g:L("csGrade")[cg]})));
+  }
   head.appendChild(hb);
   box.appendChild(head);
   r.lines.forEach(function(t){ box.appendChild(el("p","plain",t)); });
@@ -1697,11 +1830,13 @@ function renderTrend(){
   var box=document.getElementById("trend"); box.textContent="";
   var P=(DOC&&DOC.pressure)||null;
   if(!P||!P.places||!Object.keys(P.places).length){
+    var cb0=surgeBox(); if(cb0) box.appendChild(cb0);   // wind, not pressure: still shown
     box.appendChild(el("div",null,DOC&&DOC.generated?L("presNone"):L("unknown")));
     return;
   }
   var nchg=northChange(P);
   var ph=monsoon(DOC&&DOC.generated);
+  var csb=surgeBox(); if(csb) box.appendChild(csb);
   var anyOld=Object.keys(P.places).some(function(id){ return !presFresh(P,P.places[id]); });
   if(anyOld) box.appendChild(el("div","presstale",fill(L("presOldNote"),{t:presWhen(P,null).t})));
   box.appendChild(el("div","seasonline",L("season")[ph]));
@@ -1710,7 +1845,7 @@ function renderTrend(){
     REFS.forEach(function(r){
       if(r.grp!==grp) return;
       var e=P.places[r.id]; if(!e) return;
-      var ok=presFresh(P,e), rd=ok?reading(e,nchg,r.lat,r.lon):null;
+      var ok=presFresh(P,e), rd=ok?reading(e,nchg,r.lat,r.lon,r.id):null;
       var surge=rd?rd.surge:null, g=rd?rd.g:null;
       var row=el("div","inv"), left=el("div");
       left.appendChild(el("div",null,(lang==="en"?r.en:r.zh)));
@@ -1769,6 +1904,8 @@ function stormCard(s,n){
     bs.appendChild(el("span","badge hot","⚠ "+(s.unavailable||la===null ? L("unavail")
       : fill(L("staleBadge"),{age:ago(la*36e5)}))));
   }
+  var sc=scsInfo(s);
+  if(sc) bs.appendChild(el("span","badge amb", sc.now?L("scsNow"):fill(L("scsFc"),{tau:sc.tau})));
   if(c.intensity) bs.appendChild(el("span","badge hot", L("intens")[c.intensity]));
   if(c.scale) bs.appendChild(el("span","badge amb", L("scale")[c.scale]));
   var sf=saffirFrom10min(c.wind_kt);
@@ -1994,6 +2131,10 @@ zh:[
  ["GDACS 是什么","GDACS（全球灾害预警与协调系统）是欧盟联合研究中心（JRC）与联合国人道事务协调厅（OCHA）从 2004 年起合办的平台，服务对象是救灾单位。它本身不是气象机构，也不做预报：它把别人的观测和路径接进来，再按人口与基础设施估算会影响到多少人，算出绿／橙／红。\n那个颜色是影响分数，不是强度分级——猛烈台风在大洋中央可以是绿色，弱系统压在人口稠密的海岸可以是橙色，路径稍微一改，两天内从红跳回绿也不稀奇。它的气旋路径主要取自美国 JTWC 与 NOAA，分级用萨菲尔-辛普森（1 分钟风速），所以同一个台风看起来会比气象厅（10 分钟风速）高约一级。\n本页用它补一个洞：气象厅只为它正式发报的气旋编号，南海那些没到台风级的低压不会出现在上面那一节，GDACS 有时候会有。所以看它是看「那里有没有一个系统」，颜色留给救灾单位去用。"],
  ["台风的中文名","名字由日本气象厅给，只给到热带风暴级（17 米/秒）以上；名单是世界气象组织台风委员会的 140 个名字，14 个成员各出 10 个，用完一轮从头再来。\n中文名不是气象厅给的，也不是本页翻的。中国气象局、香港天文台、澳门地球物理暨气象局三家协商，定出一套统一译名——就是马来西亚华文报上看到的那一套。本页直接收录这份公布的名单（简繁都是公布的原文，不是本页转换的），所以 Dolphin 是「白海豚」，Nangka 是「浪卡」。\n两点要知道。一，台湾中央气象署自己翻译，部分名字跟这套不一样，同一个台风可能有两个中文名。二，造成重大伤亡的名字会被除名换新，2026 年就换掉了九个（摩羯、山陀儿、潭美、万宜等）。所以名单是有日期的：气象厅用到本页没有的名字时，本页只显示英文原名，不会自己音译一个出来。"],
  ["对照天上的云","这一页给的是气压走向。天上的云是另一半，而且不用花钱就能核对——出门抬头看一眼，就知道这三档写得准不准。\n转干：台风把空气抽上去，抽走的总要沉回来，常常就沉在我们头顶。中层被压住，云长不高。天上多的是从台风那边飘过来的卷云、卷层云，薄薄一层像牛奶，太阳有时带一圈晕；底下的积云是扁的，午后堆一堆也长不上去，傍晚就散掉。霾积着不散。闷热、灰白、不下雨。\n转湿（涌流拉开）：云是一层一层压过来的，不是一朵朵长上去。灰色低云从海上某一个方向推进来，云底只有几百米，来了就不走；雨是连续的中雨，不是雷雨那种一阵一阵；风也是持续地吹，不是先狂后静。看方向和持久度：从海上来、天黑了还不散，那就是涌流。\n平稳：就是平常的日循环。清早晴或有雾，上午积云开始长，下午某几朵长得起来变雷雨，落点很碰运气——这条山谷下 20 毫米，隔壁一滴都没有。\n最容易看错的一件事：台风的卷云罩常常伸出一千公里以上。东北方向飘来高云，并不代表东西要来了——那是它的出流，而且底下往往正在下沉，反而偏干。「天色乳白＝要变天」这个直觉，在这里多半是反的。\n值得记的一条：平稳的日子，留意积云是扁的还是长得起来。这一档本页的证据最少，而天空免费告诉你答案。"],
+ ["冷涌指数",
+  "东北季风期间（11–3 月），冷空气从中国大陆南下，经南海北部一路压下来，这就是冷涌。它把东北季风加强，把大量水气推到吉兰丹、丁加奴、彭亨和西砂拉越——很多年底的大水就是这样来的。\n本页用的是研究文献里常用的定义（Chang、Harr、Chen，2005）：925 百帕（约离地 800 米）的南北向风，在北纬 15°、东经 110–117.5° 这一线取平均。北风超过每秒 8 米就算冷涌；8–10 弱，10–12 中等，12 以上强。它量的是南海北部的风，不是马来西亚的雨：冷涌通常要一两天才压到这里，而同样强的冷涌，遇上马登-朱利安振荡（MJO）活跃时雨会大得多。\n这个指数是公开的定义，不是本页自己发明的规则；风的数值来自 ECMWF 模式，今天以后的几天是模式预报。"],
+ ["为什么标出南海",
+  "进入南海的台风，对马来西亚的影响通常比留在菲律宾以东的大：它更靠近，也更容易把南海的南北气压差拉开、把季风涌推下来。本页在台风卡片上标出「在南海」或「几小时后在南海」，根据的是气象厅公布的实况和预报位置。\n南海在这里是一个画出来的框：北纬 3–23°、东经 105–120°（包括北部湾）。这是为了这个标签画的，不是官方的海域界线。"],
  ["马来西亚为什么要看台风","半岛几乎不会被台风正面登陆——纬度太低，科氏力太弱，气旋转不起来。真正的影响是间接的：西北太平洋或南海的台风会拉紧气压梯度、加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前几天看季风涌。"]
 ],
 en:[
@@ -2008,6 +2149,10 @@ en:[
  ["What GDACS is","GDACS — the Global Disaster Alert and Coordination System — is a platform run jointly by the European Commission's Joint Research Centre and the UN Office for the Coordination of Humanitarian Affairs, going since 2004. Its audience is relief agencies. It is not a weather service and it issues no forecasts: it ingests other people's observations and tracks, then estimates how many people and how much infrastructure lie in the way, and scores that as green, orange or red.\nThat colour is an impact score, not a strength grade — a violent typhoon in the middle of the ocean can be green, a weak system sitting on a crowded coast can be orange, and a small shift in the predicted track can take an alert from red back to green inside two days. Its cyclone tracks come mainly from the US JTWC and NOAA, and it grades on Saffir-Simpson using 1-minute winds, so the same storm reads about a category higher than JMA's 10-minute basis.\nThis page uses it to fill one gap: JMA numbers only the cyclones it formally bulletins, so a South China Sea low below typhoon grade never appears in the section above, and GDACS sometimes has it. Read it for whether something is there. The colour is for the relief agencies."],
  ["Chinese names for the storms","JMA assigns the name, and only from tropical-storm grade (17 m/s) upward. The list itself belongs to the WMO Typhoon Committee: 140 names, ten from each of fourteen members, used in order and then started again.\nThe Chinese name is not JMA's and is not this page's translation. CMA, the Hong Kong Observatory and the Macao Meteorological Bureau agree one common rendering between them — the one Malaysian Chinese newspapers print. This page carries that published list verbatim in both scripts rather than converting one into the other, so Dolphin is 白海豚 and Nangka is 浪卡.\nTwo things to know. Taiwan's CWA translates independently and some of its names differ, so one storm can have two Chinese names. And names that cause serious loss are retired and replaced — nine were replaced for 2026. The list therefore has a date on it: when JMA uses a name this page does not hold, the page shows the romanised name alone rather than inventing a transliteration."],
  ["Checking it against the sky","This page gives you a pressure trend. The clouds are the other half, and they cost nothing — step outside, look up, and you can judge whether the three readings are any good.\nDrier: the typhoon pulls air upward and what goes up has to come down, often over us. That descent warms and dries the middle levels and puts a lid on convection. So the sky fills with cirrus and cirrostratus streaming over from the storm — a thin milky layer, sometimes a halo around the sun — while the cumulus underneath stay flat-bottomed and stunted, building a little after noon, never getting tall, gone by evening. Haze settles in because nothing washes it out. Hot, grey-white, no rain.\nWetter (the surge gap opening): cloud arrives in layers rather than growing in towers. A grey low deck pushes in from one direction off the sea, bases only a few hundred metres up, and it stays. The rain is continuous and moderate, not the burst-and-stop of a thunderstorm, and the wind blows steadily instead of gusting then dropping. Read the direction and the persistence: in off the sea, still there after dark, that is a surge.\nSteady: the ordinary daily cycle. Clear or misty at dawn, cumulus building through the morning, a few towers reaching thunderstorm size in the afternoon, and where they land is luck — 20 mm in this valley, nothing in the next.\nThe easiest thing to get backwards: a typhoon's cirrus shield routinely reaches a thousand kilometres or more beyond the centre. High cloud drifting in from the northeast is not evidence that something is coming. It is the storm's outflow, and there is often subsidence underneath it, which means drier rather than wetter. The instinct that a milky sky means a change on the way is usually inverted here.\nWorth logging: on steady days, note whether the cumulus stayed flat or went tall. That is the reading this page has the least evidence for, and the sky answers it for free."],
+ ["The cold surge index",
+  "During the north-east monsoon (November to March), cold air from mainland China pushes south across the northern South China Sea. That is a cold surge. It strengthens the monsoon and drives moisture onto Kelantan, Terengganu, Pahang and west Sarawak — many of the year-end floods begin this way.\nThis page uses the definition common in the research literature (Chang, Harr & Chen, 2005): the 925 hPa north-south wind (about 800 m up) averaged along 15°N from 110°E to 117.5°E. A northerly above 8 m/s is a surge; 8–10 weak, 10–12 moderate, above 12 strong. It measures wind over the northern South China Sea, not rain in Malaysia: a surge usually takes a day or two to push down here, and the same surge brings far more rain when the Madden–Julian Oscillation (MJO) is active.\nThe index is a published definition, not a rule this page made up; the wind comes from the ECMWF model, and the days after today are the model's forecast."],
+ ["Why the South China Sea is marked",
+  "A typhoon that enters the South China Sea usually matters more to Malaysia than one that stays east of the Philippines: it is closer, and it more readily widens the north-south pressure difference across the sea and drives a monsoon surge south. Storm cards are marked \u201cIn the South China Sea\u201d or \u201cby +N h\u201d from JMA's published analysis and forecast positions.\nThe South China Sea here is a drawn box: 3–23°N, 105–120°E (including the Gulf of Tonkin). It is drawn for this label and is not an official sea boundary."],
  ["Why Malaysia watches typhoons","The peninsula is almost never struck directly — too near the equator for Coriolis to spin one up. The real effect is indirect: a typhoon in the West Pacific or South China Sea tightens the pressure gradient and strengthens the northeast monsoon surge that pushes days of rain onto Kelantan, Terengganu and east Pahang. Watching typhoons is watching the surge a few days early."]
 ]};
 
