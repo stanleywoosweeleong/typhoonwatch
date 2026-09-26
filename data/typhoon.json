@@ -1,9 +1,9 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-09-26T11:24:11Z",
+ "generated": "2026-09-26T11:49:11Z",
  "gone": [],
- "last_attempt": "2026-09-26T11:24:11Z",
+ "last_attempt": "2026-09-26T11:49:11Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -770,7 +770,7 @@
     "valid": "2026-09-26T11:00Z"
    }
   },
-  "time": "2026-09-26T11:24Z"
+  "time": "2026-09-26T11:49Z"
  },
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
  "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
