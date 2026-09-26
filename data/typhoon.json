@@ -1,9 +1,9 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-09-26T13:01:07Z",
+ "generated": "2026-09-26T13:04:09Z",
  "gone": [],
- "last_attempt": "2026-09-26T13:01:07Z",
+ "last_attempt": "2026-09-26T13:04:09Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -830,13 +830,13 @@
     "valid": "2026-09-26T13:00Z"
    }
   },
-  "time": "2026-09-26T13:01Z"
+  "time": "2026-09-26T13:04Z"
  },
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
  "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
  "squall": {
   "app_url": "https://stanleywoosweeleong.github.io/SumatraSquall/",
-  "at": "2026-09-26T13:01:11Z",
+  "at": "2026-09-26T13:04:13Z",
   "empty": [],
   "levels": [
    [
@@ -2492,7 +2492,7 @@
   "ref": "Chang, Harr & Chen (2005), Monthly Weather Review 133",
   "step": 0.5,
   "threshold": 8.0,
-  "time": "2026-09-26T13:01Z",
+  "time": "2026-09-26T13:04Z",
   "w": 110.0
  },
  "wind_averaging": "10-minute sustained"
