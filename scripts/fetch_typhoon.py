@@ -389,17 +389,107 @@ def selftest():
     ent = {"hourly": {"time": times, "pressure_msl": [1010.0] + [None] * 23 + [1008.5]}}
     check("tend.span_is_24h", (len(times), times[0], times[24]),
           (25, "2026-08-01T01:00", "2026-08-02T01:00"))
-    check("tend.value_and_change", pick_tendency(ent, "2026-08-02T01:00"), (1008.5, -1.5))
+    check("tend.value_and_change", pick_tendency(ent, "2026-08-02T01:00"),
+          (1008.5, -1.5, "2026-08-02T01:00Z"))
     check("tend.no_history", pick_tendency({"hourly": {"time": ["2026-08-02T01:00"],
-          "pressure_msl": [1009.0]}}, "2026-08-02T01:00"), (1009.0, None))
-    check("tend.empty", pick_tendency({}), (None, None))
+          "pressure_msl": [1009.0]}}, "2026-08-02T01:00"), (1009.0, None, "2026-08-02T01:00Z"))
+    check("tend.empty", pick_tendency({}), (None, None, None))
     check("tend.all_null", pick_tendency({"hourly": {"time": ["2026-08-02T01:00"],
-          "pressure_msl": [None]}}, "2026-08-02T01:00"), (None, None))
+          "pressure_msl": [None]}}, "2026-08-02T01:00"), (None, None, None))
+    # Codex 2026-09-26: a 2020 series was accepted as today's reading
+    old_series = {"hourly": {"time": ["2020-01-0%dT00:00" % d for d in (1, 2)],
+                             "pressure_msl": [1010.0, 1008.0]}}
+    check("tend.rejects_old_series", pick_tendency(old_series, "2026-08-02T01:00"),
+          (None, None, None))
+    # a missing hour must not make "24 slots back" pass for "24 hours back"
+    # series 08-01T00..08-02T01 with 08-01T05 missing: 24 slots back from the
+    # end lands on 08-01T00 (25 h back, 1012); 24 h back is 08-01T01 (1010)
+    gap_t = ["2026-08-01T00:00"] + [t for t in times if t != "2026-08-01T05:00"]
+    gap_v = [1012.0, 1010.0] + [1011.0] * (len(gap_t) - 3) + [1008.5]
+    gap = {"hourly": {"time": gap_t, "pressure_msl": gap_v}}
+    check("tend.gap_uses_timestamp", pick_tendency(gap, "2026-08-02T01:00")[1], -1.5)
+
+    # --- grid refresh by age (Codex #5) ---
+    t0 = datetime(2026, 9, 26, 5, 31, tzinfo=timezone.utc)
+    check("grid.due_when_none", grid_due(None, t0), True)
+    check("grid.due_when_undated", grid_due({"values": []}, t0), True)
+    # the live case: a late run at 05:31 with a grid from 12:00 the day before
+    check("grid.due_17h_old", grid_due({"time": "2026-09-25T12:00Z"}, t0), True)
+    check("grid.not_due_3h_old", grid_due({"time": "2026-09-26T02:30Z"}, t0), False)
+    check("grid.due_late_run", grid_due({"time": "2026-09-26T00:00Z"}, t0), True)
     # the carry-forward bug: a non-grid run must not wipe the previous grid
     old = {"nx": 3, "ny": 3, "time": "2026-08-02T00:00Z", "values": [1] * 9}
-    kept = fetch_pressure([], False, old)
-    check("grid.carried_forward", kept["grid"], old)
-    check("grid.none_when_never_had", fetch_pressure([], False, None)["grid"], None)
+    global fetch_series
+    real_series = fetch_series
+    t_run = datetime(2026, 8, 2, 1, 10, tzinfo=timezone.utc)
+    one_ref = [{"id": "triang", "lat": 3.2, "lon": 102.4}]
+    try:
+        fetch_series = lambda la, lo, extra: [ent]
+        kept = fetch_pressure(one_ref, False, old, [], t_run)
+        check("grid.carried_forward", kept["grid"], old)
+        check("pres.place_has_valid", kept["places"]["triang"]["valid"], "2026-08-02T01:00Z")
+        check("grid.none_when_never_had",
+              fetch_pressure(one_ref, False, None, [], t_run)["grid"], None)
+
+        def grid_fails(la, lo, extra):
+            if extra.startswith("current"):
+                raise OSError("timed out")
+            return [ent]
+        fetch_series = grid_fails
+        errs = []
+        kept = fetch_pressure(one_ref, True, old, errs, t_run)
+        check("grid.fail_keeps_old", kept["grid"], old)
+        check("grid.fail_keeps_places", "triang" in kept["places"], True)
+        check("grid.fail_is_loud", len(errs), 1)
+        fetch_series = lambda la, lo, extra: [old_series]
+        check("pres.all_old_raises",
+              _raises(lambda: fetch_pressure(one_ref, False, None, [], t_run)), True)
+    finally:
+        fetch_series = real_series
+
+    # --- a failed download is not a departure (Codex #1) ---
+    tg = [{"tropicalCyclone": "TC2611", "typhoonNumber": "2609", "category": "TY"},
+          {"tropicalCyclone": "TC2612", "typhoonNumber": "2610", "category": "TS"}]
+    good = build(tg[:1], lambda tc: FIX_SPEC, [])[0]
+    prev_doc = {"generated": "2026-07-05T03:00:00Z", "storms": [good]}
+
+    def timeout(tc):
+        raise OSError("The read operation timed out")
+    errs = []
+    got = build(tg, timeout, errs, prev_doc["storms"], "2026-07-05T06:00:00Z")
+    check("fail.keeps_every_target", [s["id"] for s in got], ["TC2611", "TC2612"])
+    check("fail.errors_loud", len(errs), 2)
+    check("fail.flagged", [s.get("unavailable") for s in got], [True, True])
+    check("fail.keeps_last_good_pos", (got[0]["current"]["lat"], got[0]["issued"]),
+          (13.1, "2026-07-05T04:05:00Z"))
+    check("fail.new_has_no_position", "current" in got[1], False)
+    check("fail.new_not_parsed", got[1]["parsed"], False)
+    check("fail.since", got[0]["unavailable_since"], "2026-07-05T06:00:00Z")
+    again = build(tg, timeout, [], got, "2026-07-05T09:00:00Z")
+    check("fail.since_kept", again[0]["unavailable_since"], "2026-07-05T06:00:00Z")
+    check("fail.one_problem_line",
+          sum(1 for p in again[0]["problems"] if p.startswith("download failed")), 1)
+    check("fail.not_gone",
+          track_gone(got, prev_doc, "2026-07-05T06:00:00Z", target_ids(tg)), [])
+    # even if the storm list were somehow empty, the target list decides
+    check("fail.target_list_decides",
+          track_gone([], prev_doc, "2026-07-05T06:00:00Z", target_ids(tg)), [])
+    left = track_gone([], prev_doc, "2026-07-05T06:00:00Z", [])
+    check("gone.real_departure", [g["id"] for g in left], ["TC2611"])
+    back = build(tg[:1], lambda tc: FIX_SPEC, [], got, "2026-07-05T09:00:00Z")[0]
+    check("fail.recovers_clean", back.get("unavailable"), None)
+
+    # --- GDACS: iscurrent alone is not enough ---
+    stale_fc = {"features": [
+        {"geometry": {"coordinates": [83.7, 18.1]},
+         "properties": {"eventid": "1001326", "eventname": "ONE-26", "iscurrent": "true",
+                        "todate": "2026-09-24T00:00:00"}},
+        {"geometry": {"coordinates": [-110.1, 17.4]},
+         "properties": {"eventid": "1001325", "eventname": "POLO-26", "iscurrent": "true",
+                        "todate": "2026-09-26T03:00:00"}}]}
+    check("gdacs.drops_old_todate",
+          [e["name"] for e in parse_gdacs(stale_fc, "2026-09-26T05:31:28Z")[0]], ["POLO-26"])
+    check("gdacs.no_now_no_filter", len(parse_gdacs(stale_fc)[0]), 2)
 
     check("aslist.object", len(_as_list({"a": 1})), 1)
     check("aslist.array", len(_as_list([{"a": 1}, {"b": 2}])), 2)
@@ -424,12 +514,19 @@ def _truthy(v):
     return str(v).strip().lower() in ("true", "1", "yes")
 
 
-def parse_gdacs(fc):
+# GDACS updates a live cyclone every 6 h or so. `iscurrent` alone has been
+# seen still "true" on an event whose last episode was 2+ days old (ONE-26,
+# mirrored 2026-09-26 with todate 2026-09-24T00:00), so check the date too.
+GDACS_MAX_AGE_H = 36
+
+
+def parse_gdacs(fc, now=None):
     """geoJSON FeatureCollection -> list of current tropical cyclone events."""
     out, problems = [], []
     feats = (fc or {}).get("features")
     if not isinstance(feats, list):
         return [], ["GDACS response had no features list"]
+    t_now = _utc(now) if now else None
     for f in feats:
         props = f.get("properties") or {}
         geom = f.get("geometry") or {}
@@ -438,6 +535,12 @@ def parse_gdacs(fc):
             continue                      # no position -> not usable, skip
         if not _truthy(props.get("iscurrent")):
             continue                      # only live systems
+        t_to = _utc(props.get("todate"))
+        if t_now is not None and t_to is not None and \
+                (t_now - t_to).total_seconds() > GDACS_MAX_AGE_H * 3600:
+            print("GDACS: skipped %s — flagged current but last updated %s"
+                  % (props.get("eventname") or props.get("eventid"), props.get("todate")))
+            continue
         sev = props.get("severitydata") or {}
         out.append({
             "id": str(props.get("eventid") or ""),
@@ -535,15 +638,19 @@ def parse_cnames(html):
 GONE_KEEP_H = 24        # how long a departed system stays listed
 
 
-def track_gone(storms, prev, now):
+def track_gone(storms, prev, now, listed=None):
     """JMA's targetTc.json IS the monitoring list: a system on it is being
     monitored, and when JMA is done the entry disappears. Until now the card
     just vanished from the app, which looks exactly like the app losing track
     of it. So compare this run's ids against the last run's and carry the
     departures for a day, with the time each was last seen. This reports a
     change in what the SOURCE published — it decides nothing about the storm.
+
+    `listed` is the id list from targetTc.json. Departures are judged against
+    THAT, never against the storms we happened to download: a timed-out
+    detail request is our failure, not JMA dropping the system.
     """
-    here = {s.get("id") for s in storms if s.get("id")}
+    here = set(listed) if listed is not None else {s.get("id") for s in storms if s.get("id")}
     gone = []
     for g in (prev.get("gone") or []):          # keep recent ones, drop old
         if g.get("id") in here:
@@ -624,12 +731,43 @@ def fetch_series(lats, lons, extra):
     return got
 
 
-def pick_tendency(entry, now_iso=None):
-    """Value at the hour nearest now, and the change over the preceding 24 h."""
+PRES_MAX_AGE_H = 3       # a "current" reading further than this from now is not current
+# Refresh the grid by its AGE, not by the clock. The old rule ("only when the
+# UTC hour is divisible by 6") silently skipped every refresh whenever GitHub
+# started the run late: a 03:45 slot that actually ran at 05:31 carried a grid
+# that was already 17 h old forward again. Runs come every ~3 h, so refreshing
+# once the grid is 5 h old keeps the ~6-hourly rhythm and survives lateness.
+GRID_REFRESH_H = GRID_EVERY_H - 1
+
+
+def _utc(s):
+    """'2026-08-02T01:00', '...Z' or '...+00:00' -> aware datetime, else None."""
+    if not isinstance(s, str) or not s:
+        return None
+    try:
+        d = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+
+
+def _stamp(d):
+    return d.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+
+
+def pick_tendency(entry, now_iso=None, max_age_h=PRES_MAX_AGE_H):
+    """Value at the hour nearest now, the change over the preceding 24 h, and
+    the valid time of that value.
+
+    Two checks that were missing: the value must actually be CURRENT (within
+    max_age_h of now — a series of 2020 timestamps used to be accepted as
+    today's reading), and the comparison value must be exactly 24 h earlier
+    BY TIMESTAMP, not merely 24 slots back, which a gap in the series breaks.
+    """
     h = entry.get("hourly") or {}
     times, vals = h.get("time") or [], h.get("pressure_msl") or []
     if not times or len(times) != len(vals):
-        return None, None
+        return None, None, None
     now = now_iso or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:00")
     idx = None
     for i, t in enumerate(times):
@@ -641,36 +779,82 @@ def pick_tendency(entry, now_iso=None):
     while idx >= 0 and vals[idx] is None:      # step back over gaps
         idx -= 1
     if idx < 0:
-        return None, None
+        return None, None, None
+    t_val, t_now = _utc(times[idx]), _utc(now)
+    if t_val is None or t_now is None or \
+            abs((t_now - t_val).total_seconds()) > max_age_h * 3600:
+        return None, None, None
     cur = float(vals[idx])
-    j = idx - 24
-    prev = vals[j] if 0 <= j < len(vals) else None
-    return cur, (None if prev is None else round(cur - float(prev), 1))
+    prev = None
+    for t, v in zip(times, vals):
+        tt = _utc(t)
+        if tt is not None and (t_val - tt).total_seconds() == 24 * 3600:
+            prev = v
+            break
+    return cur, (None if prev is None else round(cur - float(prev), 1)), _stamp(t_val)
 
 
-def fetch_pressure(refs, want_grid, prev_grid=None):
+def grid_due(prev_grid, now=None):
+    """True when the carried grid is missing, undated, or GRID_REFRESH_H old."""
+    if not prev_grid:
+        return True
+    t = _utc(prev_grid.get("time"))
+    if t is None:
+        return True
+    now = now or datetime.now(timezone.utc)
+    return (now - t).total_seconds() >= GRID_REFRESH_H * 3600
+
+
+def fetch_pressure(refs, want_grid, prev_grid=None, errors=None, now=None):
     """prev_grid is carried forward on runs that do not refresh it — otherwise
-    the map loses its isobars for five hours out of every six."""
-    out = {"model": "ECMWF IFS via Open-Meteo", "places": {}, "grid": prev_grid}
+    the map loses its isobars for five hours out of every six. A failed grid
+    refresh also keeps the old grid (its own `time` says how old it is) rather
+    than throwing away the place readings that did arrive."""
+    now = now or datetime.now(timezone.utc)
+    out = {"model": "ECMWF IFS via Open-Meteo", "places": {}, "grid": prev_grid,
+           "time": _stamp(now)}
     entries = fetch_series([r["lat"] for r in refs], [r["lon"] for r in refs],
                            "hourly=pressure_msl&past_days=1&forecast_days=1")
     for r, e in zip(refs, entries):
-        cur, chg = pick_tendency(e)
+        cur, chg, valid = pick_tendency(e, now.strftime("%Y-%m-%dT%H:00"))
         if cur is not None:
-            out["places"][r["id"]] = {"hpa": round(cur, 1), "change24": chg}
+            out["places"][r["id"]] = {"hpa": round(cur, 1), "change24": chg, "valid": valid}
+    if not out["places"]:
+        raise ValueError("no current pressure reading at any reference place")
     if want_grid:
-        lats, lons = grid_points()
-        vals = []
-        for e in fetch_series(lats, lons, "current=pressure_msl"):
-            v = (e.get("current") or {}).get("pressure_msl")
-            vals.append(None if v is None else round(float(v), 1))
-        out["grid"] = {"w": GRID["w"], "e": GRID["e"], "s": GRID["s"], "n": GRID["n"],
-                       "step": GRID["step"],
-                       "nx": int(round((GRID["e"] - GRID["w"]) / GRID["step"])) + 1,
-                       "ny": int(round((GRID["n"] - GRID["s"]) / GRID["step"])) + 1,
-                       "values": vals,
-                       "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:00Z")}
+        try:
+            out["grid"] = fetch_grid(now)
+        except Exception as e:  # noqa: BLE001
+            if errors is not None:
+                errors.append("pressure grid: %s (kept the one from %s)"
+                              % (e, (prev_grid or {}).get("time") or "never"))
     return out
+
+
+def fetch_grid(now):
+    lats, lons = grid_points()
+    vals, stamps = [], set()
+    for e in fetch_series(lats, lons, "current=pressure_msl"):
+        cur = e.get("current") or {}
+        v = cur.get("pressure_msl")
+        vals.append(None if v is None else round(float(v), 1))
+        if cur.get("time"):
+            stamps.add(cur["time"])
+    # Stamp the grid with the model's own valid time, not with when we ran.
+    t = _utc(min(stamps)) if stamps else None
+    if t is None:
+        t = now.replace(minute=0, second=0, microsecond=0)
+    if abs((now - t).total_seconds()) > PRES_MAX_AGE_H * 3600:
+        raise ValueError("grid valid time %s is not current" % _stamp(t))
+    if len(vals) != len(lats):
+        raise ValueError("grid returned %d of %d points" % (len(vals), len(lats)))
+    if sum(1 for v in vals if v is not None) < len(vals) * 0.9:
+        raise ValueError("grid came back mostly empty")
+    return {"w": GRID["w"], "e": GRID["e"], "s": GRID["s"], "n": GRID["n"],
+            "step": GRID["step"],
+            "nx": int(round((GRID["e"] - GRID["w"]) / GRID["step"])) + 1,
+            "ny": int(round((GRID["n"] - GRID["s"]) / GRID["step"])) + 1,
+            "values": vals, "time": _stamp(t)}
 
 
 # ---------------------------------------------------------------------- main
@@ -691,7 +875,44 @@ def save(doc):
     os.replace(tmp, OUT)
 
 
-def build(targets, fetch_spec, errors):
+def target_ids(targets):
+    """The ids JMA says it is monitoring right now. This, not the list of
+    storms we managed to download, is what decides whether a system has left."""
+    return [t.get("tropicalCyclone") for t in targets if t.get("tropicalCyclone")]
+
+
+def unavailable_record(t, prev_rec, err, now):
+    """A storm JMA still lists but whose bulletin we could not download.
+
+    Dropping it (the old behaviour) made track_gone() report it as "dropped
+    from JMA's list" — a false statement — and with every download failing
+    the page could show no storms while JMA was monitoring several. So keep
+    it, and say plainly that this run did not get it:
+      * seen before  -> the last good record, flagged unavailable, never
+                        presented as current
+      * never seen   -> an empty record carrying only what targetTc.json said
+    Nothing here is guessed; a placeholder has no position at all.
+    """
+    tc = t.get("tropicalCyclone")
+    if prev_rec and prev_rec.get("id") == tc:
+        rec = json.loads(json.dumps(prev_rec))          # deep copy
+        rec["problems"] = [p for p in (rec.get("problems") or [])
+                           if not str(p).startswith("download failed")]
+    else:
+        rec = {"id": tc, "parsed": False, "forecast": [], "problems": [],
+               "typhoon_number": t.get("typhoonNumber"),
+               "category": t.get("category")}
+    rec["unavailable"] = True
+    rec["unavailable_since"] = (prev_rec or {}).get("unavailable_since") or now
+    rec["problems"].append("download failed: %s" % err)
+    rec["target_category"] = t.get("category")
+    rec["target_issue"] = t.get("issue")
+    return rec
+
+
+def build(targets, fetch_spec, errors, prev_storms=None, now=None):
+    now = now or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    before = {p.get("id"): p for p in (prev_storms or []) if p.get("id")}
     storms = []
     for t in targets:
         tc = t.get("tropicalCyclone")
@@ -702,6 +923,7 @@ def build(targets, fetch_spec, errors):
             spec = fetch_spec(tc)
         except Exception as e:  # noqa: BLE001
             errors.append("%s: %s" % (tc, e))
+            storms.append(unavailable_record(t, before.get(tc), e, now))
             continue
         rec = parse_spec(spec)
         rec["id"] = tc
@@ -730,12 +952,13 @@ def main():
         return 0
 
     print("active tropical cyclones: %s" % ([t.get("tropicalCyclone") for t in targets] or "none"))
-    storms = build(targets, lambda tc: get_json("%s/%s/specifications.json" % (BASE, tc)), errors)
+    storms = build(targets, lambda tc: get_json("%s/%s/specifications.json" % (BASE, tc)),
+                   errors, prev.get("storms"), now)
 
     others = []
     try:
         events, probs = parse_gdacs(get_json(GDACS_URL, timeout=GDACS_TIMEOUT,
-                                             retries=GDACS_RETRIES))
+                                             retries=GDACS_RETRIES), now)
         others = tag_duplicates(events, storms)
         errors.extend(probs)
         print("GDACS current TC events: %d (%d also in JMA)"
@@ -752,25 +975,29 @@ def main():
         check_names(storms, app_html, errors)
 
     pressure = None
+    prev_p = prev.get("pressure") or None
     try:
         refs = parse_refs(app_html)
-        prev_grid = ((prev.get("pressure") or {}).get("grid")) or None
-        # refresh on the 6-hourly slot, or straight away if we have none yet
-        want_grid = (datetime.now(timezone.utc).hour % GRID_EVERY_H == 0) or not prev_grid
-        pressure = fetch_pressure(refs, want_grid, prev_grid)
-        print("pressure: %d place(s), grid %s (%s)" % (
+        prev_grid = ((prev_p or {}).get("grid")) or None
+        want_grid = grid_due(prev_grid)
+        pressure = fetch_pressure(refs, want_grid, prev_grid, errors)
+        g = pressure["grid"]
+        print("pressure: %d place(s), grid %s (valid %s, %s)" % (
               len(pressure["places"]),
-              "%dx%d" % (pressure["grid"]["nx"], pressure["grid"]["ny"]) if pressure["grid"] else "none",
-              "refreshed" if want_grid else "carried forward from " + str(pressure["grid"].get("time"))))
+              "%dx%d" % (g["nx"], g["ny"]) if g else "none",
+              (g or {}).get("time"),
+              "refresh attempted" if want_grid else "carried forward"))
     except Exception as e:  # noqa: BLE001
         errors.append("pressure: %s" % e)      # optional layer, never fatal
-        prev_p = prev.get("pressure")
         if prev_p:
-            pressure = prev_p
+            # Keep the numbers for reference, but mark them: the app shows
+            # them with their age and gives NO wetter/drier reading from them.
+            pressure = dict(prev_p)
             pressure["stale"] = True
+            pressure.setdefault("stale_since", now)
 
     save({
-        "gone": track_gone(storms, prev, now),
+        "gone": track_gone(storms, prev, now, target_ids(targets)),
         "generated": now,
         "last_attempt": now,
         "fetch_ok": True,
