@@ -17,7 +17,7 @@ on:
   push:
     paths:
       - "scripts/fetch_typhoon.py"
-      - ".github/workflows/jtwc-watch.yml"
+      - ".github/workflows/typhoon-watch.yml"
 
 permissions:
   contents: write
