@@ -29,7 +29,10 @@ Usage:
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -491,11 +494,124 @@ def selftest():
           [e["name"] for e in parse_gdacs(stale_fc, "2026-09-26T05:31:28Z")[0]], ["POLO-26"])
     check("gdacs.no_now_no_filter", len(parse_gdacs(stale_fc)[0]), 2)
 
+    # --- model rain beside the pressure reading (the 转干 veto) ---
+    rt = ["2026-08-02T%02d:00" % h for h in range(0, 24)] + \
+         ["2026-08-03T%02d:00" % h for h in range(0, 24)]
+    wet = {"hourly": {"time": rt, "precipitation": [0.0] * 5 + [3.0, 4.0] + [0.1] * 41}}
+    check("rain.next24_sum_max", rain_window(wet, "2026-08-02T04:00Z"), (9.2, 4.0))
+    check("rain.excludes_valid_hour", rain_window(wet, "2026-08-02T06:00Z")[0], 2.4)
+    part = {"hourly": {"time": rt[:30], "precipitation": [0.0] * 30}}
+    check("rain.partial_is_unknown", rain_window(part, "2026-08-02T10:00Z"), (None, None))
+    hole = {"hourly": {"time": rt, "precipitation": [0.0] * 10 + [None] + [0.0] * 37}}
+    check("rain.null_is_unknown", rain_window(hole, "2026-08-02T04:00Z"), (None, None))
+
     check("aslist.object", len(_as_list({"a": 1})), 1)
     check("aslist.array", len(_as_list([{"a": 1}, {"b": 2}])), 2)
 
+    # --- squall index through SumatraSquall's own engine ---
+    ok = selftest_squall(check) and ok
+
     print("\n%s" % ("ALL TESTS PASSED" if ok else "TESTS FAILED"))
     return 0 if ok else 1
+
+
+def _synth_om(url, scen):
+    """Port of SumatraSquall tests/smoke.js synth(): a squall night (SW
+    steering, high CAPE, pre-dawn land breezes meeting over the Strait, rain
+    and gusts) or a calm easterly one."""
+    from urllib.parse import urlparse, parse_qs
+    q = parse_qs(urlparse(url).query)
+    lats = [float(x) for x in q["latitude"][0].split(",")]
+    lons = [float(x) for x in q["longitude"][0].split(",")]
+    vars_ = q["hourly"][0].split(",")
+    d0 = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    t0 = int(d0.timestamp()) - 86400
+    times = [t0 + i * 3600 for i in range(96)]
+    AX = [[5.4, 98.8], [4.6, 99.35], [4.0, 99.65], [3.0, 100.65], [2.2, 101.45], [1.7, 102.5], [1.15, 103.45]]
+
+    def axis_lon(lat):
+        for a, b in zip(AX, AX[1:]):
+            if b[0] <= lat <= a[0]:
+                return a[1] + (b[1] - a[1]) * (a[0] - lat) / (a[0] - b[0])
+        return 98.8 if lat > 5.4 else 103.45
+    out = []
+    for lat, lon in zip(lats, lons):
+        west, near = lon < axis_lon(lat), abs(lon - axis_lon(lat)) < 0.7
+        hourly = {"time": times}
+        for v in vars_:
+            col = []
+            for ts in times:
+                h = datetime.fromtimestamp(ts + 8 * 3600, timezone.utc).hour
+                predawn = 0 <= h <= 8
+                if scen == "squall":
+                    x = (240 if v in ("wind_direction_850hPa", "wind_direction_700hPa") else
+                         32 if v in ("wind_speed_850hPa", "wind_speed_700hPa") else
+                         ((235 if west else 60) if h <= 7 else 200) if v == "wind_direction_10m" else
+                         (14 if h <= 7 else 8) if v == "wind_speed_10m" else
+                         2300 if v == "cape" else
+                         (6 if (len(lons) > 40 and near and predawn) else
+                          4 if (len(lons) <= 40 and lon < 104 and 4 <= h <= 7) else 0)
+                         if v == "precipitation" else
+                         (62 if (lon < 104 and 4 <= h <= 7) else 20) if v == "wind_gusts_10m" else None)
+                else:
+                    x = (80 if v.startswith("wind_direction") else 18 if v.startswith("wind_speed") else
+                         300 if v == "cape" else 0 if v == "precipitation" else
+                         25 if v == "wind_gusts_10m" else None)
+                col.append(x)
+            hourly[v] = col
+        out.append({"latitude": lat, "longitude": lon, "hourly": hourly})
+    return out
+
+
+def selftest_squall(check):
+    """Needs node and a copy of SumatraSquall's index.html (env SQUALL_HTML,
+    or ../SumatraSquall-main/index.html next to this repo). Without them the
+    squall part is skipped and SAYS so — the live run still reports failures
+    in `errors`."""
+    path = os.environ.get("SQUALL_HTML") or \
+        os.path.join(os.path.dirname(ROOT), "SumatraSquall-main", "index.html")
+    if not shutil.which("node") or not os.path.exists(path):
+        print("SKIP squall tests (need node and SQUALL_HTML=<SumatraSquall index.html>)")
+        return True
+    html = open(path, encoding="utf-8").read()
+    global get_json
+    real = get_json
+    good = [True]
+
+    def chk(label, got, want):
+        if got != want:
+            good[0] = False
+        check(label, got, want)
+    now = datetime.now(timezone.utc).timestamp()
+    try:
+        for scen in ("squall", "calm"):
+            get_json = lambda url, timeout=None, retries=None, s=scen: _synth_om(url, s)
+            errs = []
+            sq = fetch_squall(now, errs, html)
+            n0 = sq["nights"][0]
+            chk("squall.%s.no_errors" % scen, errs, [])
+            chk("squall.%s.two_nights" % scen, len(sq["nights"]), 2)
+            chk("squall.%s.source" % scen, sq["source"].startswith("SumatraSquall ssw-"), True)
+            chk("squall.%s.level" % scen, n0["level"] in (("likely", "strong") if scen == "squall" else ("low",)), True)
+            if scen == "squall":
+                chk("squall.penang_signal", sq["nights"][0]["towns"]["penang"]["first"] is not None, True)
+                chk("squall.steer_from_sw", 200 <= n0["parts"]["steer"]["from"] <= 290, True)
+        # no 850/700 hPa wind: the engine withholds a level rather than guess
+        def no_upper(url, timeout=None, retries=None):
+            if "850hPa" in url:
+                raise urllib.error.HTTPError(url, 503, "busy", {}, None)
+            return _synth_om(url, "squall")
+        get_json = no_upper
+        errs = []
+        sq = fetch_squall(now, errs, html)
+        chk("squall.no_upper_blocked", (sq["nights"][0]["level"], sq["nights"][0]["blocked"]), (None, "missing"))
+        chk("squall.no_upper_is_loud", len(errs), 1)
+        chk("squall.broken_page_raises",
+            _raises(lambda: fetch_squall(now, [], "<html>nothing</html>")), True)
+    finally:
+        get_json = real
+    return good[0]
+
 
 
 
@@ -794,6 +910,39 @@ def pick_tendency(entry, now_iso=None, max_age_h=PRES_MAX_AGE_H):
     return cur, (None if prev is None else round(cur - float(prev), 1)), _stamp(t_val)
 
 
+# The pressure rules can say 转干 (drier). On 2026-09-26 they said it for Penang
+# and Alor Setar while the west coast flooded — a 24 h pressure change cannot
+# see a squall or a thunderstorm. So "drier" is now only allowed when the SAME
+# model also has little rain there over the next 24 h. These two numbers are
+# printed in the app next to the rule that uses them.
+DRY_RAIN_MM = 5.0        # model total over the next 24 h at or above this: no 转干
+DRY_RATE_MM = 2.5        # any single hour at or above this (his "workers stop"): no 转干
+
+
+def rain_window(entry, valid):
+    """Model rain over the 24 h after `valid` (the hour the pressure is read
+    at): (total mm, wettest hour mm), or (None, None) unless all 24 hours are
+    present — a partial window is not "little rain", it is unknown."""
+    h = entry.get("hourly") or {}
+    times, vals = h.get("time") or [], h.get("precipitation") or []
+    t0 = _utc(valid)
+    if t0 is None or not times or len(times) != len(vals):
+        return None, None
+    got = []
+    for t, v in zip(times, vals):
+        tt = _utc(t)
+        if tt is None:
+            continue
+        dt = (tt - t0).total_seconds()
+        if 0 < dt <= 24 * 3600:
+            if v is None:
+                return None, None
+            got.append(float(v))
+    if len(got) != 24:
+        return None, None
+    return round(sum(got), 1), round(max(got), 1)
+
+
 def grid_due(prev_grid, now=None):
     """True when the carried grid is missing, undated, or GRID_REFRESH_H old."""
     if not prev_grid:
@@ -814,11 +963,13 @@ def fetch_pressure(refs, want_grid, prev_grid=None, errors=None, now=None):
     out = {"model": "ECMWF IFS via Open-Meteo", "places": {}, "grid": prev_grid,
            "time": _stamp(now)}
     entries = fetch_series([r["lat"] for r in refs], [r["lon"] for r in refs],
-                           "hourly=pressure_msl&past_days=1&forecast_days=1")
+                           "hourly=pressure_msl,precipitation&past_days=1&forecast_days=2")
     for r, e in zip(refs, entries):
         cur, chg, valid = pick_tendency(e, now.strftime("%Y-%m-%dT%H:00"))
         if cur is not None:
-            out["places"][r["id"]] = {"hpa": round(cur, 1), "change24": chg, "valid": valid}
+            rain, rmax = rain_window(e, valid)
+            out["places"][r["id"]] = {"hpa": round(cur, 1), "change24": chg, "valid": valid,
+                                      "rain24": rain, "rainmax": rmax}
     if not out["places"]:
         raise ValueError("no current pressure reading at any reference place")
     if want_grid:
@@ -855,6 +1006,69 @@ def fetch_grid(now):
             "nx": int(round((GRID["e"] - GRID["w"]) / GRID["step"])) + 1,
             "ny": int(round((GRID["n"] - GRID["s"]) / GRID["step"])) + 1,
             "values": vals, "time": _stamp(t)}
+
+
+# ------------------------------------------------------------------ squall
+# The Sumatra squall setup index, computed by SumatraSquall's OWN engine. The
+# engine is loaded out of that app's published page at run time (see
+# scripts/squall.js), so a threshold changed there is used here on the next
+# run and the two apps cannot drift. This file only does the networking.
+
+SQUALL_APP = "https://stanleywoosweeleong.github.io/SumatraSquall/"
+SQUALL_JS = os.path.join(ROOT, "scripts", "squall.js")
+SQUALL_TIMEOUT = 60
+
+
+def run_squall_js(mode, html_path, stdin=None):
+    node = shutil.which("node")
+    if not node:
+        raise RuntimeError("node is not installed on this runner")
+    p = subprocess.run([node, SQUALL_JS, mode, html_path], input=stdin,
+                       capture_output=True, text=True, timeout=120)
+    if p.returncode != 0:
+        last = (p.stderr or "").strip().splitlines()
+        raise RuntimeError("squall.js %s: %s" % (mode, last[-1] if last else "exit %d" % p.returncode))
+    return json.loads(p.stdout)
+
+
+def _first_ok(options, what):
+    """SumatraSquall's own fallback rule: only a rejected model (HTTP 400)
+    moves on to the next model id; a busy or dead server does not."""
+    last = None
+    for mid, url in options:
+        try:
+            return {"id": mid, "json": get_json(url, timeout=SQUALL_TIMEOUT, retries=2)}
+        except urllib.error.HTTPError as e:
+            last = e
+            if e.code != 400:
+                break
+        except Exception as e:  # noqa: BLE001
+            last = e
+            break
+    raise RuntimeError("%s: %s" % (what, last))
+
+
+def fetch_squall(now_ts, errors, html=None):
+    """-> the `squall` block for typhoon.json. Raises if the index cannot be
+    computed at all; partial data (no 850/700 hPa wind, no towns) is passed
+    through exactly as the app treats it — the engine then withholds a level."""
+    html = html if html is not None else get(SQUALL_APP + "index.html")
+    fd, path = tempfile.mkstemp(suffix=".html")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(html)
+        plan = run_squall_js("plan", path)
+        raw = {"now": int(now_ts), "grid": _first_ok(plan["urls"]["grid"], "squall grid")}
+        for part in ("upper", "towns"):
+            raw[part] = None
+            if plan["urls"].get(part):
+                try:
+                    raw[part] = _first_ok(plan["urls"][part], "squall " + part)
+                except Exception as e:  # noqa: BLE001
+                    errors.append(str(e))
+        return run_squall_js("analyze", path, json.dumps(raw))
+    finally:
+        os.unlink(path)
 
 
 # ---------------------------------------------------------------------- main
@@ -975,6 +1189,7 @@ def main():
         check_names(storms, app_html, errors)
 
     pressure = None
+    want_grid = False
     prev_p = prev.get("pressure") or None
     try:
         refs = parse_refs(app_html)
@@ -996,8 +1211,28 @@ def main():
             pressure["stale"] = True
             pressure.setdefault("stale_since", now)
 
+    squall = None
+    prev_sq = prev.get("squall") or None
+    if want_grid:
+        # Open-Meteo counts every location as a call, 600 a minute on the free
+        # tier. The grid just used ~600; the squall set is another ~360. Wait
+        # out the minute rather than lose the squall run to HTTP 429. Daily
+        # total stays ~5,500 of 10,000 (places 30x8, grid 598x4, squall 363x8).
+        time.sleep(61)
+    try:
+        squall = fetch_squall(datetime.now(timezone.utc).timestamp(), errors)
+        n0 = squall["nights"][0]
+        print("squall: %s, night of %s -> %s (%s)" % (squall["source"], n0["m0"],
+              n0["score"], n0["level"] or n0["blocked"]))
+    except Exception as e:  # noqa: BLE001
+        errors.append("squall index: %s" % e)
+        if prev_sq:
+            squall = dict(prev_sq)     # its own `at` dates it; the app ages it out
+            squall["stale"] = True
+
     save({
         "gone": track_gone(storms, prev, now, target_ids(targets)),
+        "squall": squall,
         "generated": now,
         "last_attempt": now,
         "fetch_ok": True,
@@ -1048,6 +1283,16 @@ def probe():
 if __name__ == "__main__":
     if "--probe" in sys.argv:
         sys.exit(probe())
+    if "--selftest-squall" in sys.argv:
+        _ok = [True]
+
+        def _chk(label, got, want):
+            print("%s %-26s %r" % ("pass" if got == want else "FAIL", label, got))
+            if got != want:
+                _ok[0] = False
+        r = selftest_squall(_chk)
+        print("\n%s" % ("SQUALL TESTS PASSED" if (r and _ok[0]) else "SQUALL TESTS FAILED"))
+        sys.exit(0 if (r and _ok[0]) else 1)
     if "--selftest" in sys.argv:
         sys.exit(selftest())
     if "--fixture" in sys.argv:
