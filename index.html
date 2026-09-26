@@ -50,6 +50,8 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
   border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13.5px}
 .fresh.stale{border-left-color:var(--red);background:#26161a;color:#ffd7d4}
 .fresh.warnish{border-left-color:var(--amber);background:#241d10}
+.sqbox{border:1px solid var(--line);border-left:3px solid var(--amber);padding:9px 11px;margin:10px 0;line-height:1.6}
+.sqbox a{color:#8fd3ff}
 .presstale{border-left:3px solid var(--amber);background:#241d10;color:#ffe2a8;padding:9px 11px;margin:8px 0;line-height:1.6}
 .fresh b{font-family:var(--mono)}
 /* Partial-failure list. The fetcher can succeed overall and still lose a
@@ -175,7 +177,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.3.0";
+var VERSION = "v3.4.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -232,12 +234,12 @@ var T = {
     tagline:"日本气象厅 RSMC 东京 · 台风情报 · 离线可读",
     hRegion:"区域总览 · REGION", hStorms:"气象厅台风情报 · JMA BULLETINS",
     hOther:"邻近其他系统 · OTHER SYSTEMS",
-    simpleNote:"这是根据气压走向的判读，不是天气预报。会不会真的下雨还要看水气、辐合、地形。官方警报请以马来西亚气象局（MET Malaysia）为准。下面还有地图、气压走向和每个台风的详情。",
+    simpleNote:"气压走向只看得到台风、季风这种上千公里的变化；飑线和雷暴只有几十公里宽，它看不到，所以半岛地点另外附上苏门答腊飑线的条件。这是根据气压走向的判读，不是天气预报。会不会真的下雨还要看水气、辐合、地形。官方警报请以马来西亚气象局（MET Malaysia）为准。下面还有地图、气压走向和每个台风的详情。",
     mapWhatRegion:"这张图看：台风在哪里、离你多远，还有气压高低（圈圈越密，风越大）。",
     mapWhatTrack:"这张图看：这个台风预计往哪里走。虚线圈是它「可能在圈内」的范围，越往后越大，代表越不确定。",
     hTrend:"天气走向 · OUTLOOK", trendRegion:"区域其他地点",
     surgeShort:"涌流差", regStrong:"（明显）",
-    reg:{wet:"转湿",dry:"转干",steady:"平稳"},
+    reg:{wet:"转湿",dry:"转干",steady:"平稳",held:"不判转干"},
     season:{ne:"目前是东北季风季（11–3 月）：涌流从东北方压下来，先打吉兰丹、丁加奴、彭亨东岸。",
             sw:"目前是西南季风季（5–9 月）：气流从西南方来，西海岸与砂拉越较容易得雨。",
             inter:"目前是季候风交替期（4 月／10 月）：风向不定，午后雷雨为主，涌流讯号会比较杂乱。"},
@@ -249,8 +251,10 @@ var T = {
      ["平稳／阴天但没什么雨",
       "多半是过渡：中层水气先到，深对流还没跟上；或者外围云带正在散。气压 24 小时几乎不动。这种天最难判断，也不值得为它改动安排——等下一次更新再看方向。"],
      ["为什么看 24 小时、不看 3 小时",
-      "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"]],
-    trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
+      "热带的气压每天有两次潮汐式起伏，约 ±1.5 百帕，早上和晚上各一个高点。这个起伏往往比天气本身还大。拿 24 小时前的同一时刻来比，潮汐就抵消掉了，剩下的才是天气。"],
+     ["为什么气压看不到飑线",
+      "苏门答腊飑线是夜里在马六甲海峡形成的一条雷暴线，只有几十公里宽，几个小时就扫过西海岸。它引起的气压变化小，来得快、去得也快，在 24 小时的气压变化里几乎留不下痕迹；模式的格点（约 28 公里）也画不出这么窄的一条线。所以气压走向说「平稳」甚至偏干的晚上，西海岸照样可以被飑线淹。飑线要看的是另一组条件——引导风、不稳定度、海峡上的辐合——那是「苏门答腊飑线」软件的工作。本页把它的结果附在半岛地点下面，数字和那个软件一模一样。"]],
+    trendNote:"判读规则（写出来给你检查）：本地 24 小时下降 0.7 百帕以上，或涌流差达 +1.5 以上 → 转湿；上升 0.7 以上且涌流差不大 → 转干；其余 → 平稳。转干还要多过一关：同一个模式未来 24 小时在当地的雨量要少于 5 毫米、而且没有任何一小时达到 2.5 毫米，今晚的苏门答腊飑线条件也要低于「留意」；过不了就显示「不判转干」，并写出原因。这是对气压趋势的读法，不是天气预报——真正下不下雨还牵涉水气、辐合、地形等许多因素。官方警报以马来西亚气象局（MET Malaysia）为准。",
     nextAt:"下次 {t}", reload:"重新读取", nextDue:"下次更新约 {t}",
     loadFail:"读取失败：", openData:"直接打开数据文件 →",
     myt:"马来西亚时间", desig:"气象厅编号", tdLetter:"热带低压",
@@ -319,6 +323,20 @@ var T = {
     presOldNote:"⚠ 气压资料已过时（{t}），数字只供参考，不作判读。",
     gridOld:"气压场已过时（{t}，{age} 前），暂不画等压线。",
     sysLabel:"气象厅系统",
+    sqTitle:"苏门答腊飑线", sqNight:"苏门答腊飑线 · {night}",
+    sqLv:{low:"配置不利",watch:"留意",likely:"配置有利",strong:"配置很有利"},
+    sqIng:{steer:"引导风",cape:"不稳定度",conv:"海峡辐合",rain:"海峡模式雨",gust:"西海岸阵风",season:"季节",window:"时段"},
+    sqSig:"模式在{town}的讯号：{t} 起有雨（每小时 {r} 毫米以上）或阵风（每小时 {g} 公里以上）。",
+    sqNoSig:"模式今晚没有在{town}给出雨或阵风讯号。",
+    sqLag:"如果飑线形成并往东推，大约在越过海峡中线 {h} 小时后到{town}。",
+    sqGate:"引导风不是吹向马来西亚，所以分数被封顶。",
+    sqBlocked:"模式资料不全（缺：{list}），今晚不给分。",
+    sqStale:"飑线指数已过时（计算于 {t}，{age} 前），这里不显示。",
+    sqFail:"飑线指数这一次没算成，原因列在页面顶端。",
+    sqHow:"分数怎么来的", sqSum:"合计 {s} / 100", sqMiss:"缺",
+    sqNote:"这是「苏门答腊飑线」软件的配置指数：同一套程序、同一组门槛，在服务器上用 ECMWF 模式资料算出，数字和那个软件一样。它看的是飑线形成和推进的条件齐不齐，不是预报，也不是警报——模式画不出飑线本身。官方警报以马来西亚气象局（MET Malaysia）为准。",
+    sqOpen:"打开苏门答腊飑线软件（雷达、卫星、地图）→",
+    sqBadge:"飑线 · {lv}", rain24:"模式雨 24h {mm} 毫米",
     credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
   en:{
@@ -326,12 +344,12 @@ var T = {
     tagline:"JMA · RSMC Tokyo Typhoon Center · readable offline",
     hRegion:"REGION OVERVIEW", hStorms:"JMA BULLETINS",
     hOther:"OTHER NEARBY SYSTEMS",
-    simpleNote:"This is a reading of the pressure trend, not a forecast. Whether rain actually falls also depends on moisture, convergence and terrain. For official warnings, MET Malaysia is the authority. The maps, the outlook table and each storm follow below.",
+    simpleNote:"The pressure trend only sees changes on the scale of typhoons and the monsoon, thousands of km across. Squalls and thunderstorms are tens of km wide and invisible to it, so Peninsula places also show the Sumatra squall setup. This is a reading of the pressure trend, not a forecast. Whether rain actually falls also depends on moisture, convergence and terrain. For official warnings, MET Malaysia is the authority. The maps, the outlook table and each storm follow below.",
     mapWhatRegion:"This map shows: where the typhoons are, how far from you, and the pressure pattern (the tighter the rings, the stronger the wind).",
     mapWhatTrack:"This map shows: where this storm is expected to go. The dashed circles are where its centre might be — they grow with time because the further ahead, the less certain.",
     hTrend:"OUTLOOK", trendRegion:"Other places in the region",
     surgeShort:"surge", regStrong:" (marked)",
-    reg:{wet:"Wetter",dry:"Drier",steady:"Steady"},
+    reg:{wet:"Wetter",dry:"Drier",steady:"Steady",held:"No \u201cdrier\u201d call"},
     season:{ne:"Northeast monsoon season (Nov-Mar): surges press down from the northeast and hit Kelantan, Terengganu and east Pahang first.",
             sw:"Southwest monsoon season (May-Sep): the flow comes from the southwest, favouring the west coast and Sarawak.",
             inter:"Inter-monsoon (Apr / Oct): winds are variable, afternoon thunderstorms dominate, and the surge signal is noisier."},
@@ -343,8 +361,10 @@ var T = {
      ["Steady / overcast but little rain",
       "Usually a transition: mid-level moisture arrives before deep convection, or an outer band is decaying. Pressure barely moves over 24 h. This is the hardest state to call, and not one to change your plans for — wait for the next update and see which way it breaks."],
      ["Why 24 hours and not 3",
-      "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."]],
-    trendNote:"Here are the rules, so you can judge them for yourself: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
+      "Tropical pressure has a twice-daily tide of about 1.5 hPa, peaking mid-morning and mid-evening. That swing is often larger than the weather signal. Comparing against the same hour a day earlier cancels the tide and leaves the weather."],
+     ["Why pressure cannot see a squall",
+      "A Sumatra squall is a line of thunderstorms that forms at night over the Strait of Malacca. It is only tens of kilometres wide and sweeps across the west coast in a few hours. The pressure change it causes is small and comes and goes quickly, so it leaves almost no trace in a 24-hour pressure change, and the model grid (about 28 km) cannot draw a line that narrow. So on a night when the pressure trend reads Steady, or even drier, the west coast can still be flooded by a squall. A squall has its own ingredients — steering wind, instability, convergence over the Strait — and reading them is the Sumatra Squall app's job. This page shows that app's result under each Peninsula place, with exactly the same numbers."]],
+    trendNote:"Here are the rules, so you can judge them for yourself: local 24 h fall of 0.7 hPa or more, or a surge gap of +1.5 or more, reads Wetter; a rise of 0.7 or more with no meaningful surge gap reads Drier; anything else, Steady. Drier has one more gate: the same model must have under 5 mm at that place over the next 24 h with no single hour at 2.5 mm or more, and tonight's Sumatra squall setup must be below Watch. If either fails, the reading shows No \u201cdrier\u201d call and says why. This is a reading of a pressure trend, not a forecast — whether rain actually falls also depends on moisture, convergence, terrain and much else. For official warnings, MET Malaysia is the authority.",
     nextAt:"Next {t}", reload:"Reload", nextDue:"next update about {t}",
     loadFail:"Fetch failed:", openData:"Open the data file directly →",
     myt:"MYT", desig:"JMA designation", tdLetter:"Tropical depression",
@@ -414,6 +434,20 @@ var T = {
     presOldNote:"⚠ Pressure data is out of date ({t}); the numbers are for reference only and are not read.",
     gridOld:"The pressure field is out of date ({t}, {age} ago), so no isobars are drawn.",
     sysLabel:"JMA system",
+    sqTitle:"Sumatra squall", sqNight:"Sumatra squall · {night}",
+    sqLv:{low:"Unfavourable",watch:"Watch",likely:"Favourable",strong:"Strongly favourable"},
+    sqIng:{steer:"Steering wind",cape:"Instability (CAPE)",conv:"Strait convergence",rain:"Model rain over the Strait",gust:"West-coast gusts",season:"Season",window:"time window"},
+    sqSig:"Model signal at {town}: rain (≥{r} mm/h) or gusts (≥{g} km/h) from {t}.",
+    sqNoSig:"The model shows no rain or gust signal at {town} tonight.",
+    sqLag:"If a line forms and moves east, it reaches {town} about {h} h after crossing the Strait mid-line.",
+    sqGate:"The steering wind is not blowing toward Malaysia, so the score is capped.",
+    sqBlocked:"Model data incomplete (missing: {list}), so no score tonight.",
+    sqStale:"The squall index is out of date (computed {t}, {age} ago), so it is not shown.",
+    sqFail:"The squall index could not be computed this time; the reason is listed at the top of the page.",
+    sqHow:"How the score is made", sqSum:"Total {s} / 100", sqMiss:"missing",
+    sqNote:"This is the setup index from the Sumatra Squall app — the same code and thresholds, run on the server with ECMWF model data, so the numbers match that app. It says whether the conditions for a squall line to form and move are in place. It is not a forecast and not a warning; the model cannot draw the line itself. For official warnings, MET Malaysia is the authority.",
+    sqOpen:"Open the Sumatra Squall app (radar, satellite, map) →",
+    sqBadge:"Squall · {lv}", rain24:"model rain 24 h {mm} mm",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
@@ -430,7 +464,7 @@ var LANGS=["zh","tw","en"];
    OpenCC is wrong in this domain: 干 is always "dry" here (乾, not 幹), 里
    inside a phrase is 裡 while 公里 keeps 里, 台风 is 颱風 while 台湾/台北
    keep 台. Regenerate with scripts/make_tw.py after editing Chinese copy. */
-var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","旧":"舊","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","监":"監","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","苏":"蘇","范":"範","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","轮":"輪","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥"};
+var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","卫":"衛","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宽":"寬","宾":"賓","对":"對","导":"導","尔":"爾","层":"層","岘":"峴","岛":"島","峡":"峽","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","旧":"舊","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槛":"檻","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","监":"監","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","结":"結","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","腊":"臘","节":"節","苏":"蘇","范":"範","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","轮":"輪","软":"軟","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","迹":"跡","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飑":"颮","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥","齐":"齊"};
 var TWPROT=[["公里","公里"],["台风","颱風"],
   /* Five storm names whose published Traditional form is NOT what the
      character map would produce: 里 normally becomes 裡, 范 becomes 範,
@@ -1319,6 +1353,147 @@ function stormLabel(s,full){
   return L("tdLetter")+(n?" "+n:"");
 }
 
+/* ---- Sumatra squall ------------------------------------------------
+   The pressure trend is blind to a Sumatra squall — a line of storms tens of
+   km wide that forms over the Strait at night and is gone by mid-morning. On
+   2026-09-26 this page read 转干 for Penang and Alor Setar while the west
+   coast flooded. The squall setup index is computed on the runner by the
+   SumatraSquall app's OWN engine (scripts/squall.js), so the number shown
+   here is that app's number, not a second opinion. */
+var SQ_TOWN_KM=40;                 // a place borrows the squall town within this
+var SQ_ON={watch:1,likely:1,strong:1};
+function squallState(){
+  var S=DOC&&DOC.squall;
+  if(!S||!S.nights) return {none:true};
+  var at=Date.parse(S.at||""), age=isNaN(at)?Infinity:(Date.now()-at)/36e5;
+  if(S.stale||age>(S.stale_h||6)) return {S:S,stale:true,at:at,age:age};
+  // the night still under way or next: its window ends 10:00 MYT that morning
+  for(var i=0;i<S.nights.length;i++){
+    var m=Date.parse(S.nights[i].m0);
+    if(!isNaN(m)&&m+10*36e5>Date.now()) return {S:S,n:S.nights[i],at:at,age:age};
+  }
+  return {S:S,stale:true,at:at,age:age};
+}
+function squallTown(lat,lon){
+  var S=DOC&&DOC.squall, best=null;
+  if(!S||!S.town_meta) return null;
+  S.town_meta.forEach(function(t){
+    if(t.g==="east") return;       // the Strait's squalls are a Peninsula matter
+    var d=hav(lat,lon,t.lat,t.lon);
+    if(d<=SQ_TOWN_KM&&(!best||d<best.d)) best={t:t,d:d};
+  });
+  return best?best.t:null;
+}
+function squallFor(lat,lon){
+  var t=squallTown(lat,lon); if(!t) return null;
+  var st=squallState();
+  return {town:t,st:st,n:st.n||null,tr:st.n&&st.n.towns?(st.n.towns[t.id]||null):null};
+}
+function squallOn(q){ return !!(q&&q.n&&q.n.level&&SQ_ON[q.n.level]); }
+function nightLabel(n){
+  var m=Date.parse(n.m0), eve=new Date(m-6e4+8*36e5), mor=new Date(m+8*36e5);
+  if(lang==="en") return "night of "+eve.getUTCDate()+"–"+mor.getUTCDate()+" "+
+    ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][mor.getUTCMonth()];
+  return (eve.getUTCMonth()+1)+"月"+eve.getUTCDate()+"日晚到"+
+    (eve.getUTCMonth()===mor.getUTCMonth()?"":(mor.getUTCMonth()+1)+"月")+mor.getUTCDate()+"日早上";
+}
+
+/* 转干 is the one reading that can do harm when wrong: a farmer who reads
+   "drier" sprays, fertilises and leaves the drains. So it must clear two more
+   checks than the pressure rule, and when it cannot, the page says which. */
+var DRY_RAIN_MM=5, DRY_RATE_MM=2.5;          // printed in trendNote
+function holdDry(e,lat,lon){
+  var why=[];
+  if(e.rain24===null||e.rain24===undefined) why.push({k:"norain"});
+  else if(e.rain24>=DRY_RAIN_MM||(e.rainmax!=null&&e.rainmax>=DRY_RATE_MM))
+    why.push({k:"rain",mm:e.rain24,max:e.rainmax});
+  var q=squallFor(lat,lon);
+  if(squallOn(q)) why.push({k:"squall",q:q});
+  return why;
+}
+function reading(e,nchg,lat,lon){
+  var chg=e.change24;
+  var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
+  var g=regime(chg,surge);
+  if(g&&g.k==="dry"){
+    var why=holdDry(e,lat,lon);
+    if(why.length) g={k:"held",strong:false,why:why};
+  }
+  return {chg:chg,surge:surge,g:g};
+}
+function regBadge(g){
+  return el("span","badge"+(g.k==="wet"?" amb":g.k==="dry"?" hot":""),
+    L("reg")[g.k]+(g.strong?L("regStrong"):""));
+}
+
+/* The squall block under a Peninsula place: level, what the model shows at
+   that town, and the arithmetic — or, loudly, why there is none. */
+/* Rough Peninsula box, used ONLY to decide where a failed squall run must be
+   reported: with no squall block there is no town list to match against. */
+function onPeninsula(lat,lon){ return lat>=1.2&&lat<=6.8&&lon>=99.5&&lon<=104.6; }
+function squallBox(ref){
+  var S=DOC&&DOC.squall, st=squallState(), box=el("div","sqbox");
+  if(st.none){
+    var failed=((DOC&&DOC.errors)||[]).some(function(e){ return /^squall/i.test(String(e)); });
+    if(!failed || !onPeninsula(ref.lat,ref.lon)) return null;   // no block yet: an older data file
+    box.appendChild(el("div","k",L("sqTitle")));
+    box.appendChild(el("div",null,L("sqFail")));
+    return box;
+  }
+  var t=squallTown(ref.lat,ref.lon);
+  if(!t) return null;
+  var tname=lang==="en"?t.en:t.zh;
+  var head=el("div","cardhead");
+  head.appendChild(el("div","k",st.n?fill(L("sqNight"),{night:nightLabel(st.n)}):L("sqTitle")));
+  box.appendChild(head);
+  if(st.stale){
+    box.appendChild(el("div",null,fill(L("sqStale"),{t:isNaN(st.at)?"—":bothT(new Date(st.at).toISOString()),
+      age:isFinite(st.age)?ago(st.age*36e5):"—"})));
+  } else {
+    var n=st.n, tr=n.towns?n.towns[t.id]:null;
+    if(n.level){
+      head.appendChild(el("span","badge"+(n.level==="strong"||n.level==="likely"?" hot":n.level==="watch"?" amb":""),
+        L("sqLv")[n.level]+" · "+n.score+"/100"));
+    } else {
+      var miss=n.blocked==="window"?[L("sqIng").window]:(n.lacking||[]).map(function(k){ return L("sqIng")[k]||k; });
+      box.appendChild(el("div",null,fill(L("sqBlocked"),{list:miss.join(lang==="en"?", ":"、")})));
+    }
+    if(tr){
+      var sig=(S&&S.sig)||{rain:2,gust:45};
+      box.appendChild(el("p","plain",tr.first
+        ? fill(L("sqSig"),{town:tname,t:myt(tr.first)+" "+L("myt"),r:sig.rain,g:sig.gust})
+        : fill(L("sqNoSig"),{town:tname})));
+      if(tr.lag&&tr.lag.h!=null&&n.level&&SQ_ON[n.level])
+        box.appendChild(el("p","plain",fill(L("sqLag"),{town:tname,h:tr.lag.h.toFixed(1)})));
+    }
+    if(n.gate) box.appendChild(el("p","plain",L("sqGate")));
+    if(n.parts){
+      var how=el("details"); how.appendChild(el("summary",null,L("sqHow")));
+      var ul=el("ul","decode");
+      ["steer","cape","conv","rain","gust","season"].forEach(function(k){
+        var p=n.parts[k]; if(!p) return;
+        var li=el("li"), bits=[];
+        if(k==="steer"&&p.from!=null) bits.push(p.from+"° · "+p.ms+" "+L("ms"));
+        if(k==="cape"&&p.cape!=null) bits.push(p.cape+" J/kg");
+        if(k==="conv"&&p.conv!=null) bits.push(p.conv+" ×10⁻⁵ s⁻¹");
+        if(k==="rain"&&p.frac!=null) bits.push(Math.round(p.frac*100)+"%");
+        if(k==="gust"&&p.kmh!=null) bits.push(p.kmh+" "+L("kmh"));
+        li.appendChild(el("code",null,(L("sqIng")[k]||k)+"  "+(p.missing?L("sqMiss"):(p.pts+" / "+p.w))));
+        if(bits.length) li.appendChild(el("span",null," "+bits.join(" · ")));
+        ul.appendChild(li);
+      });
+      if(n.score!=null) ul.appendChild(el("li",null,fill(L("sqSum"),{s:n.score})));
+      how.appendChild(ul); box.appendChild(how);
+    }
+  }
+  var a=document.createElement("a");
+  a.href=(S&&S.app_url)||"https://stanleywoosweeleong.github.io/SumatraSquall/";
+  a.target="_blank"; a.rel="noopener"; a.textContent=X(L("sqOpen"));
+  var ap=el("div"); ap.appendChild(a); box.appendChild(ap);
+  var nt=el("div","rangeline"); nt.appendChild(el("span","note",L("sqNote"))); box.appendChild(nt);
+  return box;
+}
+
 /* ---- plain language -------------------------------------------------
    Simple mode. Same two numbers as the outlook table, said in the way a
    farmer would say them, with the REASON kept in — "north is rising and we
@@ -1328,10 +1503,9 @@ function plainLines(ref,P,nchg){
   if(ref.gps && ref.baseKm>GPS_MAXKM) return null;   // too far to mean anything
   var e=P.places[presRef(ref).id];
   if(!e || !presFresh(P,e)) return null;   // never read a stale trend
-  var chg=e.change24;
-  var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
-  var g=regime(chg,surge), out=[], W=lang!=="en";
+  var rd=reading(e,nchg,ref.lat,ref.lon), chg=rd.chg, surge=rd.surge, g=rd.g, out=[], W=lang!=="en";
   if(!g) return null;
+  var active=((DOC&&DOC.storms)||[]).some(function(s){ return !s.unavailable&&!stormEnded(s); });
 
   if(g.k==="wet"){
     out.push(W?"接下来偏湿。":"Leaning wetter.");
@@ -1343,8 +1517,29 @@ function plainLines(ref,P,nchg){
                 :("Pressure to the north (Hong Kong, Haikou, Sanya) is rising while ours is not — the gap has widened by "+surge.toFixed(1)+" hPa. The wider that gap, the harder the monsoon blows, and the more likely rain runs for days."));
   } else if(g.k==="dry"){
     out.push(W?"接下来偏干，但会闷、会热。":"Leaning drier — but stifling and hot.");
-    out.push(W?("我们这里的气压 24 小时里升了 "+Math.abs(chg).toFixed(1)+" 百帕。台风像抽风机，把空气抽上去，抽走的空气总要沉回来，常常就沉在我们头顶。空气一沉，云就长不高，午后雷雨打不上来——所以会闷热、会积霾，但不太下雨。")
-              :("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours. A typhoon pumps air upward, and that air has to sink back down somewhere — often over us. Sinking air stops clouds growing tall, so the afternoon storms never fire: hot, sticky, hazy, but little rain."));
+    out.push(W?("我们这里的气压 24 小时里升了 "+Math.abs(chg).toFixed(1)+" 百帕，同一个模式未来 24 小时在这里也只有 "+e.rain24.toFixed(1)+" 毫米雨。")
+              :("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours, and the same model has only "+e.rain24.toFixed(1)+" mm of rain here over the next 24 hours."));
+    // The typhoon-subsidence story is told only when there is a typhoon to
+    // tell it about, and even then as a possible cause: pressure can rise
+    // for other reasons, and this page cannot tell which.
+    if(active)
+      out.push(W?"有台风在活动时，常见的原因是：台风像抽风机，把空气抽上去，抽走的空气总要沉回来，常常就沉在我们头顶。空气一沉，云就长不高，午后雷雨打不上来——所以会闷热、会积霾，但不太下雨。不过气压上升也可能有别的原因，本页分不出来。"
+                :"When a typhoon is active, a common reason is this: it pumps air upward, and that air has to sink back down somewhere — often over us. Sinking air stops clouds growing tall, so the afternoon storms never fire: hot, sticky, hazy, but little rain. Pressure can rise for other reasons too, and this page cannot tell which.");
+  } else if(g.k==="held"){
+    out.push(W?"不判转干。":"No \u201cdrier\u201d call.");
+    out.push(W?("我们这里的气压 24 小时里升了 "+Math.abs(chg).toFixed(1)+" 百帕——单看气压，会读成转干。但是：")
+              :("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours — on pressure alone that reads as drier. But:"));
+    g.why.forEach(function(w){
+      if(w.k==="rain")
+        out.push(W?("同一个模式未来 24 小时在这里仍有 "+w.mm.toFixed(1)+" 毫米雨"+(w.max!=null?"（最大的一小时 "+w.max.toFixed(1)+" 毫米）":"")+"，所以不说转干。")
+                  :("the same model still has "+w.mm.toFixed(1)+" mm of rain here over the next 24 hours"+(w.max!=null?" (wettest hour "+w.max.toFixed(1)+" mm)":"")+", so this is not called drier."));
+      else if(w.k==="squall")
+        out.push(W?("今晚苏门答腊飑线的条件是「"+L("sqLv")[w.q.n.level]+"」（"+w.q.n.score+" 分）。飑线只有几十公里宽，气压走向看不到它；详情在下面。")
+                  :("tonight's Sumatra squall setup is "+L("sqLv")[w.q.n.level]+" ("+w.q.n.score+"/100). A squall is tens of km wide and the pressure trend cannot see it; details below."));
+      else
+        out.push(W?"这一次没有模式雨量可以核对，所以不说转干。"
+                  :"there is no model rainfall to check it against this time, so this is not called drier.");
+    });
   } else {
     out.push(W?"暂时平稳，看不出明显方向。":"Steady for now, no clear direction.");
     out.push(W?("气压 24 小时几乎没动（"+(chg>0?"+":"")+chg.toFixed(1)+" 百帕）。天可能灰灰的，中层云飘过来，但不一定下得成雨。这种时候最难讲，也不值得为它改动安排——等下一次更新再看。")
@@ -1386,23 +1581,30 @@ function plainLines(ref,P,nchg){
 function renderSimple(){
   var box=document.getElementById("simple"); box.textContent="";
   var ref=refPlace(), P=(DOC&&DOC.pressure)||null;
+  // The squall block does not depend on the pressure data, so it is shown
+  // whatever happened to that — a stale pressure file must not hide it.
+  function withSquall(){ var sb=squallBox(ref); if(sb) box.appendChild(sb); }
   if(!P||!P.places){
     box.appendChild(el("div",null,DOC&&DOC.generated?L("presNone"):L("unknown")));
-    return;
+    withSquall(); return;
   }
   var here=P.places[presRef(ref).id];
   if(here && !(ref.gps && ref.baseKm>GPS_MAXKM) && !presFresh(P,here)){
     var pw=presWhen(P,here), due=nextDue();
     box.appendChild(el("div","presstale",fill(L("presStale"),{t:pw.t,age:pw.age,
       due:due?fill(L("presDue"),{t:due+" "+L("myt")}):""})));
-    return;
+    withSquall(); return;
   }
   var r=plainLines(ref,P,northChange(P));
-  if(!r){ box.appendChild(el("div",null,L("presNone"))); return; }
+  if(!r){ box.appendChild(el("div",null,L("presNone"))); withSquall(); return; }
   var head=el("div","cardhead");
   head.appendChild(el("div","sname",(lang==="en"?ref.en:ref.zh)));
-  head.appendChild(el("span","badge"+(r.g.k==="wet"?" amb":r.g.k==="dry"?" hot":""),
-    L("reg")[r.g.k]+(r.g.strong?L("regStrong"):"")));
+  var hb=el("div","badges");
+  hb.appendChild(regBadge(r.g));
+  var q=squallFor(ref.lat,ref.lon);
+  if(squallOn(q)) hb.appendChild(el("span","badge"+(q.n.level==="watch"?" amb":" hot"),
+    fill(L("sqBadge"),{lv:L("sqLv")[q.n.level]})));
+  head.appendChild(hb);
   box.appendChild(head);
   r.lines.forEach(function(t){ box.appendChild(el("p","plain",t)); });
   if(ref.gps){
@@ -1411,9 +1613,12 @@ function renderSimple(){
     if(ref.baseKm>120){ bl.textContent+=" "+X(L("gpsRough")); bl.style.color="#ffd489"; }
     box.appendChild(bl);
   }
-  box.appendChild(el("div","pos",L("hpa")+" "+P.places[presRef(ref).id].hpa.toFixed(1)+
+  var hp=P.places[presRef(ref).id];
+  box.appendChild(el("div","pos",L("hpa")+" "+hp.hpa.toFixed(1)+
     " · 24h "+(r.chg<0?"▼":"▲")+Math.abs(r.chg).toFixed(1)+
-    (r.surge!==null?" · "+L("surgeShort")+" "+(r.surge>0?"+":"")+r.surge.toFixed(1):"")));
+    (r.surge!==null?" · "+L("surgeShort")+" "+(r.surge>0?"+":"")+r.surge.toFixed(1):"")+
+    (hp.rain24!=null?" · "+fill(L("rain24"),{mm:hp.rain24.toFixed(1)}):"")));
+  withSquall();
   var n=el("div","rangeline"); n.appendChild(el("span","note",L("simpleNote")));
   box.appendChild(n);
 }
@@ -1505,22 +1710,24 @@ function renderTrend(){
     REFS.forEach(function(r){
       if(r.grp!==grp) return;
       var e=P.places[r.id]; if(!e) return;
-      var ok=presFresh(P,e);
-      var surge=(!ok||nchg===null||e.change24===null||e.change24===undefined)?null:+(nchg-e.change24).toFixed(1);
-      var g=ok?regime(e.change24,surge):null;
+      var ok=presFresh(P,e), rd=ok?reading(e,nchg,r.lat,r.lon):null;
+      var surge=rd?rd.surge:null, g=rd?rd.g:null;
       var row=el("div","inv"), left=el("div");
       left.appendChild(el("div",null,(lang==="en"?r.en:r.zh)));
       var bits=[e.hpa.toFixed(1)+" "+L("hpa")];
       if(e.change24!==null&&e.change24!==undefined)
         bits.push("24h "+(e.change24<0?"▼":"▲")+Math.abs(e.change24).toFixed(1));
       if(surge!==null) bits.push(L("surgeShort")+" "+(surge>0?"+":"")+surge.toFixed(1));
+      if(e.rain24!=null) bits.push(fill(L("rain24"),{mm:e.rain24.toFixed(1)}));
       left.appendChild(el("div","pos",bits.join(" · ")));
       row.appendChild(left);
-      if(g){
-        var cls=g.k==="wet"?" amb":g.k==="dry"?" hot":"";
-        row.appendChild(el("span","badge"+cls,
-          L("reg")[g.k]+(g.strong?L("regStrong"):"")));
-      } else if(!ok) row.appendChild(el("span","badge","⚠ "+L("presOld")));
+      var rb=el("div","badges");
+      if(g) rb.appendChild(regBadge(g));
+      else if(!ok) rb.appendChild(el("span","badge","⚠ "+L("presOld")));
+      var q=squallFor(r.lat,r.lon);
+      if(squallOn(q)) rb.appendChild(el("span","badge"+(q.n.level==="watch"?" amb":" hot"),
+        fill(L("sqBadge"),{lv:L("sqLv")[q.n.level]})));
+      row.appendChild(rb);
       into.appendChild(row);
     });
   }
