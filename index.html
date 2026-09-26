@@ -50,6 +50,7 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
   border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13.5px}
 .fresh.stale{border-left-color:var(--red);background:#26161a;color:#ffd7d4}
 .fresh.warnish{border-left-color:var(--amber);background:#241d10}
+.presstale{border-left:3px solid var(--amber);background:#241d10;color:#ffe2a8;padding:9px 11px;margin:8px 0;line-height:1.6}
 .fresh b{font-family:var(--mono)}
 /* Partial-failure list. The fetcher can succeed overall and still lose a
    storm, so what it could not get is named here rather than left blank. */
@@ -174,7 +175,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.2.2";
+var VERSION = "v3.3.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -305,6 +306,19 @@ var T = {
     gpsNoSupport:"这个浏览器不支持定位。请从下拉选一个地点。",
     qrCap:"扫码打开本页。也可以直接输入网址：",
     partial:"这次有几项没取到或显示不全，下面列出来；其余照常显示。",
+    unavail:"这次没取到",
+    unavailOld:"⚠ 这一次没能下载到它的最新情报。气象厅名单上它还在，表示仍在监测中；下面显示的是 {t} 发表的存档，位置和强度都不是现在的。请直接查看气象厅官网确认。",
+    unavailNew:"⚠ 气象厅名单上有这个系统（仍在监测中），但这一次没能下载到它的情报，所以本页没有它的位置和强度。请直接查看气象厅官网。",
+    staleBadge:"{age}未更新",
+    freshLag:"⚠ 以下系统的情报不是最新的：{list}。卡片上有标示；这几个请直接查看气象厅官网。",
+    lagAge:"已 {age} 未更新",
+    freshNone:"⚠ 气象厅名单上有 {n} 个系统，但这一次一份情报都没下载到。下面的卡片没有最新位置和强度，请直接查看气象厅官网。",
+    presStale:"⚠ 气压资料已过时（最后一次是 {t}，{age} 前），所以这次不给转湿／转干的判读——旧的气压走向说明不了现在。台风情报照常显示。{due}官方警报以马来西亚气象局（MET Malaysia）为准。",
+    presDue:"下次更新约 {t}。",
+    presOld:"过时",
+    presOldNote:"⚠ 气压资料已过时（{t}），数字只供参考，不作判读。",
+    gridOld:"气压场已过时（{t}，{age} 前），暂不画等压线。",
+    sysLabel:"气象厅系统",
     credit:"数据来源：日本气象厅 気象庁（RSMC 东京台风中心），西北太平洋台风的世界气象组织指定区域专责气象中心。由 GitHub Actions 每 3 小时镜像一次。风速为 10 分钟平均，与马来西亚气象局一致。马来西亚官方警报以 MET Malaysia 为准。本应用不作任何预报，只呈现气象厅已发表的内容。<br>注：美国 JTWC 的产品对数据中心 IP 返回 403，无法自动抓取。<br>开发协作：Claude Opus 5（Anthropic）。"
   },
   en:{
@@ -387,6 +401,19 @@ var T = {
     gpsNoSupport:"This browser cannot provide a location. Please pick a place from the list.",
     qrCap:"Scan to open this page, or type the address:",
     partial:"A few items did not arrive or could not be fully shown this time; they are listed below. Everything else is showing normally.",
+    unavail:"not received this run",
+    unavailOld:"⚠ This run could not download its latest bulletin. JMA still lists it, so it is still being monitored; what follows is the copy issued {t} — neither the position nor the strength is current. Check JMA directly.",
+    unavailNew:"⚠ JMA lists this system, so it is being monitored, but this run could not download its bulletin — this page has no position or strength for it. Check JMA directly.",
+    staleBadge:"not updated for {age}",
+    freshLag:"⚠ Not current: {list}. Each is marked on its card; check JMA directly for these.",
+    lagAge:"{age} without an update",
+    freshNone:"⚠ JMA lists {n} system(s), but this run could not download a single bulletin. The cards below carry no current position or strength — check JMA directly.",
+    presStale:"⚠ The pressure data is out of date (last reading {t}, {age} ago), so no wetter/drier reading is given — an old pressure trend says nothing about now. The typhoon bulletins are unaffected. {due}For official warnings, MET Malaysia is the authority.",
+    presDue:"Next update about {t}. ",
+    presOld:"stale",
+    presOldNote:"⚠ Pressure data is out of date ({t}); the numbers are for reference only and are not read.",
+    gridOld:"The pressure field is out of date ({t}, {age} ago), so no isobars are drawn.",
+    sysLabel:"JMA system",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
   }
 };
@@ -403,7 +430,7 @@ var LANGS=["zh","tw","en"];
    OpenCC is wrong in this domain: 干 is always "dry" here (乾, not 幹), 里
    inside a phrase is 裡 while 公里 keeps 里, 台风 is 颱風 while 台湾/台北
    keep 台. Regenerate with scripts/make_tw.py after editing Chinese copy. */
-var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","苏":"蘇","范":"範","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","轮":"輪","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥"};
+var TWMAP={"万":"萬","与":"與","专":"專","东":"東","丝":"絲","两":"兩","严":"嚴","个":"個","为":"為","丽":"麗","么":"麼","义":"義","乱":"亂","于":"於","云":"雲","亚":"亞","产":"產","从":"從","仑":"侖","们":"們","会":"會","伤":"傷","体":"體","余":"餘","儿":"兒","兰":"蘭","关":"關","内":"內","写":"寫","军":"軍","冲":"沖","况":"況","准":"準","凉":"涼","几":"幾","凤":"鳳","则":"則","别":"別","剑":"劍","办":"辦","务":"務","动":"動","劳":"勞","势":"勢","区":"區","华":"華","协":"協","单":"單","卢":"盧","厅":"廳","压":"壓","参":"參","发":"發","变":"變","号":"號","后":"後","员":"員","响":"響","团":"團","围":"圍","国":"國","图":"圖","圆":"圓","圣":"聖","场":"場","处":"處","头":"頭","奥":"奧","实":"實","宾":"賓","对":"對","尔":"爾","层":"層","岘":"峴","岛":"島","带":"帶","干":"乾","并":"並","广":"廣","应":"應","开":"開","张":"張","强":"強","当":"當","录":"錄","径":"徑","志":"誌","总":"總","扫":"掃","报":"報","换":"換","据":"據","数":"數","斗":"鬥","断":"斷","无":"無","旧":"舊","时":"時","显":"顯","晋":"晉","晕":"暈","暂":"暫","机":"機","杂":"雜","权":"權","条":"條","来":"來","杨":"楊","杰":"傑","构":"構","标":"標","树":"樹","样":"樣","档":"檔","桦":"樺","检":"檢","楼":"樓","槟":"檳","欧":"歐","气":"氣","汇":"彙","没":"沒","测":"測","浏":"瀏","涌":"湧","涛":"濤","涡":"渦","温":"溫","湾":"灣","湿":"濕","滞":"滯","灾":"災","灿":"燦","点":"點","烟":"煙","热":"熱","牵":"牽","状":"狀","狮":"獅","猫":"貓","玑":"璣","玛":"瑪","环":"環","现":"現","电":"電","画":"畫","监":"監","着":"著","码":"碼","础":"礎","确":"確","离":"離","种":"種","积":"積","稳":"穩","简":"簡","紧":"緊","红":"紅","约":"約","级":"級","纬":"緯","纳":"納","线":"線","组":"組","细":"細","织":"織","经":"經","给":"給","统":"統","续":"續","绳":"繩","维":"維","绿":"綠","缓":"緩","编":"編","网":"網","罗":"羅","联":"聯","节":"節","苏":"蘇","范":"範","莲":"蓮","萨":"薩","蓝":"藍","蔷":"薔","虚":"虛","蝎":"蠍","补":"補","见":"見","观":"觀","规":"規","览":"覽","觉":"覺","计":"計","认":"認","讯":"訊","记":"記","讲":"講","许":"許","设":"設","证":"證","诉":"訴","词":"詞","译":"譯","试":"試","诗":"詩","话":"話","该":"該","详":"詳","误":"誤","说":"說","请":"請","读":"讀","谁":"誰","调":"調","谈":"談","谨":"謹","贝":"貝","负":"負","责":"責","败":"敗","贴":"貼","费":"費","资":"資","赌":"賭","趋":"趨","车":"車","转":"轉","轮":"輪","载":"載","较":"較","辐":"輻","输":"輸","边":"邊","达":"達","过":"過","运":"運","还":"還","这":"這","进":"進","远":"遠","连":"連","选":"選","邻":"鄰","里":"裡","钟":"鐘","钱":"錢","银":"銀","错":"錯","镜":"鏡","长":"長","门":"門","闭":"閉","间":"間","闷":"悶","阳":"陽","阴":"陰","阵":"陣","阶":"階","陆":"陸","随":"隨","难":"難","雳":"靂","雾":"霧","静":"靜","韦":"韋","页":"頁","顶":"頂","项":"項","预":"預","颜":"顏","风":"風","飘":"飄","马":"馬","鱼":"魚","鲁":"魯","鲸":"鯨","鸥":"鷗","鸯":"鴦","鸳":"鴛","鸿":"鴻","鹃":"鵑","鹉":"鵡","鹦":"鸚","鹭":"鷺","麦":"麥"};
 var TWPROT=[["公里","公里"],["台风","颱風"],
   /* Five storm names whose published Traditional form is NOT what the
      character map would produce: 里 normally becomes 裡, 范 becomes 範,
@@ -637,14 +664,20 @@ function renderFresh(){
      had just succeeded — crying wolf, which costs the banner its meaning on
      the day something is really wrong. If every storm has finished, fall back
      to the fetch time, which is then the only honest measure of freshness. */
+  /* The NEWEST bulletin alone used to set the clock, so one current storm hid
+     another whose bulletin was days old. Freshness is now judged per storm:
+     the headline still reports the newest bulletin actually received, and
+     every storm that is behind (or was not received at all) is named. */
+  var active=(DOC.storms||[]).filter(function(s){ return s.unavailable||!stormEnded(s); });
   var newest=null;
-  (DOC.storms||[]).forEach(function(s){
-    if(stormEnded(s)) return;
+  active.forEach(function(s){
+    if(s.unavailable) return;      // an archived copy is not this run's bulletin
     var t=Date.parse(s.issued||"");
     if(!isNaN(t) && (newest===null||t>newest)) newest=t;
   });
+  var lagging=active.filter(stormLagging);
   var quiet=false;                 // clock came from our fetch, not a bulletin
-  if(newest===null){
+  if(newest===null && !active.length){
     var g=Date.parse(DOC.generated||"");
     if(!isNaN(g)){ newest=g; quiet=true; }
   }
@@ -652,6 +685,10 @@ function renderFresh(){
   if(DOC.fetch_ok===false){
     box.classList.add("stale");
     html=fill(L("freshFail"),{when:DOC.last_attempt||"?"});
+  } else if(newest===null && active.length){
+    box.classList.add("stale");
+    html=fill(L("freshNone"),{n:active.length});
+    lagging=[];                    // the headline already says it of every card
   } else if(newest!==null && (now-newest)/36e5>STALE_H){
     box.classList.add("stale");
     html=fill(L("freshStale"),{t:bothT(new Date(newest).toISOString()),age:ago(now-newest),h:STALE_H});
@@ -668,6 +705,16 @@ function renderFresh(){
   }
   if(OFFLINE) html+=" "+L("offline");
   box.innerHTML=X(html);   // built as a string, so it misses el()'s boundary
+
+  if(lagging.length){
+    if(!box.classList.contains("stale")) box.classList.add("warnish");
+    box.appendChild(el("span","probs",fill(L("freshLag"),{list:lagging.map(function(s){
+      var a=stormAgeH(s);
+      return stormLabel(s)+(lang==="en"?" (":"（")+
+        (s.unavailable?L("unavail"):fill(L("lagAge"),{age:ago(a*36e5)}))+
+        (lang==="en"?")":"）");
+    }).join(lang==="en"?"; ":"、")})));
+  }
 
   /* A run can succeed overall and still lose one storm, one GDACS call or the
      pressure grid — fetch_ok stays true and `generated` advances, so nothing
@@ -843,7 +890,9 @@ function overviewMap(storms,others,ref){
            '" fill="#5c7891" font-size="'+FSG+'" font-family="monospace" paint-order="stroke"'+
            ' stroke="#081019" stroke-width="'+(2.4*K).toFixed(1)+'">'+latTick(g)+'</text>';
   }
-  if(SHOWISO) svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY,W,H);
+  // an old grid is not drawn: contours look authoritative whatever their age
+  if(SHOWISO && gridOk((DOC&&DOC.pressure)||null))
+    svg+=isobarPaths((DOC&&DOC.pressure)||null,PX,PY,W,H);
   svg+=coastPaths(REGION.w,REGION.e,REGION.s,REGION.n,PX,PY,coastW(K,0.85),"#2b4f63");
 
   svg+=equatorSVG(W,PY,REGION.s,REGION.n,K);
@@ -1240,11 +1289,28 @@ function stormEnded(s){
   return !!(s && s.parsed && s.current && s.current.lat!=null &&
             !((s.forecast||[]).length));
 }
+function stormAgeH(s){
+  var t=Date.parse((s&&s.issued)||"");
+  return isNaN(t)?null:(Date.now()-t)/36e5;
+}
+/* Behind = not received this run, or a live storm whose own bulletin is
+   older than STALE_H. A final bulletin stops advancing by design, so it is
+   never "behind" (the v3.2.2 crying-wolf fix still holds). */
+function stormLagging(s){
+  if(!s) return false;
+  if(s.unavailable) return true;
+  if(stormEnded(s)) return false;
+  var a=stormAgeH(s);
+  return a!==null && a>STALE_H;
+}
 
 /* full=true on the storm card, where there is room for both scripts. The
    map and the plain-language line get the short form. */
 function stormLabel(s,full){
   var n=String(s.typhoon_number||""), c=s.name_en?cname(s.name_en):null;
+  // Listed by JMA but never downloaded: all we know is its designation, and
+  // calling it a "tropical depression" would be a guess.
+  if(!s.name_en && !s.parsed && s.unavailable) return L("sysLabel")+" "+(n||s.id||"?");
   if(s.name_en && /^\d+$/.test(n)){
     if(lang==="en") return "Typhoon "+n.slice(-2)+" "+s.name_en;
     return "台风 "+n.slice(-2)+" 号 "+(c?c+(full?" "+s.name_en:""):s.name_en);
@@ -1261,7 +1327,7 @@ function stormLabel(s,full){
 function plainLines(ref,P,nchg){
   if(ref.gps && ref.baseKm>GPS_MAXKM) return null;   // too far to mean anything
   var e=P.places[presRef(ref).id];
-  if(!e) return null;
+  if(!e || !presFresh(P,e)) return null;   // never read a stale trend
   var chg=e.change24;
   var surge=(nchg===null||chg===null||chg===undefined)?null:+(nchg-chg).toFixed(1);
   var g=regime(chg,surge), out=[], W=lang!=="en";
@@ -1299,6 +1365,7 @@ function plainLines(ref,P,nchg){
   ((DOC&&DOC.storms)||[]).forEach(function(s){
     var c=s.current; if(!c||c.lat==null) return;
     count++;
+    if(s.unavailable) return;      // archived copy: counted, but no distance
     var d=hav(c.lat,c.lon,ref.lat,ref.lon);
     if(!near||d<near.d) near={d:d,s:s};
   });
@@ -1321,6 +1388,13 @@ function renderSimple(){
   var ref=refPlace(), P=(DOC&&DOC.pressure)||null;
   if(!P||!P.places){
     box.appendChild(el("div",null,DOC&&DOC.generated?L("presNone"):L("unknown")));
+    return;
+  }
+  var here=P.places[presRef(ref).id];
+  if(here && !(ref.gps && ref.baseKm>GPS_MAXKM) && !presFresh(P,here)){
+    var pw=presWhen(P,here), due=nextDue();
+    box.appendChild(el("div","presstale",fill(L("presStale"),{t:pw.t,age:pw.age,
+      due:due?fill(L("presDue"),{t:due+" "+L("myt")}):""})));
     return;
   }
   var r=plainLines(ref,P,northChange(P));
@@ -1356,11 +1430,40 @@ function renderSimple(){
    NOT a forecast, and MET Malaysia remains the authority. */
 var NORTH = ["hongkong","haikou","sanya"];   // upstream end of the gradient
 
+/* A pressure reading is only read (wetter / drier / steady) while it is
+   current. The fetcher marks a whole carried-forward block `stale`, and each
+   place carries the valid time of its own reading; either being old stops
+   the reading. Older data files have neither, and fall back to `generated`. */
+var GRID_MAX_H=12;                 // grid refreshes ~6-hourly; past this, hide it
+function presT(P,e){
+  var s=(e&&e.valid)||(P&&P.time)||(P&&P.stale?"":(DOC&&DOC.generated))||"";
+  var t=Date.parse(s);
+  return isNaN(t)?null:t;
+}
+function presFresh(P,e){
+  if(!P||P.stale||!e) return false;
+  var t=presT(P,e);
+  return t!==null && (Date.now()-t)/36e5<=STALE_H;
+}
+function gridAgeH(P){
+  var t=Date.parse((P&&P.grid&&P.grid.time)||"");
+  return isNaN(t)?null:(Date.now()-t)/36e5;
+}
+function gridOk(P){
+  var a=gridAgeH(P);
+  return a!==null && a<=GRID_MAX_H;
+}
+/* "03-26 13:00 MYT, 9.5 h ago" pieces for a stale-pressure message. */
+function presWhen(P,e){
+  var t=presT(P,e);
+  return t===null?{t:"—",age:"—"}:{t:bothT(new Date(t).toISOString()),age:ago(Date.now()-t)};
+}
+
 function northChange(P){
   var n=0, sum=0;
   NORTH.forEach(function(id){
     var e=P.places[id];
-    if(e && e.change24!==null && e.change24!==undefined){ sum+=e.change24; n++; }
+    if(e && presFresh(P,e) && e.change24!==null && e.change24!==undefined){ sum+=e.change24; n++; }
   });
   // round here so the surge arithmetic downstream stays clean
   return n?+(sum/n).toFixed(1):null;
@@ -1394,14 +1497,17 @@ function renderTrend(){
   }
   var nchg=northChange(P);
   var ph=monsoon(DOC&&DOC.generated);
+  var anyOld=Object.keys(P.places).some(function(id){ return !presFresh(P,P.places[id]); });
+  if(anyOld) box.appendChild(el("div","presstale",fill(L("presOldNote"),{t:presWhen(P,null).t})));
   box.appendChild(el("div","seasonline",L("season")[ph]));
 
   function rows(grp,into){
     REFS.forEach(function(r){
       if(r.grp!==grp) return;
       var e=P.places[r.id]; if(!e) return;
-      var surge=(nchg===null||e.change24===null||e.change24===undefined)?null:+(nchg-e.change24).toFixed(1);
-      var g=regime(e.change24,surge);
+      var ok=presFresh(P,e);
+      var surge=(!ok||nchg===null||e.change24===null||e.change24===undefined)?null:+(nchg-e.change24).toFixed(1);
+      var g=ok?regime(e.change24,surge):null;
       var row=el("div","inv"), left=el("div");
       left.appendChild(el("div",null,(lang==="en"?r.en:r.zh)));
       var bits=[e.hpa.toFixed(1)+" "+L("hpa")];
@@ -1414,7 +1520,7 @@ function renderTrend(){
         var cls=g.k==="wet"?" amb":g.k==="dry"?" hot":"";
         row.appendChild(el("span","badge"+cls,
           L("reg")[g.k]+(g.strong?L("regStrong"):"")));
-      }
+      } else if(!ok) row.appendChild(el("span","badge","⚠ "+L("presOld")));
       into.appendChild(row);
     });
   }
@@ -1450,13 +1556,21 @@ function stormCard(s,n){
     var strong = catCode==="TY";
     bs.appendChild(el("span","badge"+(strong?" hot":" amb"), (L("cat")[catCode]||catCode)));
   }
-  if(stormEnded(s)) bs.appendChild(el("span","badge","· "+L("ended")));
+  if(stormEnded(s) && !s.unavailable) bs.appendChild(el("span","badge","· "+L("ended")));
+  if(stormLagging(s)){
+    var la=stormAgeH(s);
+    bs.appendChild(el("span","badge hot","⚠ "+(s.unavailable||la===null ? L("unavail")
+      : fill(L("staleBadge"),{age:ago(la*36e5)}))));
+  }
   if(c.intensity) bs.appendChild(el("span","badge hot", L("intens")[c.intensity]));
   if(c.scale) bs.appendChild(el("span","badge amb", L("scale")[c.scale]));
   var sf=saffirFrom10min(c.wind_kt);
   if(sf) bs.appendChild(el("span","badge", fill(L("saffir"),{c:sf})));
   head.appendChild(bs);
   card.appendChild(head);
+  if(s.unavailable)
+    card.appendChild(el("div","presstale", c.lat!=null && s.issued
+      ? fill(L("unavailOld"),{t:bothT(s.issued)}) : L("unavailNew")));
 
   if(!s.parsed){
     var w=el("div","rangeline");
@@ -1537,8 +1651,15 @@ function renderRegion(){
   });
   bar.appendChild(ib);
   var P0=(DOC&&DOC.pressure)||null;
-  if(SHOWISO && P0 && P0.grid && P0.grid.time)
-    bar.appendChild(el("span","maptime",L("isoAt")+" "+myt(P0.grid.time)+" "+L("myt")));
+  if(SHOWISO && P0 && P0.grid && P0.grid.time){
+    if(gridOk(P0))
+      bar.appendChild(el("span","maptime",L("isoAt")+" "+myt(P0.grid.time)+" "+L("myt")));
+    else {
+      var go=el("span","maptime",fill(L("gridOld"),{t:myt(P0.grid.time)+" "+L("myt"),
+        age:ago(gridAgeH(P0)*36e5)}));
+      go.style.color="#ffd489"; bar.appendChild(go);
+    }
+  }
   box.appendChild(bar);
 
   box.appendChild(el("div","mapwhat",L("mapWhatRegion")));
@@ -1556,7 +1677,9 @@ function renderRegion(){
     if(here){
       var line=document.createElement("div");
       var txt=fill(L("presAt"),{place:(lang==="en"?ref.en:ref.zh),hpa:here.hpa.toFixed(1)});
-      if(here.change24===null||here.change24===undefined){
+      if(!presFresh(P,here)){
+        txt+=" · ⚠ "+L("presOld");
+      } else if(here.change24===null||here.change24===undefined){
         txt+=" · "+L("presSteady");
       } else if(Math.abs(here.change24)<0.5){
         txt+=" · "+L("presSteady");
@@ -1571,7 +1694,7 @@ function renderRegion(){
     var falls=Object.keys(P.places).map(function(id){
       var r=null;
       for(var i=0;i<REFS.length;i++) if(REFS[i].id===id) r=REFS[i];
-      return r?{r:r,c:P.places[id].change24}:null;
+      return r&&presFresh(P,P.places[id])?{r:r,c:P.places[id].change24}:null;
     }).filter(function(x){ return x&&x.c!==null&&x.c!==undefined&&x.c<=-1; })
       .sort(function(a,b){ return a.c-b.c; }).slice(0,3);
     if(falls.length){
@@ -1579,7 +1702,8 @@ function renderRegion(){
         return (lang==="en"?f.r.en:f.r.zh)+" ▼"+Math.abs(f.c).toFixed(1);
       }).join(" · ")));
     }
-    if(P.stale) strip.appendChild(el("div","pos",L("offline")));
+    if(here && !presFresh(P,here))
+      strip.appendChild(el("div","pos",fill(L("presOldNote"),{t:presWhen(P,here).t})));
   }
   strip.appendChild(el("span","note",L("presNote")));
   box.appendChild(strip);
@@ -1800,8 +1924,17 @@ function nextDueClock(){     // just "15:45", for the button
 }
 /* The control states what it knows even when you never touch it, and only
    invites a tap when a tap would actually do something. */
+/* Reloading is one small file on our own origin, so it is worth offering
+   whenever what we hold is incomplete — not only once the 2.5 h window has
+   passed. Before, a partial failure left the button disabled for 150 min. */
+function reloadUseful(){
+  if(dataAge()>=CYCLE_MIN || !DOC || OFFLINE || LOADERR) return true;
+  if(DOC.fetch_ok===false) return true;
+  if((DOC.errors||[]).some(function(e){ return e; })) return true;
+  return (DOC.storms||[]).some(function(s){ return s.unavailable; });
+}
 function refreshStatus(){
-  var b=document.getElementById("updBtn"), stale=dataAge()>=CYCLE_MIN;
+  var b=document.getElementById("updBtn"), stale=reloadUseful();
   var due=nextDueClock();
   if(stale||!due){
     b.textContent=X(L("reload"));
@@ -1816,12 +1949,19 @@ function refreshStatus(){
   }
 }
 function load(force){
-  if(!force && dataAge()<CYCLE_MIN){ renderAll(); return; }
+  if(!force && !reloadUseful()){ renderAll(); return; }
   var url=/[?&]demo=1/.test(location.search)?"./data/typhoon.sample.json":DATA_URL;
   LOADERR=null;
+  var cached=false;
   fetch(url+"?t="+Date.now(),{cache:"no-store"})
-    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-    .then(function(j){ DOC=j; OFFLINE=false; LOADERR=null; renderAll(); })
+    .then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      // sw.js tags a copy it served from its cache, so an offline phone
+      // says "offline: cached copy" instead of passing it off as fresh
+      cached=r.headers && r.headers.get("X-TW-Cache")==="1";
+      return r.json();
+    })
+    .then(function(j){ DOC=j; OFFLINE=cached; LOADERR=null; renderAll(); })
     .catch(function(e1){
       // Keep the real reason. "No data yet" alone cannot tell a 404 from a
       // parse error from an offline phone, and that cost a debugging cycle.
@@ -1860,7 +2000,7 @@ document.getElementById("langBtn").addEventListener("click",function(){
   renderAll();
 });
 document.getElementById("updBtn").addEventListener("click",function(){
-  if(dataAge()<CYCLE_MIN){ renderAll(); return; }   // disabled anyway; belt and braces
+  if(!reloadUseful()){ renderAll(); return; }   // disabled anyway; belt and braces
   load(true);
 });
 
