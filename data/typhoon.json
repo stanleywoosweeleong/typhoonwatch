@@ -1,9 +1,9 @@
 {
  "errors": [],
  "fetch_ok": true,
- "generated": "2026-10-24T21:12:04Z",
+ "generated": "2026-10-24T23:44:47Z",
  "gone": [],
- "last_attempt": "2026-10-24T21:12:04Z",
+ "last_attempt": "2026-10-24T23:44:47Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -620,223 +620,223 @@
   "model": "ECMWF IFS via Open-Meteo",
   "places": {
    "alorsetar": {
-    "change24": 1.7,
-    "hpa": 1010.1,
-    "rain24": 38.1,
-    "rainmax": 3.7,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.4,
+    "hpa": 1011.3,
+    "rain24": 40.9,
+    "rainmax": 4.2,
+    "valid": "2026-10-24T23:00Z"
    },
    "bintulu": {
-    "change24": 1.8,
-    "hpa": 1010.3,
-    "rain24": 18.6,
-    "rainmax": 3.4,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.4,
+    "hpa": 1012.1,
+    "rain24": 3.3,
+    "rainmax": 0.5,
+    "valid": "2026-10-24T23:00Z"
    },
    "danang": {
-    "change24": 1.4,
-    "hpa": 1009.7,
-    "rain24": 0.9,
-    "rainmax": 0.2,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.2,
+    "hpa": 1011.4,
+    "rain24": 0.6,
+    "rainmax": 0.1,
+    "valid": "2026-10-24T23:00Z"
    },
    "guangzhou": {
-    "change24": 4.0,
-    "hpa": 1012.6,
+    "change24": 4.8,
+    "hpa": 1014.5,
     "rain24": 0.0,
     "rainmax": 0.0,
-    "valid": "2026-10-24T21:00Z"
+    "valid": "2026-10-24T23:00Z"
    },
    "haikou": {
-    "change24": 2.5,
-    "hpa": 1010.9,
+    "change24": 3.3,
+    "hpa": 1012.7,
     "rain24": 0.0,
     "rainmax": 0.0,
-    "valid": "2026-10-24T21:00Z"
+    "valid": "2026-10-24T23:00Z"
    },
    "hongkong": {
-    "change24": 4.1,
-    "hpa": 1011.2,
+    "change24": 5.6,
+    "hpa": 1013.4,
     "rain24": 0.0,
     "rainmax": 0.0,
-    "valid": "2026-10-24T21:00Z"
+    "valid": "2026-10-24T23:00Z"
    },
    "ipoh": {
-    "change24": 1.8,
-    "hpa": 1009.9,
-    "rain24": 22.5,
-    "rainmax": 2.5,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.4,
+    "hpa": 1011.4,
+    "rain24": 32.9,
+    "rainmax": 2.8,
+    "valid": "2026-10-24T23:00Z"
    },
    "jb": {
-    "change24": 1.8,
-    "hpa": 1009.5,
-    "rain24": 9.0,
-    "rainmax": 1.3,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.3,
+    "hpa": 1010.8,
+    "rain24": 27.7,
+    "rainmax": 2.6,
+    "valid": "2026-10-24T23:00Z"
    },
    "kagoshima": {
-    "change24": -0.7,
-    "hpa": 1014.5,
-    "rain24": 2.1,
-    "rainmax": 0.3,
-    "valid": "2026-10-24T21:00Z"
+    "change24": -0.3,
+    "hpa": 1014.8,
+    "rain24": 2.5,
+    "rainmax": 0.4,
+    "valid": "2026-10-24T23:00Z"
    },
    "kaohsiung": {
-    "change24": 9.0,
-    "hpa": 1009.6,
+    "change24": 10.3,
+    "hpa": 1012.2,
     "rain24": 0.0,
     "rainmax": 0.0,
-    "valid": "2026-10-24T21:00Z"
+    "valid": "2026-10-24T23:00Z"
    },
    "kb": {
-    "change24": 1.8,
-    "hpa": 1009.5,
-    "rain24": 48.9,
-    "rainmax": 7.4,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.2,
+    "hpa": 1010.8,
+    "rain24": 34.7,
+    "rainmax": 8.0,
+    "valid": "2026-10-24T23:00Z"
    },
    "kk": {
-    "change24": 2.3,
-    "hpa": 1010.2,
-    "rain24": 5.7,
-    "rainmax": 1.0,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 3.2,
+    "hpa": 1012.4,
+    "rain24": 0.1,
+    "rainmax": 0.1,
+    "valid": "2026-10-24T23:00Z"
    },
    "kl": {
     "change24": 2.4,
-    "hpa": 1010.6,
-    "rain24": 17.7,
-    "rainmax": 1.3,
-    "valid": "2026-10-24T21:00Z"
+    "hpa": 1011.8,
+    "rain24": 16.2,
+    "rainmax": 1.4,
+    "valid": "2026-10-24T23:00Z"
    },
    "kt": {
-    "change24": 1.8,
-    "hpa": 1009.3,
-    "rain24": 31.2,
-    "rainmax": 3.6,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.4,
+    "hpa": 1010.8,
+    "rain24": 26.1,
+    "rainmax": 2.9,
+    "valid": "2026-10-24T23:00Z"
    },
    "kuantan": {
-    "change24": 2.1,
-    "hpa": 1009.4,
-    "rain24": 17.4,
-    "rainmax": 2.1,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.7,
+    "hpa": 1010.9,
+    "rain24": 23.4,
+    "rainmax": 4.4,
+    "valid": "2026-10-24T23:00Z"
    },
    "kuching": {
-    "change24": 0.9,
-    "hpa": 1009.5,
-    "rain24": 18.3,
-    "rainmax": 2.1,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.0,
+    "hpa": 1011.1,
+    "rain24": 22.0,
+    "rainmax": 2.3,
+    "valid": "2026-10-24T23:00Z"
    },
    "manila": {
-    "change24": 2.8,
-    "hpa": 1010.0,
+    "change24": 3.8,
+    "hpa": 1012.0,
     "rain24": 0.0,
     "rainmax": 0.0,
-    "valid": "2026-10-24T21:00Z"
+    "valid": "2026-10-24T23:00Z"
    },
    "melaka": {
-    "change24": 1.0,
-    "hpa": 1009.6,
-    "rain24": 20.1,
-    "rainmax": 1.7,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 1.8,
+    "hpa": 1011.1,
+    "rain24": 16.9,
+    "rainmax": 2.2,
+    "valid": "2026-10-24T23:00Z"
    },
    "miri": {
-    "change24": 2.0,
-    "hpa": 1010.1,
-    "rain24": 4.8,
-    "rainmax": 0.7,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.7,
+    "hpa": 1011.9,
+    "rain24": 6.2,
+    "rainmax": 1.5,
+    "valid": "2026-10-24T23:00Z"
    },
    "naha": {
-    "change24": 3.7,
-    "hpa": 1011.3,
-    "rain24": 1.5,
-    "rainmax": 0.3,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 4.5,
+    "hpa": 1012.6,
+    "rain24": 2.7,
+    "rainmax": 0.8,
+    "valid": "2026-10-24T23:00Z"
    },
    "penang": {
-    "change24": 2.1,
-    "hpa": 1010.5,
-    "rain24": 35.7,
-    "rainmax": 3.1,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.4,
+    "hpa": 1011.2,
+    "rain24": 38.4,
+    "rainmax": 3.3,
+    "valid": "2026-10-24T23:00Z"
    },
    "raub": {
-    "change24": 2.0,
-    "hpa": 1011.8,
-    "rain24": 9.3,
-    "rainmax": 1.0,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.1,
+    "hpa": 1013.0,
+    "rain24": 11.6,
+    "rainmax": 1.3,
+    "valid": "2026-10-24T23:00Z"
    },
    "sandakan": {
-    "change24": 2.1,
-    "hpa": 1010.5,
-    "rain24": 3.9,
-    "rainmax": 0.7,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 3.4,
+    "hpa": 1012.9,
+    "rain24": 22.2,
+    "rainmax": 3.5,
+    "valid": "2026-10-24T23:00Z"
    },
    "sanya": {
-    "change24": 2.2,
-    "hpa": 1010.8,
+    "change24": 2.9,
+    "hpa": 1012.3,
     "rain24": 1.5,
     "rainmax": 0.3,
-    "valid": "2026-10-24T21:00Z"
+    "valid": "2026-10-24T23:00Z"
    },
    "seremban": {
-    "change24": 2.0,
-    "hpa": 1010.5,
-    "rain24": 11.1,
-    "rainmax": 1.8,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 1.6,
+    "hpa": 1011.9,
+    "rain24": 15.1,
+    "rainmax": 2.8,
+    "valid": "2026-10-24T23:00Z"
    },
    "sibu": {
-    "change24": 1.5,
-    "hpa": 1009.8,
-    "rain24": 20.7,
-    "rainmax": 2.4,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.0,
+    "hpa": 1011.4,
+    "rain24": 13.5,
+    "rainmax": 3.4,
+    "valid": "2026-10-24T23:00Z"
    },
    "taipei": {
-    "change24": 17.9,
-    "hpa": 1011.1,
-    "rain24": 0.0,
-    "rainmax": 0.0,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 17.7,
+    "hpa": 1013.5,
+    "rain24": 0.6,
+    "rainmax": 0.1,
+    "valid": "2026-10-24T23:00Z"
    },
    "tawau": {
-    "change24": 1.7,
-    "hpa": 1010.0,
-    "rain24": 10.2,
-    "rainmax": 2.1,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 3.2,
+    "hpa": 1012.6,
+    "rain24": 5.6,
+    "rainmax": 0.9,
+    "valid": "2026-10-24T23:00Z"
    },
    "tokyo": {
-    "change24": -9.8,
-    "hpa": 1016.5,
-    "rain24": 2.4,
-    "rainmax": 0.4,
-    "valid": "2026-10-24T21:00Z"
+    "change24": -11.0,
+    "hpa": 1015.5,
+    "rain24": 11.9,
+    "rainmax": 2.0,
+    "valid": "2026-10-24T23:00Z"
    },
    "triang": {
-    "change24": 2.1,
-    "hpa": 1009.7,
-    "rain24": 12.6,
-    "rainmax": 2.7,
-    "valid": "2026-10-24T21:00Z"
+    "change24": 2.6,
+    "hpa": 1011.0,
+    "rain24": 14.5,
+    "rainmax": 2.2,
+    "valid": "2026-10-24T23:00Z"
    }
   },
-  "time": "2026-10-24T21:12Z"
+  "time": "2026-10-24T23:44Z"
  },
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
  "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
  "squall": {
   "app_url": "https://stanleywoosweeleong.github.io/SumatraSquall/",
-  "at": "2026-10-24T21:13:15Z",
+  "at": "2026-10-24T23:44:51Z",
   "empty": [],
   "levels": [
    [
@@ -908,10 +908,10 @@
       "w": 5
      },
      "steer": {
-      "from": 275,
-      "ms": 5.3,
-      "pts": 10.2,
-      "score": 0.41,
+      "from": 289,
+      "ms": 5,
+      "pts": 9.4,
+      "score": 0.38,
       "w": 25
      }
     },
@@ -921,8 +921,8 @@
       "first": "2026-10-24T17:00:00Z",
       "gust": 27,
       "lag": {
-       "h": 7.7,
-       "km": 146
+       "h": 6.3,
+       "km": 113
       },
       "max": 4.8,
       "rain": 26.8
@@ -931,8 +931,8 @@
       "first": "2026-10-24T16:00:00Z",
       "gust": 13,
       "lag": {
-       "h": 4.7,
-       "km": 90
+       "h": 3.4,
+       "km": 62
       },
       "max": 2.1,
       "rain": 4.6
@@ -948,8 +948,8 @@
       "first": null,
       "gust": 19,
       "lag": {
-       "h": 0.9,
-       "km": 16
+       "h": 0.4,
+       "km": 8
       },
       "max": 0.7,
       "rain": 1.8
@@ -958,8 +958,8 @@
       "first": "2026-10-24T19:00:00Z",
       "gust": 17,
       "lag": {
-       "h": 5.4,
-       "km": 102
+       "h": 3.9,
+       "km": 70
       },
       "max": 5,
       "rain": 11.1
@@ -968,8 +968,8 @@
       "first": null,
       "gust": 21,
       "lag": {
-       "h": 1.5,
-       "km": 29
+       "h": 1,
+       "km": 19
       },
       "max": 0.3,
       "rain": 0.3
@@ -985,8 +985,8 @@
       "first": "2026-10-24T20:00:00Z",
       "gust": 19,
       "lag": {
-       "h": 3.1,
-       "km": 59
+       "h": 2.3,
+       "km": 41
       },
       "max": 2.3,
       "rain": 10
@@ -995,8 +995,8 @@
       "first": "2026-10-24T20:00:00Z",
       "gust": 22,
       "lag": {
-       "h": 2.2,
-       "km": 42
+       "h": 1.6,
+       "km": 29
       },
       "max": 3.1,
       "rain": 12.1
@@ -1005,8 +1005,8 @@
       "first": "2026-10-24T20:00:00Z",
       "gust": 21,
       "lag": {
-       "h": 4.6,
-       "km": 88
+       "h": 1.6,
+       "km": 29
       },
       "max": 2.5,
       "rain": 3.6
@@ -1029,8 +1029,8 @@
       "first": "2026-10-24T19:00:00Z",
       "gust": 26,
       "lag": {
-       "h": 3.2,
-       "km": 61
+       "h": 2.3,
+       "km": 42
       },
       "max": 2.7,
       "rain": 11.9
@@ -1039,8 +1039,8 @@
       "first": null,
       "gust": 27,
       "lag": {
-       "h": 0.7,
-       "km": 13
+       "h": 0.2,
+       "km": 4
       },
       "max": 1.6,
       "rain": 4.2
@@ -1056,8 +1056,8 @@
       "first": null,
       "gust": 26,
       "lag": {
-       "h": 0.7,
-       "km": 13
+       "h": 0.2,
+       "km": 4
       },
       "max": 1.2,
       "rain": 4.4
@@ -1066,8 +1066,8 @@
       "first": "2026-10-24T16:00:00Z",
       "gust": 30,
       "lag": {
-       "h": 0.9,
-       "km": 17
+       "h": 0.3,
+       "km": 6
       },
       "max": 3.8,
       "rain": 8
@@ -1076,8 +1076,8 @@
       "first": "2026-10-24T18:00:00Z",
       "gust": 30,
       "lag": {
-       "h": 5.7,
-       "km": 108
+       "h": 4.7,
+       "km": 84
       },
       "max": 5.3,
       "rain": 24.9
@@ -1086,8 +1086,8 @@
       "first": null,
       "gust": 14,
       "lag": {
-       "h": 5.3,
-       "km": 101
+       "h": 3.8,
+       "km": 69
       },
       "max": 0.2,
       "rain": 0.3
@@ -1103,8 +1103,8 @@
       "first": null,
       "gust": 17,
       "lag": {
-       "h": 1.8,
-       "km": 34
+       "h": 0.6,
+       "km": 11
       },
       "max": 0,
       "rain": 0
@@ -1113,8 +1113,8 @@
       "first": "2026-10-24T16:00:00Z",
       "gust": 27,
       "lag": {
-       "h": 1.4,
-       "km": 27
+       "h": 0.5,
+       "km": 9
       },
       "max": 4.6,
       "rain": 7
@@ -1137,8 +1137,8 @@
       "first": "2026-10-24T19:00:00Z",
       "gust": 13,
       "lag": {
-       "h": 3.2,
-       "km": 60
+       "h": 1.1,
+       "km": 20
       },
       "max": 2.3,
       "rain": 3.8
@@ -1147,8 +1147,8 @@
       "first": "2026-10-24T17:00:00Z",
       "gust": 25,
       "lag": {
-       "h": 3.7,
-       "km": 70
+       "h": 2.7,
+       "km": 48
       },
       "max": 3.4,
       "rain": 14.6
@@ -1157,8 +1157,8 @@
       "first": null,
       "gust": 14,
       "lag": {
-       "h": 2.8,
-       "km": 53
+       "h": 1,
+       "km": 18
       },
       "max": 0.2,
       "rain": 0.4
@@ -1211,21 +1211,21 @@
       "w": 5
      },
      "steer": {
-      "from": 244,
-      "ms": 6.3,
-      "pts": 13.6,
-      "score": 0.54,
+      "from": 255,
+      "ms": 6.6,
+      "pts": 14.2,
+      "score": 0.57,
       "w": 25
      }
     },
-    "score": 59,
+    "score": 60,
     "towns": {
      "alor": {
       "first": "2026-10-25T19:00:00Z",
       "gust": 23,
       "lag": {
-       "h": 8.2,
-       "km": 186
+       "h": 7.5,
+       "km": 177
       },
       "max": 4.8,
       "rain": 29.7
@@ -1234,8 +1234,8 @@
       "first": null,
       "gust": 21,
       "lag": {
-       "h": 5.8,
-       "km": 131
+       "h": 5.1,
+       "km": 120
       },
       "max": 0.2,
       "rain": 0.8
@@ -1251,8 +1251,8 @@
       "first": "2026-10-26T00:00:00Z",
       "gust": 16,
       "lag": {
-       "h": 1.4,
-       "km": 32
+       "h": 1.1,
+       "km": 27
       },
       "max": 3.3,
       "rain": 9.2
@@ -1261,8 +1261,8 @@
       "first": "2026-10-25T19:00:00Z",
       "gust": 21,
       "lag": {
-       "h": 6.6,
-       "km": 150
+       "h": 5.8,
+       "km": 137
       },
       "max": 2.3,
       "rain": 10.6
@@ -1271,8 +1271,8 @@
       "first": "2026-10-25T20:00:00Z",
       "gust": 19,
       "lag": {
-       "h": 2,
-       "km": 45
+       "h": 1.7,
+       "km": 41
       },
       "max": 5.5,
       "rain": 17.3
@@ -1288,8 +1288,8 @@
       "first": null,
       "gust": 12,
       "lag": {
-       "h": 3.8,
-       "km": 87
+       "h": 3.4,
+       "km": 80
       },
       "max": 1.3,
       "rain": 4
@@ -1298,8 +1298,8 @@
       "first": null,
       "gust": 18,
       "lag": {
-       "h": 2.7,
-       "km": 62
+       "h": 2.4,
+       "km": 57
       },
       "max": 1.5,
       "rain": 6.2
@@ -1308,8 +1308,8 @@
       "first": null,
       "gust": 22,
       "lag": {
-       "h": 8.5,
-       "km": 194
+       "h": 6.8,
+       "km": 161
       },
       "max": 0.2,
       "rain": 1
@@ -1332,8 +1332,8 @@
       "first": "2026-10-25T17:00:00Z",
       "gust": 24,
       "lag": {
-       "h": 3.9,
-       "km": 89
+       "h": 3.5,
+       "km": 82
       },
       "max": 3.8,
       "rain": 19.1
@@ -1342,8 +1342,8 @@
       "first": null,
       "gust": 21,
       "lag": {
-       "h": 1.3,
-       "km": 29
+       "h": 1,
+       "km": 24
       },
       "max": 0.6,
       "rain": 2.5
@@ -1359,8 +1359,8 @@
       "first": "2026-10-26T00:00:00Z",
       "gust": 20,
       "lag": {
-       "h": 1.3,
-       "km": 29
+       "h": 1,
+       "km": 24
       },
       "max": 3.5,
       "rain": 6.4
@@ -1369,8 +1369,8 @@
       "first": null,
       "gust": 25,
       "lag": {
-       "h": 1.7,
-       "km": 38
+       "h": 1.3,
+       "km": 31
       },
       "max": 1.4,
       "rain": 5.6
@@ -1379,8 +1379,8 @@
       "first": "2026-10-25T19:00:00Z",
       "gust": 21,
       "lag": {
-       "h": 6.1,
-       "km": 139
+       "h": 5.6,
+       "km": 132
       },
       "max": 6.9,
       "rain": 36.7
@@ -1389,8 +1389,8 @@
       "first": null,
       "gust": 17,
       "lag": {
-       "h": 6.5,
-       "km": 148
+       "h": 5.7,
+       "km": 135
       },
       "max": 0.7,
       "rain": 2.7
@@ -1406,8 +1406,8 @@
       "first": null,
       "gust": 24,
       "lag": {
-       "h": 3.3,
-       "km": 75
+       "h": 2.6,
+       "km": 62
       },
       "max": 0.5,
       "rain": 1.6
@@ -1416,8 +1416,8 @@
       "first": null,
       "gust": 18,
       "lag": {
-       "h": 2.6,
-       "km": 59
+       "h": 2.1,
+       "km": 49
       },
       "max": 1,
       "rain": 2.4
@@ -1440,8 +1440,8 @@
       "first": null,
       "gust": 9,
       "lag": {
-       "h": 5.8,
-       "km": 133
+       "h": 4.6,
+       "km": 110
       },
       "max": 0.2,
       "rain": 0.6
@@ -1450,8 +1450,8 @@
       "first": "2026-10-25T17:00:00Z",
       "gust": 18,
       "lag": {
-       "h": 4.5,
-       "km": 103
+       "h": 4,
+       "km": 94
       },
       "max": 3.6,
       "rain": 20.4
@@ -1460,8 +1460,8 @@
       "first": null,
       "gust": 20,
       "lag": {
-       "h": 5.1,
-       "km": 117
+       "h": 4.1,
+       "km": 97
       },
       "max": 0.4,
       "rain": 1
@@ -1710,7 +1710,7 @@
     "category": "STS",
     "category_jp": "台風",
     "circle_km": null,
-    "course_jp": "北西",
+    "course_jp": "北",
     "gale_radii": [
      {
       "area_jp": "南西",
@@ -1724,19 +1724,19 @@
     "gust_kt": 70.0,
     "gust_ms": 35.0,
     "intensity": null,
-    "lat": 11.2,
+    "lat": 11.5,
     "location_jp": "マーシャル諸島",
     "lon": 165.4,
-    "move_deg": 315,
-    "move_kmh": 15.0,
-    "move_kt": 9.0,
+    "move_deg": 0,
+    "move_kmh": 10.0,
+    "move_kt": 6.0,
     "part_jp": "実況",
     "pressure_hpa": 996.0,
     "scale": null,
     "speed_note_jp": null,
     "storm_radii": [],
     "tau": 0,
-    "valid": "2026-10-24T18:00:00Z",
+    "valid": "2026-10-24T21:00:00Z",
     "wind_kt": 50.0,
     "wind_ms": 25.0,
     "wind_note_jp": "中心付近"
@@ -1752,16 +1752,16 @@
      "gust_kt": 95.0,
      "gust_ms": 50.0,
      "intensity": "strong",
-     "lat": 13.4,
+     "lat": 13.5,
      "location_jp": "マーシャル諸島",
-     "lon": 164.7,
+     "lon": 164.8,
      "move_deg": 337.5,
-     "move_kmh": 10.0,
-     "move_kt": 6.0,
+     "move_kmh": null,
+     "move_kt": null,
      "part_jp": "予報　２４時間後",
      "pressure_hpa": 980.0,
      "scale": null,
-     "speed_note_jp": null,
+     "speed_note_jp": "ゆっくり",
      "storm_radii": [
       {
        "area_jp": "全域",
@@ -1769,7 +1769,7 @@
       }
      ],
      "tau": 24,
-     "valid": "2026-10-25T18:00:00Z",
+     "valid": "2026-10-25T21:00:00Z",
      "wind_kt": 65.0,
      "wind_ms": 35.0,
      "wind_note_jp": "中心付近"
@@ -1790,7 +1790,7 @@
      "move_deg": 22.5,
      "move_kmh": null,
      "move_kt": null,
-     "part_jp": "予報　４８時間後",
+     "part_jp": "予報　４５時間後",
      "pressure_hpa": 970.0,
      "scale": null,
      "speed_note_jp": "ゆっくり",
@@ -1800,7 +1800,7 @@
        "km": 310.0
       }
      ],
-     "tau": 48,
+     "tau": 45,
      "valid": "2026-10-26T18:00:00Z",
      "wind_kt": 75.0,
      "wind_ms": 40.0,
@@ -1822,7 +1822,7 @@
      "move_deg": null,
      "move_kmh": null,
      "move_kt": null,
-     "part_jp": "予報　７２時間後",
+     "part_jp": "予報　６９時間後",
      "pressure_hpa": 960.0,
      "scale": null,
      "speed_note_jp": "ほとんど停滞",
@@ -1832,7 +1832,7 @@
        "km": 430.0
       }
      ],
-     "tau": 72,
+     "tau": 69,
      "valid": "2026-10-27T18:00:00Z",
      "wind_kt": 80.0,
      "wind_ms": 40.0,
@@ -1854,7 +1854,7 @@
      "move_deg": 270,
      "move_kmh": 20.0,
      "move_kt": 11.0,
-     "part_jp": "予報　９６時間後",
+     "part_jp": "予報　９３時間後",
      "pressure_hpa": 955.0,
      "scale": null,
      "speed_note_jp": null,
@@ -1864,7 +1864,7 @@
        "km": 510.0
       }
      ],
-     "tau": 96,
+     "tau": 93,
      "valid": "2026-10-28T18:00:00Z",
      "wind_kt": 85.0,
      "wind_ms": 45.0,
@@ -1886,7 +1886,7 @@
      "move_deg": 270,
      "move_kmh": 30.0,
      "move_kt": 17.0,
-     "part_jp": "予報　１２０時間後",
+     "part_jp": "予報　１１７時間後",
      "pressure_hpa": 950.0,
      "scale": null,
      "speed_note_jp": null,
@@ -1896,7 +1896,7 @@
        "km": 600.0
       }
      ],
-     "tau": 120,
+     "tau": 117,
      "valid": "2026-10-29T18:00:00Z",
      "wind_kt": 90.0,
      "wind_ms": 45.0,
@@ -1904,7 +1904,7 @@
     }
    ],
    "id": "TC2637",
-   "issued": "2026-10-24T19:10:00Z",
+   "issued": "2026-10-24T22:05:00Z",
    "name_en": "In-fa",
    "name_jp": "インファ",
    "parsed": true,
@@ -1916,8 +1916,8 @@
       "jp": "台風"
      },
      "issue": {
-      "JST": "2026-10-25T04:10:00+09:00",
-      "UTC": "2026-10-24T19:10:00Z"
+      "JST": "2026-10-25T07:05:00+09:00",
+      "UTC": "2026-10-24T22:05:00Z"
      },
      "name": {
       "en": "In-fa",
@@ -1932,7 +1932,7 @@
       "en": "STS",
       "jp": "台風"
      },
-     "course": "北西",
+     "course": "北",
      "galeWarning": [
       {
        "area": "南西",
@@ -1969,13 +1969,13 @@
      "position": {
       "accuracy": "ほぼ正確",
       "deg": [
-       11.2,
+       11.5,
        165.4
       ],
       "dm": [
        [
         11,
-        10
+        30
        ],
        [
         165,
@@ -1986,12 +1986,12 @@
      "pressure": "996",
      "scale": "-",
      "speed": {
-      "km/h": "15",
-      "kt": "9"
+      "km/h": "10",
+      "kt": "6"
      },
      "validtime": {
-      "JST": "2026-10-25T03:00:00+09:00",
-      "UTC": "2026-10-24T18:00:00Z"
+      "JST": "2026-10-25T06:00:00+09:00",
+      "UTC": "2026-10-24T21:00:00Z"
      }
     },
     {
@@ -2020,17 +2020,17 @@
      },
      "position": {
       "deg": [
-       13.4,
-       164.7
+       13.5,
+       164.8
       ],
       "dm": [
        [
         13,
-        25
+        30
        ],
        [
         164,
-        40
+        50
        ]
       ]
      },
@@ -2040,8 +2040,10 @@
       "nm": 50
      },
      "speed": {
-      "km/h": "10",
-      "kt": "6"
+      "note": {
+       "en": "Slow",
+       "jp": "ゆっくり"
+      }
      },
      "stormWarning": [
       {
@@ -2056,12 +2058,12 @@
       }
      ],
      "validtime": {
-      "JST": "2026-10-26T03:00:00+09:00",
-      "UTC": "2026-10-25T18:00:00Z"
+      "JST": "2026-10-26T06:00:00+09:00",
+      "UTC": "2026-10-25T21:00:00Z"
      }
     },
     {
-     "advancedHours": 48,
+     "advancedHours": 45,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -2081,8 +2083,8 @@
       }
      },
      "part": {
-      "en": "Forecast for 48 hours ahead",
-      "jp": "予報　４８時間後"
+      "en": "Forecast for 45 hours ahead",
+      "jp": "予報　４５時間後"
      },
      "position": {
       "deg": [
@@ -2129,7 +2131,7 @@
      }
     },
     {
-     "advancedHours": 72,
+     "advancedHours": 69,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -2149,8 +2151,8 @@
       }
      },
      "part": {
-      "en": "Forecast for 72 hours ahead",
-      "jp": "予報　７２時間後"
+      "en": "Forecast for 69 hours ahead",
+      "jp": "予報　６９時間後"
      },
      "position": {
       "deg": [
@@ -2197,7 +2199,7 @@
      }
     },
     {
-     "advancedHours": 96,
+     "advancedHours": 93,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -2217,8 +2219,8 @@
       }
      },
      "part": {
-      "en": "Forecast for 96 hours ahead",
-      "jp": "予報　９６時間後"
+      "en": "Forecast for 93 hours ahead",
+      "jp": "予報　９３時間後"
      },
      "position": {
       "deg": [
@@ -2263,7 +2265,7 @@
      }
     },
     {
-     "advancedHours": 120,
+     "advancedHours": 117,
      "category": {
       "en": "TY",
       "jp": "台風"
@@ -2283,8 +2285,8 @@
       }
      },
      "part": {
-      "en": "Forecast for 120 hours ahead",
-      "jp": "予報　１２０時間後"
+      "en": "Forecast for 117 hours ahead",
+      "jp": "予報　１１７時間後"
      },
      "position": {
       "deg": [
@@ -2330,7 +2332,7 @@
     }
    ],
    "target_category": "STS",
-   "target_issue": "2026-10-25T04:10:00+09:00",
+   "target_issue": "2026-10-25T07:05:00+09:00",
    "typhoon_number": "2631"
   },
   {
@@ -2340,7 +2342,7 @@
     "category": "TS",
     "category_jp": "台風",
     "circle_km": null,
-    "course_jp": "北北東",
+    "course_jp": "北東",
     "gale_radii": [
      {
       "area_jp": "東",
@@ -2351,24 +2353,24 @@
       "km": 560.0
      }
     ],
-    "gust_kt": 65.0,
-    "gust_ms": 35.0,
+    "gust_kt": 60.0,
+    "gust_ms": 30.0,
     "intensity": null,
-    "lat": 27.9,
+    "lat": 28.6,
     "location_jp": "東シナ海",
-    "lon": 123.9,
-    "move_deg": 22.5,
-    "move_kmh": 15.0,
-    "move_kt": 7.0,
+    "lon": 124.3,
+    "move_deg": 45,
+    "move_kmh": 20.0,
+    "move_kt": 11.0,
     "part_jp": "実況",
-    "pressure_hpa": 992.0,
+    "pressure_hpa": 996.0,
     "scale": "large",
     "speed_note_jp": null,
     "storm_radii": [],
     "tau": 0,
-    "valid": "2026-10-24T18:00:00Z",
-    "wind_kt": 45.0,
-    "wind_ms": 23.0,
+    "valid": "2026-10-24T21:00:00Z",
+    "wind_kt": 40.0,
+    "wind_ms": 20.0,
     "wind_note_jp": "中心付近"
    },
    "forecast": [
@@ -2377,24 +2379,24 @@
      "category": "TS",
      "category_jp": "台風",
      "circle_km": 65.0,
-     "course_jp": "北北東",
+     "course_jp": "北東",
      "gale_radii": [],
      "gust_kt": 60.0,
      "gust_ms": 30.0,
      "intensity": null,
-     "lat": 30.0,
+     "lat": 30.3,
      "location_jp": "東シナ海",
-     "lon": 125.4,
-     "move_deg": 22.5,
+     "lon": 125.7,
+     "move_deg": 45,
      "move_kmh": 20.0,
-     "move_kt": 12.0,
+     "move_kt": 10.0,
      "part_jp": "予報　１２時間後",
      "pressure_hpa": 996.0,
      "scale": null,
      "speed_note_jp": null,
      "storm_radii": [],
      "tau": 12,
-     "valid": "2026-10-25T06:00:00Z",
+     "valid": "2026-10-25T09:00:00Z",
      "wind_kt": 40.0,
      "wind_ms": 20.0,
      "wind_note_jp": "中心付近"
@@ -2404,24 +2406,24 @@
      "category": "TS",
      "category_jp": "台風",
      "circle_km": 95.0,
-     "course_jp": "北東",
+     "course_jp": "東北東",
      "gale_radii": [],
      "gust_kt": 50.0,
      "gust_ms": 25.0,
      "intensity": null,
-     "lat": 31.3,
-     "location_jp": "五島市の南西約210km",
-     "lon": 127.3,
-     "move_deg": 45,
+     "lat": 31.5,
+     "location_jp": "五島市の南南西約150km",
+     "lon": 128.1,
+     "move_deg": 67.5,
      "move_kmh": 20.0,
-     "move_kt": 10.0,
+     "move_kt": 12.0,
      "part_jp": "予報　２４時間後",
      "pressure_hpa": 1000.0,
      "scale": null,
      "speed_note_jp": null,
      "storm_radii": [],
      "tau": 24,
-     "valid": "2026-10-25T18:00:00Z",
+     "valid": "2026-10-25T21:00:00Z",
      "wind_kt": 35.0,
      "wind_ms": 18.0,
      "wind_note_jp": "中心付近"
@@ -2442,12 +2444,12 @@
      "move_deg": 90,
      "move_kmh": 30.0,
      "move_kt": 15.0,
-     "part_jp": "予報　４８時間後",
+     "part_jp": "予報　４５時間後",
      "pressure_hpa": 1002.0,
      "scale": null,
      "speed_note_jp": null,
      "storm_radii": [],
-     "tau": 48,
+     "tau": 45,
      "valid": "2026-10-26T18:00:00Z",
      "wind_kt": 35.0,
      "wind_ms": 18.0,
@@ -2455,7 +2457,7 @@
     }
    ],
    "id": "TC2636",
-   "issued": "2026-10-24T18:45:00Z",
+   "issued": "2026-10-24T21:45:00Z",
    "name_en": "Champi",
    "name_jp": "チャンパー",
    "parsed": true,
@@ -2467,8 +2469,8 @@
       "jp": "台風"
      },
      "issue": {
-      "JST": "2026-10-25T03:45:00+09:00",
-      "UTC": "2026-10-24T18:45:00Z"
+      "JST": "2026-10-25T06:45:00+09:00",
+      "UTC": "2026-10-24T21:45:00Z"
      },
      "name": {
       "en": "Champi",
@@ -2483,7 +2485,7 @@
       "en": "TS",
       "jp": "台風"
      },
-     "course": "北北東",
+     "course": "北東",
      "galeWarning": [
       {
        "area": "東",
@@ -2504,12 +2506,12 @@
      "location": "東シナ海",
      "maximumWind": {
       "gust": {
-       "kt": "65",
-       "m/s": "35"
+       "kt": "60",
+       "m/s": "30"
       },
       "sustained": {
-       "kt": "45",
-       "m/s": "23",
+       "kt": "40",
+       "m/s": "20",
        "note": "中心付近"
       }
      },
@@ -2520,29 +2522,29 @@
      "position": {
       "accuracy": "正確",
       "deg": [
-       27.9,
-       123.9
+       28.6,
+       124.3
       ],
       "dm": [
        [
-        27,
-        55
+        28,
+        35
        ],
        [
-        123,
-        55
+        124,
+        20
        ]
       ]
      },
-     "pressure": "992",
+     "pressure": "996",
      "scale": "大型",
      "speed": {
-      "km/h": "15",
-      "kt": "7"
+      "km/h": "20",
+      "kt": "11"
      },
      "validtime": {
-      "JST": "2026-10-25T03:00:00+09:00",
-      "UTC": "2026-10-24T18:00:00Z"
+      "JST": "2026-10-25T06:00:00+09:00",
+      "UTC": "2026-10-24T21:00:00Z"
      }
     },
     {
@@ -2551,7 +2553,7 @@
       "en": "TS",
       "jp": "台風"
      },
-     "course": "北北東",
+     "course": "北東",
      "intensity": "-",
      "location": "東シナ海",
      "maximumWind": {
@@ -2571,17 +2573,17 @@
      },
      "position": {
       "deg": [
-       30.0,
-       125.4
+       30.3,
+       125.7
       ],
       "dm": [
        [
         30,
-        0
+        20
        ],
        [
         125,
-        25
+        40
        ]
       ]
      },
@@ -2592,11 +2594,11 @@
      },
      "speed": {
       "km/h": "20",
-      "kt": "12"
+      "kt": "10"
      },
      "validtime": {
-      "JST": "2026-10-25T15:00:00+09:00",
-      "UTC": "2026-10-25T06:00:00Z"
+      "JST": "2026-10-25T18:00:00+09:00",
+      "UTC": "2026-10-25T09:00:00Z"
      }
     },
     {
@@ -2605,9 +2607,9 @@
       "en": "TS",
       "jp": "台風"
      },
-     "course": "北東",
+     "course": "東北東",
      "intensity": "-",
-     "location": "五島市の南西約210km",
+     "location": "五島市の南南西約150km",
      "maximumWind": {
       "gust": {
        "kt": "50",
@@ -2625,17 +2627,17 @@
      },
      "position": {
       "deg": [
-       31.3,
-       127.3
+       31.5,
+       128.1
       ],
       "dm": [
        [
         31,
-        20
+        30
        ],
        [
-        127,
-        20
+        128,
+        5
        ]
       ]
      },
@@ -2646,15 +2648,15 @@
      },
      "speed": {
       "km/h": "20",
-      "kt": "10"
+      "kt": "12"
      },
      "validtime": {
-      "JST": "2026-10-26T03:00:00+09:00",
-      "UTC": "2026-10-25T18:00:00Z"
+      "JST": "2026-10-26T06:00:00+09:00",
+      "UTC": "2026-10-25T21:00:00Z"
      }
     },
     {
-     "advancedHours": 48,
+     "advancedHours": 45,
      "category": {
       "en": "LOW",
       "jp": "温帯低気圧"
@@ -2673,8 +2675,8 @@
       }
      },
      "part": {
-      "en": "Forecast for 48 hours ahead",
-      "jp": "予報　４８時間後"
+      "en": "Forecast for 45 hours ahead",
+      "jp": "予報　４５時間後"
      },
      "position": {
       "deg": [
@@ -2708,7 +2710,7 @@
     }
    ],
    "target_category": "TS",
-   "target_issue": "2026-10-25T03:45:00+09:00",
+   "target_issue": "2026-10-25T06:45:00+09:00",
    "typhoon_number": "2630"
   }
  ],
@@ -2725,15 +2727,15 @@
    },
    {
     "date": "2026-10-24",
-    "v": 2.2
+    "v": 2.1
    },
    {
     "date": "2026-10-25",
-    "v": 0.8
+    "v": 0.4
    },
    {
     "date": "2026-10-26",
-    "v": 1.2
+    "v": 0.9
    },
    {
     "date": "2026-10-27",
@@ -2745,18 +2747,18 @@
    },
    {
     "date": "2026-10-29",
-    "v": 1.5
+    "v": 1.7
    }
   ],
   "e": 117.5,
   "lat": 15.0,
   "level": "925hPa",
   "model": "ecmwf_ifs025",
-  "now": 1.7,
+  "now": 1.4,
   "ref": "Chang, Harr & Chen (2005), Monthly Weather Review 133",
   "step": 0.5,
   "threshold": 8.0,
-  "time": "2026-10-24T21:13Z",
+  "time": "2026-10-24T23:44Z",
   "w": 110.0
  },
  "wind_averaging": "10-minute sustained"
