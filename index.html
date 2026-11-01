@@ -42,6 +42,14 @@ button:hover{border-color:var(--faint)}
 .gpsnote{font-size:12.5px;color:var(--dim);line-height:1.5;margin-top:7px;width:100%}
 .gpsnote.warn{color:#ffd489}
 .gpsnote .co{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+/* First-launch offer to use the phone's location. Asked with a tap, never as
+   a cold browser prompt: an unexplained prompt is the one that gets blocked. */
+.gpsoffer{width:100%;border:1px solid var(--line);border-left:3px solid var(--teal);
+  background:var(--panel2);border-radius:7px;padding:9px 11px;margin-top:4px;line-height:1.5}
+.gpsoffer .q{font-size:14px}
+.gpsoffer .why{font-size:12px;color:var(--dim);margin:3px 0 8px}
+.gpsoffer .acts{display:flex;gap:8px;flex-wrap:wrap}
+.gpsoffer .yes{border-color:var(--teal)}
 button:disabled{cursor:default;border-style:dashed}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
@@ -139,6 +147,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
     <button id="langBtn" type="button">简体<span class="nx">→ 繁體</span></button>
     <button id="updBtn" type="button"></button>
     <select id="refSel" aria-label="参考地点 / reference place"></select>
+    <div id="gpsOffer" class="gpsoffer" hidden></div>
     <div id="gpsNote" class="gpsnote"></div>
   </div>
 </header>
@@ -177,7 +186,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.6.0";
+var VERSION = "v3.7.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -299,7 +308,10 @@ var T = {
     ended:"最后一报", endedNote:"气象厅已停止对这个系统发布预报。上面是它最后一次发表的实况，位置和强度都不会再更新了。它还留在这里是因为气象厅名单上还有；名单一撤，这张卡片就会消失。",
     goneT:"已从气象厅名单撤下", goneOne:"{n}：最后一次出现在 {t}。",
     footTitle:"关于本页 · 来源与二维码",
-    gpsUse:"📍 用我的位置", gpsBusy:"正在定位…",
+    gpsUse:"📍 用我的位置", gpsBusy:"正在定位…", gpsUpdating:"· 正在更新位置…",
+    gpsOffer:"📍 用你现在的位置，看离你最近的台风和季风读数？",
+    gpsOfferWhy:"坐标只留在这台手机上，不会送出去。不用也可以，直接选一个地点。",
+    gpsOfferYes:"用我的位置", gpsOfferNo:"自己选地点",
     gpsAt:"我的位置 {lat} {lon}（{age}取得）",
     gpsBase:"气压走向取自最近的参考点：{place}，{km} 公里外。",
     gpsFar:"最近的参考点是{place}，{km} 公里外——太远了，这个距离的气压走向说明不了你那里的情况，所以这一段不显示。台风距离和地图照常。",
@@ -425,7 +437,10 @@ var T = {
     ended:"Final bulletin", endedNote:"JMA has stopped forecasting this system. What is above is the last analysis it published — the position and strength will not be updated again. It is still listed here because JMA still carries it; when JMA drops it, this card disappears.",
     goneT:"Dropped from JMA's list", goneOne:"{n}: last seen {t}.",
     footTitle:"About this page · sources and QR",
-    gpsUse:"📍 Use my location", gpsBusy:"Locating…",
+    gpsUse:"📍 Use my location", gpsBusy:"Locating…", gpsUpdating:"· updating…",
+    gpsOffer:"📍 Use where you are now for the nearest storm and monsoon reading?",
+    gpsOfferWhy:"The coordinates stay on this phone and are never sent anywhere. Or just pick a place.",
+    gpsOfferYes:"Use my location", gpsOfferNo:"Choose a place",
     gpsAt:"My location {lat} {lon} (fixed {age} ago)",
     gpsBase:"Pressure trend taken from the nearest reference: {place}, {km} km away.",
     gpsFar:"The nearest reference is {place}, {km} km away — too far for its pressure trend to say anything about where you are, so that section is hidden. Storm distances and the maps are unaffected.",
@@ -674,9 +689,14 @@ function gpsRef(){
           acc:GPSFIX.acc, at:GPSFIX.t, base:n.ref, baseKm:n.km,
           zh:"我的位置", en:"My location"};
 }
+/* What the reader chose: "__gps", a place id, or null (never chosen). A place
+   picked by hand always wins over the location — someone in KL checking on
+   family in Kuantan must not be moved back to KL on every launch. */
+function refChoice(){
+  try{ return localStorage.getItem(LSR); }catch(e){ return null; }
+}
 function refPlace(){
-  var id=null;
-  try{ id=localStorage.getItem(LSR); }catch(e){}
+  var id=refChoice();
   if(id==="__gps"){ var g=gpsRef(); if(g) return g; }
   for(var i=0;i<REFS.length;i++) if(REFS[i].id===id) return REFS[i];
   return REFS[0];
@@ -2193,7 +2213,7 @@ function renderGpsNote(){
   var box=document.getElementById("gpsNote");
   box.textContent=""; box.className="gpsnote";
   var ref=refPlace();
-  if(GPSBUSY){ box.textContent=X(L("gpsBusy")); return; }
+  if(GPSBUSY && !ref.gps){ box.textContent=X(L("gpsBusy")); return; }
   if(GPSERR){
     box.className="gpsnote warn";
     box.textContent=X(L(GPSERR==="denied"?"gpsDenied":GPSERR==="unsupported"?"gpsNoSupport":"gpsFailed"));
@@ -2207,7 +2227,76 @@ function renderGpsNote(){
     box.appendChild(el("span",null," "+fill(L("gpsFar"),
       {place:(lang==="en"?ref.base.en:ref.base.zh),km:Math.round(ref.baseKm)})));
   }
+  if(GPSBUSY) box.appendChild(el("span",null," "+L("gpsUpdating")));
   box.appendChild(el("span","co"," "+L("gpsPrivate")));
+}
+
+/* Location is the default. On launch, with no place chosen by hand:
+   - permission already granted  -> locate silently, no card, no prompt;
+   - not asked yet (or unknown)  -> show the card; the browser prompt comes
+                                    only from a tap on "Use my location";
+   - denied, or no geolocation   -> stay on the default place, say nothing.
+   Choosing "Choose a place" or any place in the list retires the card. */
+var OFFERKEY="twatch.gpsOffer", GPSOFFER=false;
+function offerDone(){ try{ return localStorage.getItem(OFFERKEY)==="done"; }catch(e){ return false; } }
+function retireOffer(){
+  GPSOFFER=false;
+  try{ localStorage.setItem(OFFERKEY,"done"); }catch(e){}
+}
+function geoPermission(){
+  return new Promise(function(res){
+    if(!navigator.geolocation) return res("unsupported");
+    try{
+      navigator.permissions.query({name:"geolocation"})
+        .then(function(p){ res(p.state); }, function(){ res("unknown"); });
+    }catch(e){ res("unknown"); }
+  });
+}
+function useLocation(silent){
+  renderAll();                         // paints "locating" first
+  askGPS(function(){
+    if(GPSFIX && !GPSERR){ try{ localStorage.setItem(LSR,"__gps"); }catch(e){} }
+    // A quiet launch re-fix that fails is not worth an error: the stored
+    // fix is still shown, with its age.
+    if(silent && GPSFIX) GPSERR=null;
+    renderAll();
+  });
+}
+function initLocation(){
+  var c=refChoice();
+  if(c && c!=="__gps") return;         // a place picked by hand: leave it
+  geoPermission().then(function(st){
+    if(st==="unsupported") return;
+    if(c==="__gps"){
+      // Already in location mode. The browser does not re-prompt once
+      // granted, and maximumAge lets it hand back a recent cached position.
+      // Where permission is not standing (iOS home-screen apps can forget
+      // it), do not prompt unasked: keep the stored fix and its age.
+      if(st==="granted"||(st==="unknown"&&GPSFIX)) useLocation(true);
+      return;
+    }
+    if(st==="granted"){ useLocation(true); return; }
+    if(st==="denied"||offerDone()) return;
+    GPSOFFER=true; renderAll();
+  });
+}
+function renderGpsOffer(){
+  var box=document.getElementById("gpsOffer");
+  box.textContent="";
+  box.hidden=!GPSOFFER;
+  if(!GPSOFFER) return;
+  box.appendChild(el("div","q",L("gpsOffer")));
+  box.appendChild(el("div","why",L("gpsOfferWhy")));
+  var acts=el("div","acts");
+  var yes=el("button","yes",L("gpsOfferYes")); yes.type="button";
+  yes.addEventListener("click",function(){ retireOffer(); useLocation(false); });
+  var no=el("button",null,L("gpsOfferNo")); no.type="button";
+  no.addEventListener("click",function(){
+    retireOffer(); renderAll();
+    var sel=document.getElementById("refSel"); sel.focus();
+    try{ if(sel.showPicker) sel.showPicker(); }catch(e){}
+  });
+  acts.appendChild(yes); acts.appendChild(no); box.appendChild(acts);
 }
 
 function renderLearn(){
@@ -2252,6 +2341,7 @@ function renderAll(){
     });
     sel.appendChild(og);
   });
+  renderGpsOffer();
   renderGpsNote();
   document.getElementById("hRegion").textContent=X(L("hRegion"));
   document.getElementById("hStorms").textContent=X(L("hStorms"));
@@ -2374,13 +2464,10 @@ setInterval(function(){
 }, 60000);
 document.getElementById("refSel").addEventListener("change",function(e){
   var v=e.target.value;
+  retireOffer();                     // any choice in the list answers the card
   if(v==="__gps"){
     // Re-ask every time it is chosen, so picking it again is how you refresh.
-    renderAll();                     // paints the "locating" label first
-    askGPS(function(){
-      if(GPSFIX){ try{ localStorage.setItem(LSR,"__gps"); }catch(err){} }
-      renderAll();
-    });
+    useLocation(false);
     return;
   }
   try{ localStorage.setItem(LSR,v); }catch(err){}
@@ -2389,14 +2476,7 @@ document.getElementById("refSel").addEventListener("change",function(e){
 try{ var sv=localStorage.getItem(LS); if(LANGS.indexOf(sv)>-1) lang=sv; }catch(e){}
 renderAll(); load(true);   // first paint always fetches
 
-/* Already in location mode: quietly re-fix on launch. The browser does not
-   re-prompt once permission is granted, and maximumAge lets it hand back a
-   recent cached position instead of waking the GPS. A failure here is not
-   worth an error — the stored fix is still shown, with its age. */
-try{
-  if(localStorage.getItem(LSR)==="__gps" && GPSFIX)
-    askGPS(function(){ GPSERR=null; renderAll(); });
-}catch(e){}
+initLocation();
 
 if("serviceWorker" in navigator){
   /* sw.js has no version number to keep in step with VERSION: it identifies
