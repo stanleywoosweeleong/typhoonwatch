@@ -1,7 +1,7 @@
 {
   "name": "风眼 TYPHOONWATCH — 气象厅台风监测",
   "short_name": "风眼",
-  "description": "日本气象厅（RSMC 东京）热带气旋情报的镜像与解读，离线可读。Mirrored JMA (RSMC Tokyo) tropical cyclone bulletins, readable offline.",
+  "description": "日本气象厅（RSMC 东京）热带气旋情报的镜像与解读，离线可读。Mirrored JMA (RSMC Tokyo) tropical cyclone bulletins, readable offline. Buletin siklon tropika JMA, boleh dibaca luar talian.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
