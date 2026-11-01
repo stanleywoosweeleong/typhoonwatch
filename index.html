@@ -8,6 +8,14 @@
 <link rel="icon" href="./icon.svg">
 <link rel="apple-touch-icon" href="./icon.svg">
 <meta name="theme-color" content="#0a1420">
+<script>
+/* Theme before first paint: twatch.theme is auto | light | dark. */
+(function(){
+  var t="auto"; try{ t=localStorage.getItem("twatch.theme")||"auto"; }catch(e){}
+  var light=t==="light"||(t==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches);
+  if(light) document.documentElement.className+=" light";
+})();
+</script>
 <style>
 :root{
   --bg:#0a1420; --panel:#0f1f2e; --panel2:#132738; --line:#1e3648;
@@ -18,6 +26,11 @@
   --ink:#d5e2ed; --hi:#e2ebf4; --dim:#9fb3c6; --faint:#7f95a8;
   --soft:#a8bccd;
   --amber:#ffb020; --red:#ff5b52; --teal:#43c2ab;
+  --warn:#ffd489; --warnbg:#241d10; --warnink:#ffe2a8; --badbg:#26161a; --badink:#ffd7d4;
+  --link:#8fd3ff; --bdg:#1d3d55; --bdgink:#bfe0f5; --hotbg:#4a1d1a; --hotink:#ffb4ae;
+  --ambbg:#3a2c0d; --plot:#081019; --tty:#070e16; --ttyink:#a9c6dc;
+  --warnline:#5a4a2b; --badline:#5a2b2b;
+  color-scheme:dark;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
 }
@@ -39,8 +52,13 @@ button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid v
 button:hover{border-color:var(--faint)}
 /* Language button: what you are reading now, then what a tap gives you. */
 .nx{color:var(--dim);font-size:12.5px;margin-left:7px}
+/* Appearance toggle sits in the header's corner, off the tools row, so the
+   row keeps language · place · reload on one line on a phone. */
+header{position:relative}
+#themeBtn{position:absolute;right:0;top:18px;width:38px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;color:var(--dim)}
+h1{padding-right:48px}
 .gpsnote{font-size:12.5px;color:var(--dim);line-height:1.5;margin-top:7px;width:100%}
-.gpsnote.warn{color:#ffd489}
+.gpsnote.warn{color:var(--warn)}
 .gpsnote .co{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 /* First-launch offer to use the phone's location. Asked with a tap, never as
    a cold browser prompt: an unexplained prompt is the one that gets blocked. */
@@ -48,7 +66,7 @@ button:hover{border-color:var(--faint)}
   background:var(--panel2);border-radius:7px;padding:9px 11px;margin-top:4px;line-height:1.5}
 .gpsoffer .q{font-size:14px}
 .gpsoffer .why{font-size:12px;color:var(--dim);margin:3px 0 8px}
-.gpsoffer .why.warn{color:#ffd489}
+.gpsoffer .why.warn{color:var(--warn)}
 .gpsoffer .acts{display:flex;gap:8px;flex-wrap:wrap}
 .gpsoffer .yes{border-color:var(--teal)}
 button:disabled{cursor:default;border-style:dashed}
@@ -57,28 +75,28 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
   border:1px solid var(--line);border-radius:7px;padding:6px 9px}
 .fresh{border:1px solid var(--line);border-left:3px solid var(--teal);background:var(--panel);
   border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13.5px}
-.fresh.stale{border-left-color:var(--red);background:#26161a;color:#ffd7d4}
-.fresh.warnish{border-left-color:var(--amber);background:#241d10}
+.fresh.stale{border-left-color:var(--red);background:var(--badbg);color:var(--badink)}
+.fresh.warnish{border-left-color:var(--amber);background:var(--warnbg)}
 .sqbox{border:1px solid var(--line);border-left:3px solid var(--amber);padding:9px 11px;margin:10px 0;line-height:1.6}
-.sqbox a{color:#8fd3ff}
-.presstale{border-left:3px solid var(--amber);background:#241d10;color:#ffe2a8;padding:9px 11px;margin:8px 0;line-height:1.6}
+.sqbox a{color:var(--link)}
+.presstale{border-left:3px solid var(--amber);background:var(--warnbg);color:var(--warnink);padding:9px 11px;margin:8px 0;line-height:1.6}
 .fresh b{font-family:var(--mono)}
 /* Partial-failure list. The fetcher can succeed overall and still lose a
    storm, so what it could not get is named here rather than left blank. */
-.probs{display:block;margin-top:7px;font-size:12.5px;line-height:1.55;color:#ffd489;
+.probs{display:block;margin-top:7px;font-size:12.5px;line-height:1.55;color:var(--warn);
   font-family:var(--mono);word-break:break-word}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;
   padding:14px;margin-bottom:16px}
 .cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
 .sname{font-size:18px;font-weight:700}
 .snum{display:inline-flex;align-items:center;justify-content:center;min-width:20px;
-  height:20px;padding:0 5px;margin-right:8px;border-radius:10px;background:var(--amber);
-  color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:700;position:relative;top:-2px}
+  height:20px;padding:0 5px;margin-right:8px;border-radius:10px;background:#ffb020;
+  color:#0a1420;font-family:var(--mono);font-size:12px;font-weight:700;position:relative;top:-2px}
 .badges{display:flex;gap:6px;flex-wrap:wrap}
 .badge{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:3px 7px;
-  border-radius:5px;background:#1d3d55;color:#bfe0f5;white-space:nowrap}
-.badge.hot{background:#4a1d1a;color:#ffb4ae}
-.badge.amb{background:#3a2c0d;color:#ffd489}
+  border-radius:5px;background:var(--bdg);color:var(--bdgink);white-space:nowrap}
+.badge.hot{background:var(--hotbg);color:var(--hotink)}
+.badge.amb{background:var(--ambbg);color:var(--warn)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;margin-top:12px}
 .cell{background:var(--panel2);border-radius:8px;padding:8px 10px}
 .cell .k{font-size:12px;color:var(--dim);letter-spacing:.05em}
@@ -93,7 +111,7 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);
 .seasonline{font-size:13px;color:var(--dim);margin-bottom:8px}
 .maptools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
 .maptime{font-size:12.5px;color:var(--faint);font-family:var(--mono)}
-.plotwrap{margin-top:9px;background:#081019;border:1px solid var(--line);border-radius:9px;padding:6px}
+.plotwrap{margin-top:9px;background:var(--plot);border:1px solid var(--line);border-radius:9px;padding:6px}
 svg.plot{display:block;width:100%;height:auto}
 .caption{font-size:13px;color:var(--soft);margin-top:6px;text-align:right;line-height:1.5}
 details{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
@@ -102,8 +120,8 @@ summary::-webkit-details-marker{display:none}
 summary:before{content:"▸ ";color:var(--faint)}
 details[open]>summary:before{content:"▾ "}
 summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px}
-pre.tty{font-family:var(--mono);font-size:12.5px;line-height:1.45;color:#a9c6dc;
-  background:#070e16;border:1px solid var(--line);border-radius:7px;
+pre.tty{font-family:var(--mono);font-size:12.5px;line-height:1.45;color:var(--ttyink);
+  background:var(--tty);border:1px solid var(--line);border-radius:7px;
   padding:11px;overflow-x:auto;white-space:pre;margin:9px 0 0}
 /* Glossary bodies carry real paragraph breaks; without this every \n
    collapsed to a space and the longer entries read as one wall. */
@@ -153,6 +171,41 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
 #langPick button:active{transform:scale(.97);border-color:var(--amber)}
 #langPick .lp-note{font-size:12px;color:var(--faint);text-align:center;margin-top:6px;max-width:22rem;line-height:1.5}
 body.lp-open{overflow:hidden}
+/* Light theme. html.light is set before first paint by the script in
+   <head>: from the saved choice, or from the phone's own setting when the
+   choice is Auto. Every ratio against --bg stays at 4.5:1 or better. */
+html.light{
+  --bg:#f2f5f8; --panel:#ffffff; --panel2:#e8eef4; --line:#cdd9e3;
+  --ink:#1a2836; --hi:#0c1924; --dim:#44596b; --faint:#566b7d; --soft:#3d5265;
+  --amber:#a35f00; --red:#c62f28; --teal:#14806e;
+  --warn:#8a5300; --warnbg:#fff4dc; --warnink:#6b4100; --badbg:#fde9e7; --badink:#8f1e18;
+  --link:#0b65a8; --bdg:#dcebf6; --bdgink:#174a6e; --hotbg:#fbe0dd; --hotink:#9b231c;
+  --ambbg:#fdefcf; --plot:#f8fafc; --tty:#f4f7fa; --ttyink:#22384b;
+  --warnline:#e0c48a; --badline:#e3a7a3;
+  color-scheme:light;
+}
+/* The maps are SVG strings with colours baked into their attributes. CSS
+   outranks presentation attributes, so the light theme repaints them here
+   instead of threading a palette through every drawing function. */
+html.light svg.plot [stroke="#081019"],html.light svg.plot [stroke="#0a1420"]{stroke:#f8fafc}
+html.light svg.plot circle[fill="#e2ebf4"]{fill:#ffffff;stroke:#0c1924}
+html.light svg.plot text[fill="#e2ebf4"]{fill:#0c1924}
+html.light svg.plot [fill="#5c7891"]{fill:#536779}
+html.light svg.plot [fill="#9fb3c6"]{fill:#44596b}
+html.light svg.plot [stroke="#132030"],html.light svg.plot [stroke="#16293a"]{stroke:#e1e8ee}
+html.light svg.plot [stroke="#2b4f63"]{stroke:#8ea6b8}
+html.light svg.plot [stroke="#a78bd0"]{stroke:#8a6cc0}
+html.light svg.plot [fill="#bda6e0"]{fill:#5d3f94}
+html.light svg.plot [fill="#7aa862"]{fill:#3f7029}
+html.light svg.plot [stroke="#476e39"]{stroke:#93bb80}
+html.light svg.plot text[fill="#ffd489"]{fill:#8a5300}
+html.light svg.plot [stroke="#43c2ab"],html.light svg.plot [stroke="#43ae99"]{stroke:#14806e}
+html.light svg.plot [fill="#43c2ab"]{fill:#14806e}
+html.light svg.plot [stroke="#ffb020"]{stroke:#d48a00}
+html.light svg.plot [fill="#7fb2c9"],html.light svg.plot [stroke="#7fb2c9"]{fill:#3f7a96;stroke:#3f7a96}
+html.light svg.plot text[fill="#ff5b52"]{fill:#c62f28}
+html.light svg.plot text[fill="#ff9a3c"]{fill:#b85e10}
+html.light #langPick img{box-shadow:0 6px 18px rgba(0,0,0,.15)}
 @media (prefers-reduced-motion:no-preference){.card{animation:rise .25s ease both}}
 @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 </style>
@@ -171,6 +224,7 @@ body.lp-open{overflow:hidden}
 </div>
 <div class="wrap">
 <header>
+  <button id="themeBtn" type="button" class="ico"></button>
   <h1 id="brand">风眼<span class="lat"> TYPHOONWATCH</span></h1>
   <div class="sub" id="tagline"></div>
   <div class="tools">
@@ -216,7 +270,7 @@ body.lp-open{overflow:hidden}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.8.1";
+var VERSION = "v3.9.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -338,6 +392,7 @@ var T = {
     ended:"最后一报", endedNote:"气象厅已停止对这个系统发布预报。上面是它最后一次发表的实况，位置和强度都不会再更新了。它还留在这里是因为气象厅名单上还有；名单一撤，这张卡片就会消失。",
     goneT:"已从气象厅名单撤下", goneOne:"{n}：最后一次出现在 {t}。",
     footTitle:"关于本页 · 来源与二维码",
+    theme:{auto:"外观：跟随系统",light:"外观：浅色",dark:"外观：深色"},
     gpsUse:"📍 用我的位置", gpsBusy:"正在定位…", gpsUpdating:"· 正在更新位置…",
     gpsOffer:"📍 用你现在的位置，看离你最近的台风和季风读数",
     gpsOfferWhy:"点下面的按钮，浏览器会问你给不给定位。坐标只留在这台手机上，不会送出去。不想用定位，也可以从上面的列表选一个地点。",
@@ -468,6 +523,7 @@ var T = {
     ended:"Final bulletin", endedNote:"JMA has stopped forecasting this system. What is above is the last analysis it published — the position and strength will not be updated again. It is still listed here because JMA still carries it; when JMA drops it, this card disappears.",
     goneT:"Dropped from JMA's list", goneOne:"{n}: last seen {t}.",
     footTitle:"About this page · sources and QR",
+    theme:{auto:"Appearance: follow system",light:"Appearance: light",dark:"Appearance: dark"},
     gpsUse:"📍 Use my location", gpsBusy:"Locating…", gpsUpdating:"· updating…",
     gpsOffer:"📍 Use where you are now for the nearest storm and monsoon reading",
     gpsOfferWhy:"Tap the button and the browser will ask for location permission. The coordinates stay on this phone and are never sent anywhere. Or pick a place from the list above instead.",
@@ -598,6 +654,7 @@ var T = {
     ended:"Buletin terakhir", endedNote:"JMA telah berhenti meramal sistem ini. Yang di atas ialah analisis terakhir yang diterbitkannya — kedudukan dan kekuatannya tidak akan dikemas kini lagi. Ia masih disenaraikan kerana JMA masih membawanya; apabila JMA menggugurkannya, kad ini akan hilang.",
     goneT:"Digugurkan daripada senarai JMA", goneOne:"{n}: kali terakhir dilihat {t}.",
     footTitle:"Tentang halaman ini · sumber dan QR",
+    theme:{auto:"Paparan: ikut sistem",light:"Paparan: cerah",dark:"Paparan: gelap"},
     gpsUse:"📍 Guna lokasi saya", gpsBusy:"Mencari lokasi…", gpsUpdating:"· mengemas kini…",
     gpsOffer:"📍 Guna lokasi anda sekarang untuk ribut terdekat dan bacaan monsun",
     gpsOfferWhy:"Ketik butang dan pelayar akan meminta kebenaran lokasi. Koordinat kekal dalam telefon ini dan tidak dihantar ke mana-mana. Atau pilih lokasi daripada senarai di atas.",
@@ -909,7 +966,7 @@ function renderFresh(){
       box.appendChild(el("div","pos",L("loadFail")+" "+LOADERR));
       var a=document.createElement("a");
       a.href=DATA_URL; a.target="_blank"; a.rel="noopener";
-      a.textContent=X(L("openData")); a.style.color="#ffd7d4";
+      a.textContent=X(L("openData")); a.style.color="var(--badink)";
       box.appendChild(a);
     }
     return;
@@ -1961,7 +2018,7 @@ function renderSimple(){
   if(ref.gps){
     var bl=el("div","pos",fill(L("gpsBase"),
       {place:(pn(ref.base)),km:Math.round(ref.baseKm)}));
-    if(ref.baseKm>120){ bl.textContent+=" "+X(L("gpsRough")); bl.style.color="#ffd489"; }
+    if(ref.baseKm>120){ bl.textContent+=" "+X(L("gpsRough")); bl.style.color="var(--warn)"; }
     box.appendChild(bl);
   }
   var hp=P.places[presRef(ref).id];
@@ -2221,7 +2278,7 @@ function renderRegion(){
     else {
       var go=el("span","maptime",fill(L("gridOld"),{t:myt(P0.grid.time)+" "+L("myt"),
         age:ago(gridAgeH(P0)*36e5)}));
-      go.style.color="#ffd489"; bar.appendChild(go);
+      go.style.color="var(--warn)"; bar.appendChild(go);
     }
   }
   box.appendChild(bar);
@@ -2285,7 +2342,7 @@ function renderOthers(){
     var gdown=(DOC&&DOC.errors||[]).some(function(e){ return /^GDACS/i.test(String(e)); });
     box.appendChild(el("div",null, !(DOC&&DOC.generated) ? L("unknown")
                                  : gdown ? L("otherFail") : L("noOther")));
-    if(gdown) box.style.borderColor="#5a4a2b";
+    if(gdown) box.style.borderColor="var(--warnline)";
     return;
   }
   list.map(function(o){
@@ -2314,7 +2371,7 @@ function renderStorms(){
     // A quiet period and a never-successful fetch look identical in the data.
     var ever=!!(DOC&&DOC.generated);
     var e=el("div","empty",L(ever?"noStorm":"unknown"));
-    if(!ever) e.style.borderColor="#5a2b2b";
+    if(!ever) e.style.borderColor="var(--badline)";
     box.appendChild(e); renderGone(box); return;
   }
   list.forEach(function(s,i){ box.appendChild(stormCard(s,i+1)); });
@@ -2514,6 +2571,7 @@ function renderAll(){
   var lb=document.getElementById("langBtn");
   lb.textContent=CURLANG[lang];
   lb.appendChild(el("span","nx","→ "+NEXTLANG[lang]));
+  applyTheme();
   refreshStatus();
   document.getElementById("hLearn").textContent=X(L("hLearn"));
   var sel=document.getElementById("refSel"), cr=refPlace(), cur=cr?cr.id:"__gps";
@@ -2637,6 +2695,30 @@ document.getElementById("footBox").addEventListener("toggle",function(){
   try{ localStorage.setItem("twatch.foot",FOOTOPEN?"1":"0"); }catch(e){}
 });
 
+/* Appearance: Auto follows the phone, and keeps following it live. */
+var THEMES=["auto","light","dark"], theme="auto";
+/* Drawn, not font glyphs: ◐ ☀ ☾ fall back to odd fonts on some phones. */
+var THEMEICO={
+  auto:'<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
+  light:'<circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g>',
+  dark:'<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/>'};
+try{ var _t=localStorage.getItem("twatch.theme"); if(THEMES.indexOf(_t)>-1) theme=_t; }catch(e){}
+var MQL=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
+function applyTheme(){
+  var light=theme==="light"||(theme==="auto"&&!!(MQL&&MQL.matches));
+  document.documentElement.classList.toggle("light",light);
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute("content",light?"#f2f5f8":"#0a1420");
+  var b=document.getElementById("themeBtn"), lbl=X(L("theme")[theme]);
+  b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="display:block">'+THEMEICO[theme]+'</svg>'; b.title=lbl; b.setAttribute("aria-label",lbl);
+}
+if(MQL){ var _mq=function(){ if(theme==="auto") applyTheme(); };
+  if(MQL.addEventListener) MQL.addEventListener("change",_mq); else if(MQL.addListener) MQL.addListener(_mq); }
+document.getElementById("themeBtn").addEventListener("click",function(){
+  theme=THEMES[(THEMES.indexOf(theme)+1)%THEMES.length];
+  try{ localStorage.setItem("twatch.theme",theme); }catch(e){}
+  applyTheme();
+});
 function setLang(l){
   lang = l;
   try{ localStorage.setItem(LS,lang); }catch(e){}
