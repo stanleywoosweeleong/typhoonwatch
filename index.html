@@ -135,11 +135,40 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
 .qrcap{font-size:12.5px;color:var(--dim);line-height:1.55;flex:1 1 160px}
 .qrcap .u{display:block;margin-top:5px;font-family:var(--mono);font-size:11.5px;
   color:var(--faint);word-break:break-all}
+/* First-launch language picker, as in the SkewT app: one full-screen choice
+   before anything else, written in all four languages at once so whoever
+   picks up the phone can read it. Shown only while no language is saved. */
+#langPick{position:fixed;inset:0;z-index:3000;background:var(--bg);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow-y:auto;
+  padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+#langPick.on{display:flex}
+#langPick img{width:84px;height:84px;border-radius:22px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#langPick .lp-title{font-size:22px;font-weight:800;color:var(--hi);text-align:center;line-height:1.35}
+#langPick .lp-title .lat{display:block;letter-spacing:.2em;font-size:15px;color:var(--dim);font-weight:700}
+#langPick .lp-sub{font-size:13px;font-weight:700;color:var(--dim);text-align:center;margin-bottom:6px}
+#langPick button{width:min(18rem,84vw);min-height:56px;border:2px solid var(--line);border-radius:16px;
+  background:var(--panel);color:var(--ink);font-size:19px;font-weight:800;cursor:pointer;
+  transition:transform .15s,border-color .15s}
+#langPick button:hover,#langPick button:focus-visible{border-color:var(--teal);outline:none}
+#langPick button:active{transform:scale(.97);border-color:var(--amber)}
+#langPick .lp-note{font-size:12px;color:var(--faint);text-align:center;margin-top:6px;max-width:22rem;line-height:1.5}
+body.lp-open{overflow:hidden}
 @media (prefers-reduced-motion:no-preference){.card{animation:rise .25s ease both}}
 @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
+<!-- first-launch language picker (onboarding) -->
+<div id="langPick" role="dialog" aria-modal="true" aria-label="选择语言 · 選擇語言 · Choose language · Pilih bahasa">
+  <img src="./icon.svg" alt="">
+  <div class="lp-title">风眼<span class="lat">TYPHOONWATCH</span></div>
+  <div class="lp-sub">选择语言 · 選擇語言 · Choose language · Pilih bahasa</div>
+  <button type="button" data-lang="zh" lang="zh-Hans">简体中文</button>
+  <button type="button" data-lang="tw" lang="zh-Hant">繁體中文</button>
+  <button type="button" data-lang="en" lang="en">English</button>
+  <button type="button" data-lang="ms" lang="ms">Bahasa Melayu</button>
+  <div class="lp-note">可随时点顶部按钮切换 · 可隨時點頂部按鈕切換<br>Change it any time with the button at the top · Boleh ditukar bila-bila masa dengan butang di atas</div>
+</div>
 <div class="wrap">
 <header>
   <h1 id="brand">风眼<span class="lat"> TYPHOONWATCH</span></h1>
@@ -147,7 +176,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
   <div class="tools">
     <button id="langBtn" type="button">简体<span class="nx">→ 繁體</span></button>
     <button id="updBtn" type="button"></button>
-    <select id="refSel" aria-label="参考地点 / reference place"></select>
+    <select id="refSel" aria-label="参考地点 / reference place / lokasi rujukan"></select>
     <div id="gpsOffer" class="gpsoffer" hidden></div>
     <div id="gpsNote" class="gpsnote"></div>
   </div>
@@ -187,7 +216,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.7.1";
+var VERSION = "v3.8.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -230,7 +259,7 @@ var REFS = [
   {id:"sanya",   grp:"reg", zh:"三亚，海南",     en:"Sanya, Hainan",        lat:18.25, lon:109.51},
   {id:"guangzhou",grp:"reg",zh:"广州，广东",     en:"Guangzhou, Guangdong", lat:23.13, lon:113.26},
   {id:"hongkong",grp:"reg", zh:"香港",           en:"Hong Kong",            lat:22.30, lon:114.17},
-  {id:"manila",  grp:"reg", zh:"马尼拉，菲律宾", en:"Manila, Philippines",  lat:14.60, lon:120.98},
+  {id:"manila",  grp:"reg", zh:"马尼拉，菲律宾", en:"Manila, Philippines",  ms:"Manila, Filipina", lat:14.60, lon:120.98},
   {id:"kaohsiung",grp:"reg",zh:"高雄，台湾",     en:"Kaohsiung, Taiwan",    lat:22.63, lon:120.30},
   {id:"taipei",  grp:"reg", zh:"台北，台湾",     en:"Taipei, Taiwan",       lat:25.03, lon:121.56},
   {id:"naha",    grp:"reg", zh:"那霸，冲绳",     en:"Naha, Okinawa",        lat:26.21, lon:127.68},
@@ -497,15 +526,149 @@ var T = {
     scsNow:"In the South China Sea", scsFc:"In the South China Sea by +{tau} h",
     scsLineNow:" (already in the South China Sea)", scsLineFc:" (JMA's +{tau} h position is in the South China Sea)",
     credit:"Source: Japan Meteorological Agency (RSMC Tokyo Typhoon Center), the WMO-designated centre for western North Pacific tropical cyclones. Mirrored every 3 hours by GitHub Actions. Winds are 10-minute sustained, the same convention MET Malaysia uses. For official Malaysian warnings, MET Malaysia is the authority. This app forecasts nothing; it shows what JMA published.<br>Note: JTWC products return 403 to datacenter IPs and cannot be fetched automatically.<br>Built with Claude Opus 5 (Anthropic)."
+  },
+  ms:{
+    brand:"风眼", lat:" TYPHOONWATCH",
+    tagline:"JMA · Pusat Taufan RSMC Tokyo · boleh dibaca luar talian",
+    hRegion:"GAMBARAN RANTAU", hStorms:"BULETIN JMA",
+    hOther:"SISTEM LAIN BERDEKATAN",
+    simpleNote:"Arah aliran tekanan hanya nampak perubahan berskala taufan dan monsun, beribu-ribu km luasnya. Garis badai dan ribut petir hanya berpuluh km lebar dan tidak kelihatan kepadanya, jadi lokasi di Semenanjung turut memaparkan keadaan garis badai Sumatera. Ini bacaan arah aliran tekanan, bukan ramalan cuaca. Sama ada hujan benar-benar turun juga bergantung pada kelembapan, penumpuan angin dan rupa bumi. Untuk amaran rasmi, rujuk MET Malaysia. Peta, jadual tinjauan dan setiap ribut ada di bawah.",
+    mapWhatRegion:"Peta ini menunjukkan: di mana taufan berada, berapa jauh dari anda, dan corak tekanan (semakin rapat gelang, semakin kuat angin).",
+    mapWhatTrack:"Peta ini menunjukkan: ke mana ribut ini dijangka bergerak. Bulatan putus-putus ialah kawasan pusatnya mungkin berada — ia membesar mengikut masa kerana semakin jauh ke hadapan, semakin kurang pasti.",
+    hTrend:"TINJAUAN", trendRegion:"Lokasi lain di rantau ini",
+    surgeShort:"luruan", regStrong:" (ketara)",
+    reg:{wet:"Lebih basah",dry:"Lebih kering",steady:"Stabil",held:"Tiada bacaan “lebih kering”"},
+    season:{ne:"Musim monsun timur laut (Nov–Mac): luruan menekan turun dari timur laut dan melanda Kelantan, Terengganu dan pantai timur Pahang dahulu.",
+            sw:"Musim monsun barat daya (Mei–Sep): aliran datang dari barat daya, lebih memihak kepada pantai barat dan Sarawak.",
+            inter:"Peralihan monsun (Apr / Okt): angin berubah-ubah, ribut petir petang mendominasi, dan isyarat luruan lebih bising."},
+    whyTitle:"Dari mana datangnya tiga keadaan ini",
+    why:[["Lebih kering / panas dan berbahang (tekanan naik)",
+      "Taufan ialah pam yang sangat besar: ia menyedut udara di bahagian bawah dan melontarkannya keluar di bahagian atas. Udara yang keluar itu mesti turun di suatu tempat, dan selalunya ia turun di jalur khatulistiwa. Udara yang turun memanaskan lapisan atas dan menekan perolakan, jadi ribut petang tidak menjadi, haba tidak dapat keluar dan jerebu tidak dicuci. Hari yang terasa paling teruk selalunya hari ketika taufan berada jauh. Isyarat tekanan: kenaikan 24 jam setempat."],
+     ["Lebih basah / hujan berhari-hari (tekanan turun, atau jurang luruan melebar)",
+      "Taufan meregangkan perbezaan tekanan utara-selatan merentasi Laut China Selatan, angin monsun memecut, dan wap air ditolak ke Malaysia berulang kali. Ribut itu tidak melanda anda; ia menjadikan monsun lebih kuat. Isyarat tekanan: penurunan 24 jam setempat, atau tekanan di utara (Hong Kong, Haikou, Sanya) naik sedangkan tekanan anda tidak — perbezaan itulah jurang luruan, dan semakin lebar, semakin kuat angin."],
+     ["Stabil / mendung tetapi kurang hujan",
+      "Biasanya peralihan: wap air aras tengah tiba sebelum perolakan dalam, atau jalur luar sedang reput. Tekanan hampir tidak berubah dalam 24 jam. Inilah keadaan paling sukar dibaca, dan bukan sebab untuk mengubah rancangan — tunggu kemas kini seterusnya dan lihat ke arah mana ia pecah."],
+     ["Mengapa 24 jam dan bukan 3",
+      "Tekanan di kawasan tropika mempunyai pasang surut dua kali sehari sekitar 1.5 hPa, memuncak pada pertengahan pagi dan pertengahan malam. Ayunan itu selalunya lebih besar daripada isyarat cuaca. Membandingkan dengan jam yang sama sehari sebelumnya membatalkan pasang surut itu dan meninggalkan cuaca."],
+     ["Mengapa tekanan tidak nampak garis badai",
+      "Garis badai Sumatera ialah barisan ribut petir yang terbentuk pada waktu malam di Selat Melaka. Ia hanya berpuluh kilometer lebar dan melintasi pantai barat dalam beberapa jam. Perubahan tekanan yang dibawanya kecil dan datang serta pergi dengan cepat, jadi ia hampir tidak meninggalkan kesan dalam perubahan tekanan 24 jam, dan grid model (kira-kira 28 km) tidak dapat melukis garisan sesempit itu. Jadi pada malam arah aliran tekanan berbunyi Stabil, atau malah lebih kering, pantai barat masih boleh dibanjiri oleh garis badai. Garis badai ada ramuannya sendiri — angin pandu, ketidakstabilan, penumpuan di Selat — dan membacanya ialah tugas aplikasi Sumatra Squall. Halaman ini memaparkan hasil aplikasi itu di bawah setiap lokasi Semenanjung, dengan nombor yang sama."]],
+    trendNote:"Inilah peraturannya, supaya anda boleh menilainya sendiri: penurunan 24 jam setempat sebanyak 0.7 hPa atau lebih, atau jurang luruan +1.5 atau lebih, dibaca Lebih basah; kenaikan 0.7 atau lebih tanpa jurang luruan yang bermakna dibaca Lebih kering; selain itu, Stabil. Lebih kering ada satu lagi syarat: model yang sama mesti memberi kurang daripada 5 mm di lokasi itu dalam 24 jam akan datang tanpa sebarang jam mencapai 2.5 mm atau lebih, keadaan garis badai Sumatera malam ini mesti di bawah Awasi, dan bagi lokasi yang dicapai luruan sejuk monsun timur laut, indeks luruan sejuk mesti kekal di bawah ambangnya hari ini dan dua hari berikutnya. Jika mana-mana gagal, bacaan menunjukkan Tiada bacaan “lebih kering” dan menyatakan sebabnya. Ini bacaan arah aliran tekanan, bukan ramalan — sama ada hujan benar-benar turun juga bergantung pada kelembapan, penumpuan angin, rupa bumi dan banyak lagi. Untuk amaran rasmi, rujuk MET Malaysia.",
+    nextAt:"Seterusnya {t}", reload:"Muat semula", nextDue:"kemas kini seterusnya kira-kira {t}",
+    loadFail:"Gagal mengambil data:", openData:"Buka fail data secara terus →",
+    myt:"MYT", desig:"Penamaan JMA", tdLetter:"Lekukan tropika",
+    iso:"Isobar", isoAt:"medan", presAt:"{place}: <b>{hpa}</b> hPa",
+    presChg:"{arrow}{chg} hPa dalam 24 j", presSteady:"sedikit perubahan dalam 24 j",
+    presFalls:"Penurunan terbesar: ", presNote:"Isobar ialah medan tekanan aras laut model ECMWF pada sela 1 hPa — bukan analisis tangan dan bukan cerapan. Halaman ini tidak mentafsir atau menamakan sebarang tekanan rendah; kontur tertutup terpulang kepada anda untuk dibaca. Kecerunan tekanan tropika adalah lemah, sebab itu selanya 1 hPa dan bukan 4 hPa seperti carta cuaca biasa. Jarak grid ialah 1 darjah (kira-kira 110 km, meliputi 100–122°T dan 3°S–22°U): kontur tertutup bermakna model benar-benar mempunyai tekanan minimum di situ. Jarak ini cukup untuk sistem sebesar vorteks Borneo, tetapi apa-apa yang lebih kecil masih dilukis bersudut — jika bentuknya tajam seperti berlian, percayai kedudukannya, bukan bentuknya.",
+    presNone:"Belum ada data tekanan.",
+    grpMY:"Malaysia", grpReg:"Rantau (kawasan tanggungjawab JMA)",
+    rangeNoteGen:"Ini jarak bulatan besar, bukan ramalan untuk lokasi itu. Laluan ramalan ada ralatnya sendiri — lihat bulatan ramalan.",
+    regionCap:"Titik jingga penuh = taufan JMA; nombor dalam titik ialah kadnya di bawah (garis putus = laluan ramalan, satu corak bagi setiap ribut) · gelang berongga = sistem lain GDACS · titik putih = lokasi pilihan anda",
+    regionNote:"Lihat latitudnya: Malaysia terletak di khatulistiwa, tempat taufan hampir tidak pernah sampai — tetapi taufan menolak luruan monsun turun ke sini.",
+    otherNote:"Daripada GDACS (Pusat Penyelidikan Bersama Suruhanjaya Eropah), yang menghimpunkan beberapa agensi. JMA hanya menomborkan siklon yang diberi buletin rasmi, jadi tekanan rendah Laut China Selatan di bawah gred taufan mungkin tiada dalam bahagian di atas. Bahagian ini mengisi jurang itu, dengan penamaan dan penggredan yang lebih longgar daripada JMA.",
+    noOther:"GDACS tidak menyenaraikan sebarang siklon tropika aktif sekarang.",
+    otherFail:"GDACS tidak dapat dihubungi kali ini, jadi bahagian ini kosong — itu tidak sama dengan tiada apa-apa di luar sana. Buletin JMA di atas tidak terjejas.",
+    dupOf:"= {id} di atas",
+    alert:{red:"Amaran merah",orange:"Amaran jingga",green:"Hijau"},
+    away:"{km} km dari {place}",
+
+    hLearn:"CARA MEMBACA BULETIN TAUFAN",
+    freshOk:"Dikeluarkan {t} ({age} lalu) · disalin {fetch}",
+    freshQuiet:"Disalin {fetch} ({age} lalu) · tiada buletin sedang dikeluarkan",
+    freshStale:"⚠ Mungkin sudah lapuk: dikeluarkan {t}, berusia {age}. JMA mengemas kini setiap 3 jam — melebihi {h} jam, semak JMA secara terus.",
+    freshFail:"⚠ Pengambilan terakhir gagal ({when}). Yang berikut ialah salinan terakhir yang berjaya dan mungkin sudah lapuk.",
+    freshNoData:"Belum ada data. GitHub Action perlu berjaya dijalankan sekali.",
+    offline:"(luar talian: memaparkan salinan cache)",
+    noStorm:"JMA tiada buletin taufan aktif sekarang. Tempoh tenang adalah perkara biasa.",
+    unknown:"Tidak diketahui — belum ada pengambilan yang berjaya, jadi halaman ini tidak tahu sama ada wujud ribut. Kekosongan ini bukan tempoh tenang. Semak log GitHub Actions.",
+    pos:"Kedudukan pusat", wind:"Angin maksimum berterusan", gust:"Tiupan maksimum", move:"Gerakan",
+    press:"Tekanan pusat", tnum:"Nombor taufan",
+    stormR:"Kawasan ribut", galeR:"Kawasan angin kencang",
+    rangeNow:"Kini <span class=\"num\">{km} km</span> dari {place} (bearing {dir})",
+    rangeMin:"Jarak ramalan terdekat: <span class=\"num\">{km} km</span>, kira-kira {tau} j lagi",
+    rangeNote:"Ini jarak bulatan besar, bukan ramalan untuk Malaysia. Jauh tidak bermakna tidak berbahaya — taufan Pasifik Barat sering sampai ke pantai timur dengan memperkuat luruan monsun timur laut.",
+    plotCap:"Titik jingga = analisis · titik hijau dan bulatan putus = kedudukan dan bulatan ramalan (70% peluang pusat jatuh di dalamnya) · titik putih = lokasi pilihan anda",
+    decodeTitle:"Satu demi satu", rawTitle:"JSON mentah JMA",
+    kt:"knot", ms:"m/s", kmh:"km/j", km:"km", hpa:"hPa",
+    cat:{TD:"Lekukan Tropika",TS:"Ribut Tropika",STS:"Ribut Tropika Kuat",TY:"Taufan",L:"Tekanan Rendah Ekstratropika"},
+    intens:{strong:"Kuat",very_strong:"Sangat kuat",violent:"Ganas"},
+    scale:{large:"Besar",very_large:"Sangat besar"},
+    saffir:"≈ setara {c}",
+    problems:"Buletin ini tidak dapat dihuraikan sepenuhnya:",
+    demo:"DATA DEMO — bukan buletin sebenar",
+    ended:"Buletin terakhir", endedNote:"JMA telah berhenti meramal sistem ini. Yang di atas ialah analisis terakhir yang diterbitkannya — kedudukan dan kekuatannya tidak akan dikemas kini lagi. Ia masih disenaraikan kerana JMA masih membawanya; apabila JMA menggugurkannya, kad ini akan hilang.",
+    goneT:"Digugurkan daripada senarai JMA", goneOne:"{n}: kali terakhir dilihat {t}.",
+    footTitle:"Tentang halaman ini · sumber dan QR",
+    gpsUse:"📍 Guna lokasi saya", gpsBusy:"Mencari lokasi…", gpsUpdating:"· mengemas kini…",
+    gpsOffer:"📍 Guna lokasi anda sekarang untuk ribut terdekat dan bacaan monsun",
+    gpsOfferWhy:"Ketik butang dan pelayar akan meminta kebenaran lokasi. Koordinat kekal dalam telefon ini dan tidak dihantar ke mana-mana. Atau pilih lokasi daripada senarai di atas.",
+    gpsOfferYes:"📍 Guna lokasi saya",
+    gpsPending:"Belum ada lokasi. Ketik “📍 Guna lokasi saya” di atas, atau pilih lokasi daripada senarai, dan bacaan untuk tempat anda akan muncul di sini.",
+    gpsAt:"Lokasi saya {lat} {lon} (diperoleh {age} lalu)",
+    gpsBase:"Arah aliran tekanan diambil daripada titik rujukan terdekat: {place}, {km} km jauhnya.",
+    gpsFar:"Titik rujukan terdekat ialah {place}, {km} km jauhnya — terlalu jauh untuk arah aliran tekanannya memberitahu apa-apa tentang tempat anda, jadi bahagian itu disembunyikan. Jarak ribut dan peta tidak terjejas.",
+    gpsPrivate:"· koordinat kekal dalam telefon ini dan tidak dihantar ke mana-mana.",
+    gpsRough:"Pada jarak itu, anggap ia sebagai gambaran kasar sahaja.",
+    gpsDenied:"Pelayar tidak memberi kebenaran lokasi. Anda boleh mendayakannya dalam tetapan laman, atau pilih sahaja lokasi daripada senarai.",
+    gpsFailed:"Lokasi tidak dapat diperoleh kali ini. Pilih “Guna lokasi saya” sekali lagi untuk mencuba semula, atau pilih lokasi daripada senarai.",
+    gpsNoSupport:"Pelayar ini tidak dapat memberi lokasi. Sila pilih lokasi daripada senarai.",
+    qrCap:"Imbas untuk membuka halaman ini, atau taip alamatnya:",
+    partial:"Beberapa item tidak diterima atau tidak dapat dipaparkan sepenuhnya kali ini; ia disenaraikan di bawah. Yang lain dipaparkan seperti biasa.",
+    unavail:"tidak diterima kali ini",
+    unavailOld:"⚠ Kali ini buletin terbarunya tidak dapat dimuat turun. JMA masih menyenaraikannya, jadi ia masih dipantau; yang berikut ialah salinan yang dikeluarkan {t} — kedudukan dan kekuatannya bukan yang terkini. Semak JMA secara terus.",
+    unavailNew:"⚠ JMA menyenaraikan sistem ini, jadi ia sedang dipantau, tetapi kali ini buletinnya tidak dapat dimuat turun — halaman ini tiada kedudukan atau kekuatannya. Semak JMA secara terus.",
+    staleBadge:"tidak dikemas kini selama {age}",
+    freshLag:"⚠ Bukan terkini: {list}. Setiap satu ditanda pada kadnya; semak JMA secara terus untuk sistem ini.",
+    lagAge:"{age} tanpa kemas kini",
+    freshNone:"⚠ JMA menyenaraikan {n} sistem, tetapi kali ini tiada satu buletin pun dapat dimuat turun. Kad di bawah tiada kedudukan atau kekuatan terkini — semak JMA secara terus.",
+    presStale:"⚠ Data tekanan sudah lapuk (bacaan terakhir {t}, {age} lalu), jadi tiada bacaan lebih basah/lebih kering diberi — arah aliran tekanan yang lama tidak memberitahu apa-apa tentang sekarang. Buletin taufan tidak terjejas. {due}Untuk amaran rasmi, rujuk MET Malaysia.",
+    presDue:"Kemas kini seterusnya kira-kira {t}. ",
+    presOld:"lapuk",
+    presOldNote:"⚠ Data tekanan sudah lapuk ({t}); nombornya untuk rujukan sahaja dan tidak dibaca.",
+    gridOld:"Medan tekanan sudah lapuk ({t}, {age} lalu), jadi isobar tidak dilukis.",
+    sysLabel:"Sistem JMA",
+    sqTitle:"Garis badai Sumatera", sqNight:"Garis badai Sumatera · {night}",
+    sqLv:{low:"Tidak sesuai",watch:"Awasi",likely:"Sesuai",strong:"Sangat sesuai"},
+    sqIng:{steer:"Angin pandu",cape:"Ketidakstabilan (CAPE)",conv:"Penumpuan di Selat",rain:"Hujan model di Selat",gust:"Tiupan pantai barat",season:"Musim",window:"tempoh masa"},
+    sqSig:"Isyarat model di {town}: hujan (≥{r} mm/j) atau tiupan (≥{g} km/j) mulai {t}.",
+    sqNoSig:"Model tidak menunjukkan isyarat hujan atau tiupan di {town} malam ini.",
+    sqLag:"Jika garis badai terbentuk dan bergerak ke timur, ia sampai ke {town} kira-kira {h} j selepas melintasi garis tengah Selat.",
+    sqGate:"Angin pandu tidak bertiup ke arah Malaysia, jadi skornya dihadkan.",
+    sqBlocked:"Data model tidak lengkap (tiada: {list}), jadi tiada skor malam ini.",
+    sqStale:"Indeks garis badai sudah lapuk (dikira {t}, {age} lalu), jadi ia tidak dipaparkan.",
+    sqFail:"Indeks garis badai tidak dapat dikira kali ini; sebabnya disenaraikan di bahagian atas halaman.",
+    sqHow:"Bagaimana skor dikira", sqSum:"Jumlah {s} / 100", sqMiss:"tiada",
+    sqNote:"Ini indeks keadaan daripada aplikasi Sumatra Squall — kod dan ambang yang sama, dijalankan di pelayan dengan data model ECMWF, jadi nombornya sepadan dengan aplikasi itu. Ia menunjukkan sama ada keadaan untuk garis badai terbentuk dan bergerak sudah tersedia. Ia bukan ramalan dan bukan amaran; model tidak dapat melukis garis itu sendiri. Untuk amaran rasmi, rujuk MET Malaysia.",
+    sqOpen:"Buka aplikasi Sumatra Squall (radar, satelit, peta) →",
+    sqBadge:"Garis badai · {lv}", rain24:"hujan model 24 j {mm} mm",
+    csTitle:"Luruan sejuk monsun timur laut",
+    csGrade:{none:"Tiada luruan",weak:"Luruan lemah",mod:"Luruan sederhana",strong:"Luruan kuat"},
+    csNow:"Angin utara pada 925 hPa di utara Laut China Selatan (15°U, 110–117.5°T), purata 24 jam {v} m/s; ambang luruan ialah {th} m/s.",
+    csSouth:"Di utara Laut China Selatan (15°U, 110–117.5°T) angin 925 hPa berpurata angin selatan {v} m/s dalam 24 jam — tiada luruan.",
+    csNowNone:"Data 24 jam lalu tidak lengkap, jadi tiada nilai semasa diberi.",
+    csDays:"Model, hari demi hari (purata harian waktu Malaysia, m/s):",
+    csSoon:"Model meramalkan angin utara melebihi {th} m/s pada {date} ({g}).",
+    csOff:"Sekarang bukan musim monsun timur laut (Nov–Mac); di luar musim itu indeks ini jarang melepasi ambang.",
+    csWho:"Luruan sejuk terutamanya menolak hujan ke Kelantan, Terengganu, Pahang dan barat Sarawak (di halaman ini: Kota Bharu, Kuala Terengganu, Kuantan, Triang, Kuching).",
+    csNote:"Indeks luruan sejuk mengikut Chang, Harr & Chen (2005, Monthly Weather Review): angin utara-selatan 925 hPa dipuratakan sepanjang 15°U dari 110°T hingga 117.5°T; angin utara melebihi 8 m/s ialah luruan, digredkan lemah 8–10, sederhana 10–12, kuat melebihi 12. Angin itu daripada model ECMWF, dan hari selepas hari ini ialah ramalan angin oleh model — bukan ramalan hujan. Indeks ini diukur di utara Laut China Selatan dan biasanya mengambil masa sehari dua untuk sampai ke Malaysia; sama ada hujan lebat menyusul juga bergantung pada keadaan setempat. Untuk amaran rasmi, rujuk MET Malaysia.",
+    csStale:"Indeks luruan sejuk sudah lapuk ({t}, {age} lalu), jadi ia tidak dipaparkan.",
+    csFail:"Indeks luruan sejuk tidak dapat dikira kali ini; sebabnya disenaraikan di bahagian atas halaman.",
+    csBadge:"Luruan · {g}",
+    scsNow:"Di Laut China Selatan", scsFc:"Di Laut China Selatan menjelang +{tau} j",
+    scsLineNow:" (sudah berada di Laut China Selatan)", scsLineFc:" (kedudukan +{tau} j JMA berada di Laut China Selatan)",
+    credit:"Sumber: Agensi Meteorologi Jepun (Pusat Taufan RSMC Tokyo), pusat yang ditetapkan WMO bagi siklon tropika Pasifik Utara barat. Disalin setiap 3 jam oleh GitHub Actions. Angin ialah purata berterusan 10 minit, konvensyen yang sama digunakan MET Malaysia. Untuk amaran rasmi Malaysia, rujuk MET Malaysia. Aplikasi ini tidak meramal apa-apa; ia memaparkan apa yang diterbitkan JMA.<br>Nota: produk JTWC memulangkan 403 kepada IP pusat data dan tidak dapat diambil secara automatik.<br>Dibina dengan Claude Opus 5 (Anthropic)."
   }
 };
 /* The toggle names the language you are IN, then the one a tap moves to —
    a button showing only the next language cannot be told apart from one
    showing the current one, and the reader has no way to know which. */
-var CURLANG ={zh:"简体",tw:"繁體",en:"EN"};
-var NEXTLANG={zh:"繁體",tw:"EN",en:"简体"};
-var lang="zh";                     // zh = 简体, tw = 繁體, en = English
-var LANGS=["zh","tw","en"];
+var CURLANG ={zh:"简体",tw:"繁體",en:"EN",ms:"BM"};
+var NEXTLANG={zh:"繁體",tw:"EN",en:"BM",ms:"简体"};
+var lang="zh";                     // zh = 简体, tw = 繁體, en = English, ms = Bahasa Melayu
+var LANGS=["zh","tw","en","ms"];
+/* Which table a lookup reads: 繁體 renders from the Simplified copy. */
+function LK(){ return lang==="tw"?"zh":lang; }
+/* English and Malay share Latin-script punctuation and number spacing. */
+function LAT(){ return lang==="en"||lang==="ms"; }
 /* Traditional rendering is derived from the Simplified text at the render
    boundary, so there is one source of truth for Chinese copy. The map was
    generated with OpenCC over this file's own strings, then corrected where
@@ -532,30 +695,35 @@ function s2t(s){
 }
 /* Everything Chinese passes through here on its way to the DOM. */
 function X(s){ return lang==="tw" ? s2t(s) : s; }
-function L(k){ return T[lang==="tw"?"zh":lang][k]; }
+function L(k){ var v=T[LK()][k]; return v!==undefined?v:T.en[k]; }
+/* Inline copy written as tr(简体, English, Melayu). 繁體 comes from the
+   Simplified via X(); a missing Malay falls back to English. */
+function tr(zh,en,ms){ return lang==="zh"||lang==="tw"?zh:lang==="ms"&&ms!==undefined?ms:en; }
+/* Place names: REFS carry zh and en, plus ms where the Malay name differs. */
+function pn(r){ return lang==="zh"||lang==="tw"?r.zh:lang==="ms"&&r.ms?r.ms:r.en; }
 /* JMA writes these as free text. Translate the known set; anything
    unrecognised falls through as the original Japanese rather than a guess. */
 var JP={
-  "ゆっくり":{zh:"缓慢",en:"slowly"},
-  "ほとんど停滞":{zh:"几乎停滞",en:"nearly stationary"},
-  "停滞":{zh:"停滞",en:"stationary"},
-  "正確":{zh:"准确",en:"exact"},
-  "ほぼ正確":{zh:"大致准确",en:"nearly exact"},
-  "不確実":{zh:"不确定",en:"uncertain"},
-  "中心付近":{zh:"中心附近",en:"near the centre"},
-  "全域":{zh:"全域",en:"all quadrants"},
-  "北":{zh:"北",en:"north"},"南":{zh:"南",en:"south"},
-  "東":{zh:"东",en:"east"},"西":{zh:"西",en:"west"},
-  "北東":{zh:"东北",en:"northeast"},"南東":{zh:"东南",en:"southeast"},
-  "南西":{zh:"西南",en:"southwest"},"北西":{zh:"西北",en:"northwest"},
+  "ゆっくり":{zh:"缓慢",en:"slowly",ms:"perlahan"},
+  "ほとんど停滞":{zh:"几乎停滞",en:"nearly stationary",ms:"hampir pegun"},
+  "停滞":{zh:"停滞",en:"stationary",ms:"pegun"},
+  "正確":{zh:"准确",en:"exact",ms:"tepat"},
+  "ほぼ正確":{zh:"大致准确",en:"nearly exact",ms:"hampir tepat"},
+  "不確実":{zh:"不确定",en:"uncertain",ms:"tidak pasti"},
+  "中心付近":{zh:"中心附近",en:"near the centre",ms:"berhampiran pusat"},
+  "全域":{zh:"全域",en:"all quadrants",ms:"semua sukuan"},
+  "北":{zh:"北",en:"north",ms:"utara"},"南":{zh:"南",en:"south",ms:"selatan"},
+  "東":{zh:"东",en:"east",ms:"timur"},"西":{zh:"西",en:"west",ms:"barat"},
+  "北東":{zh:"东北",en:"northeast",ms:"timur laut"},"南東":{zh:"东南",en:"southeast",ms:"tenggara"},
+  "南西":{zh:"西南",en:"southwest",ms:"barat daya"},"北西":{zh:"西北",en:"northwest",ms:"barat laut"},
   // JMA writes courses on the 16-point rose, so the eight three-letter
   // bearings appear as often as the cardinals and were simply missing.
-  "北北東":{zh:"东北偏北",en:"NNE"},"東北東":{zh:"东北偏东",en:"ENE"},
-  "東南東":{zh:"东南偏东",en:"ESE"},"南南東":{zh:"东南偏南",en:"SSE"},
-  "南南西":{zh:"西南偏南",en:"SSW"},"西南西":{zh:"西南偏西",en:"WSW"},
-  "西北西":{zh:"西北偏西",en:"WNW"},"北北西":{zh:"西北偏北",en:"NNW"}
+  "北北東":{zh:"东北偏北",en:"NNE",ms:"utara-timur laut"},"東北東":{zh:"东北偏东",en:"ENE",ms:"timur-timur laut"},
+  "東南東":{zh:"东南偏东",en:"ESE",ms:"timur-tenggara"},"南南東":{zh:"东南偏南",en:"SSE",ms:"selatan-tenggara"},
+  "南南西":{zh:"西南偏南",en:"SSW",ms:"selatan-barat daya"},"西南西":{zh:"西南偏西",en:"WSW",ms:"barat-barat daya"},
+  "西北西":{zh:"西北偏西",en:"WNW",ms:"barat-barat laut"},"北北西":{zh:"西北偏北",en:"NNW",ms:"utara-barat laut"}
 };
-function jp(s){ return (s&&JP[s]) ? X(JP[s][lang==="tw"?"zh":lang]) : (s||""); }
+function jp(s){ return (s&&JP[s]) ? X(JP[s][LK()]||JP[s].en) : (s||""); }
 
 /* JMA's own field names stay on the left of every decode line — the point
    of that section is that you can open the JMA page and recognise them.
@@ -564,16 +732,16 @@ function jp(s){ return (s&&JP[s]) ? X(JP[s][lang==="tw"?"zh":lang]) : (s||""); }
    script (最大風速 needs no gloss for a Chinese reader, 予報円 does), which
    is what the s2t comparison tests. */
 var JTERM={
-  "最大風速":{zh:"最大风速",en:"max sustained wind"},
-  "最大瞬間風速":{zh:"最大瞬间风速",en:"max gust"},
-  "位置":{zh:"位置",en:"position accuracy"},
-  "暴風域":{zh:"暴风域",en:"storm-force wind area"},
-  "予報円":{zh:"预报圆",en:"forecast circle"},
-  "強風域":{zh:"强风域",en:"gale-force wind area"}
+  "最大風速":{zh:"最大风速",en:"max sustained wind",ms:"angin maksimum berterusan"},
+  "最大瞬間風速":{zh:"最大瞬间风速",en:"max gust",ms:"tiupan maksimum"},
+  "位置":{zh:"位置",en:"position accuracy",ms:"ketepatan kedudukan"},
+  "暴風域":{zh:"暴风域",en:"storm-force wind area",ms:"kawasan angin ribut"},
+  "予報円":{zh:"预报圆",en:"forecast circle",ms:"bulatan ramalan"},
+  "強風域":{zh:"强风域",en:"gale-force wind area",ms:"kawasan angin kencang"}
 };
 function jterm(t){
   var g=JTERM[t]; if(!g) return t;
-  var v=g[lang==="tw"?"zh":lang];
+  var v=g[LK()]||g.en;
   if(!v || s2t(v)===s2t(t)) return t;
   return t+" = "+X(v);
 }
@@ -593,15 +761,17 @@ function bearing(a,b,c,d){
 }
 var CMP={zh:["北","东北偏北","东北","东北偏东","东","东南偏东","东南","东南偏南",
              "南","西南偏南","西南","西南偏西","西","西北偏西","西北","西北偏北"],
-         en:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]};
-function compass(deg){ return X(CMP[lang==="tw"?"zh":lang][Math.round(deg/22.5)%16]); }
+         en:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"],
+         // Malay rose as MET Malaysia writes it: U utara, T timur, S selatan, B barat
+         ms:["U","UTL","TL","TTL","T","TMG","TG","STG","S","SBD","BD","BBD","B","BBL","BL","UBL"]};
+function compass(deg){ return X(CMP[LK()][Math.round(deg/22.5)%16]); }
 function fmtLat(v){ return Math.abs(v).toFixed(1)+(v<0?"S":"N"); }
 function fmtLon(v){ return Math.abs(v).toFixed(1)+(v<0?"W":"E"); }
 function ago(ms){
   var h=ms/36e5;
-  if(h<1) return Math.max(0,Math.round(h*60))+X(lang!=="en"?" 分钟":" min");
-  if(h<48) return h.toFixed(1)+X(lang!=="en"?" 小时":" h");
-  return (h/24).toFixed(1)+X(lang!=="en"?" 天":" d");
+  if(h<1) return Math.max(0,Math.round(h*60))+X(tr(" 分钟"," min"," min"));
+  if(h<48) return h.toFixed(1)+X(tr(" 小时"," h"," j"));
+  return (h/24).toFixed(1)+X(tr(" 天"," d"," hari"));
 }
 function shortT(iso){
   var d=new Date(iso);
@@ -690,7 +860,7 @@ function gpsRef(){
   var n=nearestRef(GPSFIX.lat,GPSFIX.lon);
   return {id:"__gps", gps:true, grp:n.ref.grp, lat:GPSFIX.lat, lon:GPSFIX.lon,
           acc:GPSFIX.acc, at:GPSFIX.t, base:n.ref, baseKm:n.km,
-          zh:"我的位置", en:"My location"};
+          zh:"我的位置", en:"My location", ms:"Lokasi saya"};
 }
 /* What the reader chose: "__gps", a place id, or null (never chosen). A place
    picked by hand always wins over the location — someone in KL checking on
@@ -798,10 +968,10 @@ function renderFresh(){
     if(!box.classList.contains("stale")) box.classList.add("warnish");
     box.appendChild(el("span","probs",fill(L("freshLag"),{list:lagging.map(function(s){
       var a=stormAgeH(s);
-      return stormLabel(s)+(lang==="en"?" (":"（")+
+      return stormLabel(s)+(LAT()?" (":"（")+
         (s.unavailable?L("unavail"):fill(L("lagAge"),{age:ago(a*36e5)}))+
-        (lang==="en"?")":"）");
-    }).join(lang==="en"?"; ":"、")})));
+        (LAT()?")":"）");
+    }).join(LAT()?"; ":"、")})));
   }
 
   /* A run can succeed overall and still lose one storm, one GDACS call or the
@@ -954,7 +1124,7 @@ function equatorSVG(W,PY,minLa,maxLa,K){
          '" stroke="#476e39" stroke-width="'+K.toFixed(2)+'" stroke-dasharray="'+
          (7*K).toFixed(1)+' '+(6*K).toFixed(1)+'"/>'+
          '<text x="'+(6*K).toFixed(1)+'" y="'+(PY(0)-5*K).toFixed(1)+
-         '" fill="#7aa862" font-size="'+fs+'">'+X(lang!=="en"?"赤道":"Equator")+'</text>';
+         '" fill="#7aa862" font-size="'+fs+'">'+X(tr("赤道","Equator","Khatulistiwa"))+'</text>';
 }
 
 function overviewMap(storms,others,ref){
@@ -1054,7 +1224,7 @@ function overviewMap(storms,others,ref){
   var rx=0, ry=0, refTxt="";
   if(ref){
     rx=+PX(ref.lon).toFixed(1); ry=+PY(ref.lat).toFixed(1);
-    refTxt=X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"");
+    refTxt=X(pn(ref)).replace(/[<>&]/g,"");
     LBOX.push({x:rx-5,y:ry+4,w:10});               // your place: the dot
     LBOX.push({x:rx+7,y:ry+4,w:labelW(refTxt)});   // your place: its name
   }
@@ -1240,7 +1410,7 @@ function trackPlot(s,ref){
        '<text x="'+(rx+6*K).toFixed(1)+'" y="'+(ry+4*K).toFixed(1)+
        '" fill="#e2ebf4" font-size="'+FST+'" paint-order="stroke" stroke="#081019"'+
        ' stroke-width="'+(3*K).toFixed(1)+'">'+
-       X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
+       X(pn(ref)).replace(/[<>&]/g,"")+'</text>';
   }
   // Name sits with the storm. Western Pacific tracks run up and to the LEFT
   // (northwest), so the forecast dots and their +NNh labels crowd that side.
@@ -1279,40 +1449,40 @@ function trackPlot(s,ref){
 /* ---- decode --------------------------------------------------------- */
 function decodeList(s){
   var c=s.current||{}, ul=el("ul","decode"), items=[];
-  if(s.issued) items.push([bothT(s.issued), lang!=="en"
-    ? "发表时刻（世界时）。气象厅以日本时间发表，本页统一换算成世界时；马来西亚时间＝世界时 +8 小时，日本时间 −1 小时。"
-    : "Issue time in UTC. JMA publishes in JST; Malaysia is UTC+8, one hour behind Japan."]);
-  if(c.wind_ms!=null) items.push([jterm("最大風速")+" · "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", lang!=="en"
-    ? "10 分钟平均风速——和大马气象局同一个标准，可以直接比较。美国 JTWC 用 1 分钟平均，同一个台风会高出约 14%。"
-    : "A 10-minute average — the same standard MET Malaysia uses, so the numbers are directly comparable. JTWC's 1-minute average runs about 14% higher for the same storm."]);
-  if(c.gust_ms!=null) items.push([jterm("最大瞬間風速")+" · "+c.gust_ms+" m/s", lang!=="en"
-    ? "瞬间最大值，通常是持续风的 1.3–1.5 倍。吹倒树、掀屋顶的是它，不是平均风。"
-    : "The instantaneous peak, typically 1.3–1.5× the sustained wind. This is what takes down trees and roofs."]);
-  if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", lang!=="en"
-    ? "中心气压。数字越低越强——这是气象厅判断强度的主要依据，和风速是一体两面。"
-    : "Central pressure. Lower is stronger — JMA's primary intensity measure, the other side of the same coin as wind speed."]);
+  if(s.issued) items.push([bothT(s.issued), tr("发表时刻（世界时）。气象厅以日本时间发表，本页统一换算成世界时；马来西亚时间＝世界时 +8 小时，日本时间 −1 小时。",
+      "Issue time in UTC. JMA publishes in JST; Malaysia is UTC+8, one hour behind Japan.",
+      "Waktu dikeluarkan dalam UTC. JMA menerbitkan dalam waktu Jepun (JST); Malaysia ialah UTC+8, sejam di belakang Jepun.")]);
+  if(c.wind_ms!=null) items.push([jterm("最大風速")+" · "+c.wind_ms+" m/s ("+c.wind_kt+" kt)", tr("10 分钟平均风速——和大马气象局同一个标准，可以直接比较。美国 JTWC 用 1 分钟平均，同一个台风会高出约 14%。",
+      "A 10-minute average — the same standard MET Malaysia uses, so the numbers are directly comparable. JTWC's 1-minute average runs about 14% higher for the same storm.",
+      "Purata 10 minit — piawai yang sama digunakan oleh MET Malaysia, jadi nombornya boleh dibandingkan terus. Purata 1 minit JTWC kira-kira 14% lebih tinggi bagi ribut yang sama.")]);
+  if(c.gust_ms!=null) items.push([jterm("最大瞬間風速")+" · "+c.gust_ms+" m/s", tr("瞬间最大值，通常是持续风的 1.3–1.5 倍。吹倒树、掀屋顶的是它，不是平均风。",
+      "The instantaneous peak, typically 1.3–1.5× the sustained wind. This is what takes down trees and roofs.",
+      "Nilai puncak serta-merta, biasanya 1.3–1.5 kali angin berterusan. Inilah yang menumbangkan pokok dan menerbangkan bumbung.")]);
+  if(c.pressure_hpa!=null) items.push([c.pressure_hpa+" hPa", tr("中心气压。数字越低越强——这是气象厅判断强度的主要依据，和风速是一体两面。",
+      "Central pressure. Lower is stronger — JMA's primary intensity measure, the other side of the same coin as wind speed.",
+      "Tekanan pusat. Lebih rendah bermakna lebih kuat — ukuran utama keamatan bagi JMA, dua sisi syiling yang sama dengan kelajuan angin.")]);
   if(c.course_jp){
     var cg=jp(c.course_jp), cbits=[c.course_jp+(cg&&cg!==c.course_jp?" = "+cg:"")];
     if(c.move_kt!=null) cbits.push(c.move_kt+" kt");
     if(c.speed_note_jp) cbits.push(c.speed_note_jp+" = "+jp(c.speed_note_jp));
-    items.push([cbits.join(" · "), lang!=="en"
-    ? "进行方向是「去向」"+(c.move_deg!=null?"（"+c.move_deg+"°，即朝"+compass(c.move_deg)+"）":"")+"。风向则相反，用「来向」——最容易搞混的地方。速度很慢时气象厅不给数字，只写「ゆっくり」（缓慢）或「ほとんど停滞」（几乎停滞）。"
-    : "Course is where it is going"+(c.move_deg!=null?" ("+c.move_deg+"°, toward "+compass(c.move_deg)+")":"")+". Wind direction uses the opposite convention. When movement is slow JMA gives no number, only ゆっくり (slow) or ほとんど停滞 (nearly stationary)."]);
+    items.push([cbits.join(" · "), tr("进行方向是「去向」"+(c.move_deg!=null?"（"+c.move_deg+"°，即朝"+compass(c.move_deg)+"）":"")+"。风向则相反，用「来向」——最容易搞混的地方。速度很慢时气象厅不给数字，只写「ゆっくり」（缓慢）或「ほとんど停滞」（几乎停滞）。",
+      "Course is where it is going"+(c.move_deg!=null?" ("+c.move_deg+"°, toward "+compass(c.move_deg)+")":"")+". Wind direction uses the opposite convention. When movement is slow JMA gives no number, only ゆっくり (slow) or ほとんど停滞 (nearly stationary).",
+      "Arah gerakan ialah ke mana ia sedang menuju"+(c.move_deg!=null?" ("+c.move_deg+"°, ke arah "+compass(c.move_deg)+")":"")+". Arah angin menggunakan konvensyen yang bertentangan (dari mana angin datang). Apabila gerakannya perlahan, JMA tidak memberi nombor, hanya ゆっくり (perlahan) atau ほとんど停滞 (hampir pegun).")]);
   }
-  if(c.accuracy_jp) items.push([jterm("位置")+" · "+c.accuracy_jp+" = "+jp(c.accuracy_jp), lang!=="en"
-    ? "定位精度：正確（准确）／ほぼ正確（大致准确）／不確実（不确定）。连现在的位置都分等级，预报位置的不确定只会更大。"
-    : "Position accuracy: 正確 exact / ほぼ正確 nearly exact / 不確実 uncertain. Even the present position is graded — forecast positions are looser still."]);
-  if((c.storm_radii||[]).length) items.push([jterm("暴風域")+" · "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
-    ? "暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。"
-    : "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold."]);
-  if((c.gale_radii||[]).length) items.push([jterm("強風域")+" · "+c.gale_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), lang!=="en"
-    ? "强风域＝风速 15 m/s 以上的范围，比暴风域大得多，也是先到的那一圈。同样按方位分开列。"
-    : "The gale area is where winds reach 15 m/s or more. It is much larger than the storm area and it arrives first. Listed per sector, for the same reason."]);
+  if(c.accuracy_jp) items.push([jterm("位置")+" · "+c.accuracy_jp+" = "+jp(c.accuracy_jp), tr("定位精度：正確（准确）／ほぼ正確（大致准确）／不確実（不确定）。连现在的位置都分等级，预报位置的不确定只会更大。",
+      "Position accuracy: 正確 exact / ほぼ正確 nearly exact / 不確実 uncertain. Even the present position is graded — forecast positions are looser still.",
+      "Ketepatan kedudukan: 正確 tepat / ほぼ正確 hampir tepat / 不確実 tidak pasti. Kedudukan semasa pun digredkan — kedudukan ramalan lebih longgar lagi.")]);
+  if((c.storm_radii||[]).length) items.push([jterm("暴風域")+" · "+c.storm_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), tr("暴风域＝风速 25 m/s 以上的范围，按方位分开列，因为台风从来不是圆的。強風域则是 15 m/s 以上。",
+      "The storm area is where winds reach 25 m/s or more, listed per sector because storms are never circular. The gale area (強風域) is the 15 m/s threshold.",
+      "Kawasan ribut ialah kawasan angin 25 m/s ke atas, disenaraikan mengikut sektor kerana ribut tidak pernah bulat. Kawasan angin kencang (強風域) ialah ambang 15 m/s.")]);
+  if((c.gale_radii||[]).length) items.push([jterm("強風域")+" · "+c.gale_radii.map(function(r){return jp(r.area_jp)+" "+r.km+" km";}).join(" / "), tr("强风域＝风速 15 m/s 以上的范围，比暴风域大得多，也是先到的那一圈。同样按方位分开列。",
+      "The gale area is where winds reach 15 m/s or more. It is much larger than the storm area and it arrives first. Listed per sector, for the same reason.",
+      "Kawasan angin kencang ialah kawasan angin 15 m/s ke atas. Ia jauh lebih besar daripada kawasan ribut dan tiba lebih dahulu. Disenaraikan mengikut sektor atas sebab yang sama.")]);
   if(stormEnded(s)) items.push([L("ended"), L("endedNote")]);
   var f0=(s.forecast||[])[0];
-  if(f0&&f0.circle_km) items.push([jterm("予報円")+" · "+f0.circle_km+" km @ +"+f0.tau+"h", lang!=="en"
-    ? "预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。"
-    : "The forecast circle: a 70% chance the centre falls inside it. A bigger circle means a less predictable track, and says nothing about intensity. Watch it grow with lead time — that is uncertainty made visible."]);
+  if(f0&&f0.circle_km) items.push([jterm("予報円")+" · "+f0.circle_km+" km @ +"+f0.tau+"h", tr("预报圆：台风中心有 7 成机会落在圈内。圈越大代表路径越难预测，和台风强弱无关。注意圈会随时间变大——这就是不确定度增长的样子。",
+      "The forecast circle: a 70% chance the centre falls inside it. A bigger circle means a less predictable track, and says nothing about intensity. Watch it grow with lead time — that is uncertainty made visible.",
+      "Bulatan ramalan: 70% peluang pusat ribut jatuh di dalamnya. Bulatan yang lebih besar bermakna laluan yang kurang dapat diramal, dan tidak menunjukkan keamatan. Perhatikan ia membesar mengikut masa — itulah ketidakpastian yang dapat dilihat.")]);
   items.forEach(function(p){
     var li=el("li"); li.appendChild(el("code",null,p[0])); li.appendChild(el("span",null,p[1])); ul.appendChild(li);
   });
@@ -1407,9 +1577,10 @@ function stormLabel(s,full){
   if(!s.name_en && !s.parsed && s.unavailable) return L("sysLabel")+" "+(n||s.id||"?");
   if(s.name_en && /^\d+$/.test(n)){
     if(lang==="en") return "Typhoon "+n.slice(-2)+" "+s.name_en;
+    if(lang==="ms") return "Taufan "+n.slice(-2)+" "+s.name_en;
     return "台风 "+n.slice(-2)+" 号 "+(c?c+(full?" "+s.name_en:""):s.name_en);
   }
-  if(s.name_en) return lang!=="en"&&c ? c+(full?" "+s.name_en:"") : s.name_en;
+  if(s.name_en) return !LAT()&&c ? c+(full?" "+s.name_en:"") : s.name_en;
   return L("tdLetter")+(n?" "+n:"");
 }
 
@@ -1450,10 +1621,12 @@ function squallFor(lat,lon){
   return {town:t,st:st,n:st.n||null,tr:st.n&&st.n.towns?(st.n.towns[t.id]||null):null};
 }
 function squallOn(q){ return !!(q&&q.n&&q.n.level&&SQ_ON[q.n.level]); }
+var MSMON=["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"];
 function nightLabel(n){
   var m=Date.parse(n.m0), eve=new Date(m-6e4+8*36e5), mor=new Date(m+8*36e5);
   if(lang==="en") return "night of "+eve.getUTCDate()+"–"+mor.getUTCDate()+" "+
     ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][mor.getUTCMonth()];
+  if(lang==="ms") return "malam "+eve.getUTCDate()+"–"+mor.getUTCDate()+" "+MSMON[mor.getUTCMonth()];
   return (eve.getUTCMonth()+1)+"月"+eve.getUTCDate()+"日晚到"+
     (eve.getUTCMonth()===mor.getUTCMonth()?"":(mor.getUTCMonth()+1)+"月")+mor.getUTCDate()+"日早上";
 }
@@ -1485,6 +1658,7 @@ function surgeActive(st){ return !!(st&&!st.none&&!st.stale&&(st.nowOn||st.soon)
 function surgePlace(ref){ return SURGE_PLACES.indexOf(presRef(ref).id)>-1; }
 function dayLabel(iso){
   var p=iso.split("-");
+  if(lang==="ms") return (+p[2])+" "+MSMON[+p[1]-1];
   return lang==="en"?(+p[2])+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1]-1]
                     :(+p[1])+"月"+(+p[2])+"日";
 }
@@ -1598,7 +1772,7 @@ function squallBox(ref){
   }
   var t=squallTown(ref.lat,ref.lon);
   if(!t) return null;
-  var tname=lang==="en"?t.en:t.zh;
+  var tname=pn(t);
   var head=el("div","cardhead");
   head.appendChild(el("div","k",st.n?fill(L("sqNight"),{night:nightLabel(st.n)}):L("sqTitle")));
   box.appendChild(head);
@@ -1612,7 +1786,7 @@ function squallBox(ref){
         L("sqLv")[n.level]+" · "+n.score+"/100"));
     } else {
       var miss=n.blocked==="window"?[L("sqIng").window]:(n.lacking||[]).map(function(k){ return L("sqIng")[k]||k; });
-      box.appendChild(el("div",null,fill(L("sqBlocked"),{list:miss.join(lang==="en"?", ":"、")})));
+      box.appendChild(el("div",null,fill(L("sqBlocked"),{list:miss.join(LAT()?", ":"、")})));
     }
     if(tr){
       var sig=(S&&S.sig)||{rain:2,gust:45};
@@ -1659,60 +1833,61 @@ function plainLines(ref,P,nchg){
   if(ref.gps && ref.baseKm>GPS_MAXKM) return null;   // too far to mean anything
   var e=P.places[presRef(ref).id];
   if(!e || !presFresh(P,e)) return null;   // never read a stale trend
-  var rd=reading(e,nchg,ref.lat,ref.lon,presRef(ref).id), chg=rd.chg, surge=rd.surge, g=rd.g, out=[], W=lang!=="en";
+  var rd=reading(e,nchg,ref.lat,ref.lon,presRef(ref).id), chg=rd.chg, surge=rd.surge, g=rd.g, out=[], W=!LAT(), M=lang==="ms";
   if(!g) return null;
   var active=((DOC&&DOC.storms)||[]).some(function(s){ return !s.unavailable&&!stormEnded(s); });
 
   if(g.k==="wet"){
-    out.push(W?"接下来偏湿。":"Leaning wetter.");
+    out.push(W?"接下来偏湿。":(M?"Cenderung lebih basah.":"Leaning wetter."));
     if(chg<=-0.7)
       out.push(W?("我们这里的气压 24 小时里降了 "+Math.abs(chg).toFixed(1)+" 百帕。气压降，通常代表水气正在往这边聚。")
-                :("Pressure here has fallen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours. Falling pressure usually means moisture is gathering."));
+                :(M?("Tekanan di sini turun "+Math.abs(chg).toFixed(1)+" hPa dalam 24 jam. Tekanan yang turun biasanya bermakna wap air sedang berkumpul."):("Pressure here has fallen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours. Falling pressure usually means moisture is gathering.")));
     if(surge!==null&&surge>=1.5)
       out.push(W?("北方（香港、海口、三亚一带）的气压在升，我们这里没跟着升，两边差距拉开了 "+surge.toFixed(1)+" 百帕。差距越大，季风吹得越急，雨越容易一连下几天。")
-                :("Pressure to the north (Hong Kong, Haikou, Sanya) is rising while ours is not — the gap has widened by "+surge.toFixed(1)+" hPa. The wider that gap, the harder the monsoon blows, and the more likely rain runs for days."));
+                :(M?("Tekanan di utara (Hong Kong, Haikou, Sanya) sedang naik sedangkan tekanan kita tidak — jurangnya melebar sebanyak "+surge.toFixed(1)+" hPa. Semakin lebar jurang itu, semakin kencang monsun bertiup, dan semakin besar kemungkinan hujan berterusan berhari-hari."):("Pressure to the north (Hong Kong, Haikou, Sanya) is rising while ours is not — the gap has widened by "+surge.toFixed(1)+" hPa. The wider that gap, the harder the monsoon blows, and the more likely rain runs for days.")));
   } else if(g.k==="dry"){
-    out.push(W?"接下来偏干，但会闷、会热。":"Leaning drier — but stifling and hot.");
+    out.push(W?"接下来偏干，但会闷、会热。":(M?"Cenderung lebih kering — tetapi panas dan berbahang.":"Leaning drier — but stifling and hot."));
     out.push(W?("我们这里的气压 24 小时里升了 "+Math.abs(chg).toFixed(1)+" 百帕，同一个模式未来 24 小时在这里也只有 "+e.rain24.toFixed(1)+" 毫米雨。")
-              :("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours, and the same model has only "+e.rain24.toFixed(1)+" mm of rain here over the next 24 hours."));
+              :(M?("Tekanan di sini naik "+Math.abs(chg).toFixed(1)+" hPa dalam 24 jam, dan model yang sama hanya memberi "+e.rain24.toFixed(1)+" mm hujan di sini dalam 24 jam akan datang."):("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours, and the same model has only "+e.rain24.toFixed(1)+" mm of rain here over the next 24 hours.")));
     // The typhoon-subsidence story is told only when there is a typhoon to
     // tell it about, and even then as a possible cause: pressure can rise
     // for other reasons, and this page cannot tell which.
     if(active)
       out.push(W?"有台风在活动时，常见的原因是：台风像抽风机，把空气抽上去，抽走的空气总要沉回来，常常就沉在我们头顶。空气一沉，云就长不高，午后雷雨打不上来——所以会闷热、会积霾，但不太下雨。不过气压上升也可能有别的原因，本页分不出来。"
-                :"When a typhoon is active, a common reason is this: it pumps air upward, and that air has to sink back down somewhere — often over us. Sinking air stops clouds growing tall, so the afternoon storms never fire: hot, sticky, hazy, but little rain. Pressure can rise for other reasons too, and this page cannot tell which.");
+                :(M?"Apabila ada taufan aktif, sebab yang biasa ialah: taufan mengepam udara ke atas, dan udara itu mesti turun semula di suatu tempat — selalunya di atas kita. Udara yang turun menghalang awan tumbuh tinggi, jadi ribut petir petang tidak menjadi: panas, melekit, berjerebu, tetapi kurang hujan. Tekanan juga boleh naik atas sebab lain, dan halaman ini tidak dapat membezakannya.":"When a typhoon is active, a common reason is this: it pumps air upward, and that air has to sink back down somewhere — often over us. Sinking air stops clouds growing tall, so the afternoon storms never fire: hot, sticky, hazy, but little rain. Pressure can rise for other reasons too, and this page cannot tell which."));
   } else if(g.k==="held"){
-    out.push(W?"不判转干。":"No \u201cdrier\u201d call.");
+    out.push(W?"不判转干。":(M?"Tiada bacaan \u201clebih kering\u201d.":"No \u201cdrier\u201d call."));
     out.push(W?("我们这里的气压 24 小时里升了 "+Math.abs(chg).toFixed(1)+" 百帕——单看气压，会读成转干。但是：")
-              :("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours — on pressure alone that reads as drier. But:"));
+              :(M?("Tekanan di sini naik "+Math.abs(chg).toFixed(1)+" hPa dalam 24 jam — jika dilihat pada tekanan sahaja, ini dibaca sebagai lebih kering. Tetapi:"):("Pressure here has risen "+Math.abs(chg).toFixed(1)+" hPa in 24 hours — on pressure alone that reads as drier. But:")));
     g.why.forEach(function(w){
       if(w.k==="rain")
         out.push(W?("同一个模式未来 24 小时在这里仍有 "+w.mm.toFixed(1)+" 毫米雨"+(w.max!=null?"（最大的一小时 "+w.max.toFixed(1)+" 毫米）":"")+"，所以不说转干。")
-                  :("the same model still has "+w.mm.toFixed(1)+" mm of rain here over the next 24 hours"+(w.max!=null?" (wettest hour "+w.max.toFixed(1)+" mm)":"")+", so this is not called drier."));
+                  :(M?("model yang sama masih memberi "+w.mm.toFixed(1)+" mm hujan di sini dalam 24 jam akan datang"+(w.max!=null?" (jam paling basah "+w.max.toFixed(1)+" mm)":"")+", jadi ini tidak dibaca sebagai lebih kering."):("the same model still has "+w.mm.toFixed(1)+" mm of rain here over the next 24 hours"+(w.max!=null?" (wettest hour "+w.max.toFixed(1)+" mm)":"")+", so this is not called drier.")));
       else if(w.k==="surge"){
         var S_=w.cs.S, v_=w.cs.nowOn?S_.now:w.cs.soon.v;
         out.push(W?("南海北部的东北季风冷涌指数"+(w.cs.nowOn?"现在":"预计 "+dayLabel(w.cs.soon.date)+" ")+"达到「"+L("csGrade")[surgeGrade(v_,S_)]+"」（北风 "+v_.toFixed(1)+" 米/秒，门槛 "+S_.threshold+"）。冷涌会把季风的雨推到这里；详情在下面。")
-                  :("the north-east monsoon cold surge index "+(w.cs.nowOn?"is now":"is forecast for "+dayLabel(w.cs.soon.date)+" to be")+" at "+L("csGrade")[surgeGrade(v_,S_)].toLowerCase()+" (northerly "+v_.toFixed(1)+" m/s, threshold "+S_.threshold+"). A surge pushes the monsoon's rain onto this area; details below."));
+                  :(M?("indeks luruan sejuk monsun timur laut "+(w.cs.nowOn?"kini berada":"diramal pada "+dayLabel(w.cs.soon.date)+" berada")+" pada tahap "+L("csGrade")[surgeGrade(v_,S_)].toLowerCase()+" (angin utara "+v_.toFixed(1)+" m/s, ambang "+S_.threshold+"). Luruan menolak hujan monsun ke kawasan ini; butiran di bawah."):("the north-east monsoon cold surge index "+(w.cs.nowOn?"is now":"is forecast for "+dayLabel(w.cs.soon.date)+" to be")+" at "+L("csGrade")[surgeGrade(v_,S_)].toLowerCase()+" (northerly "+v_.toFixed(1)+" m/s, threshold "+S_.threshold+"). A surge pushes the monsoon's rain onto this area; details below.")));
       }
       else if(w.k==="squall")
         out.push(W?("今晚苏门答腊飑线的条件是「"+L("sqLv")[w.q.n.level]+"」（"+w.q.n.score+" 分）。飑线只有几十公里宽，气压走向看不到它；详情在下面。")
-                  :("tonight's Sumatra squall setup is "+L("sqLv")[w.q.n.level]+" ("+w.q.n.score+"/100). A squall is tens of km wide and the pressure trend cannot see it; details below."));
+                  :(M?("keadaan garis badai Sumatera malam ini: "+L("sqLv")[w.q.n.level]+" ("+w.q.n.score+"/100). Garis badai hanya berpuluh km lebar dan arah aliran tekanan tidak dapat melihatnya; butiran di bawah."):("tonight's Sumatra squall setup is "+L("sqLv")[w.q.n.level]+" ("+w.q.n.score+"/100). A squall is tens of km wide and the pressure trend cannot see it; details below.")));
       else
         out.push(W?"这一次没有模式雨量可以核对，所以不说转干。"
-                  :"there is no model rainfall to check it against this time, so this is not called drier.");
+                  :(M?"kali ini tiada hujan model untuk menyemaknya, jadi ini tidak dibaca sebagai lebih kering.":"there is no model rainfall to check it against this time, so this is not called drier."));
     });
   } else {
-    out.push(W?"暂时平稳，看不出明显方向。":"Steady for now, no clear direction.");
+    out.push(W?"暂时平稳，看不出明显方向。":(M?"Stabil buat masa ini, tiada arah yang jelas.":"Steady for now, no clear direction."));
     out.push(W?("气压 24 小时几乎没动（"+(chg>0?"+":"")+chg.toFixed(1)+" 百帕）。天可能灰灰的，中层云飘过来，但不一定下得成雨。这种时候最难讲，也不值得为它改动安排——等下一次更新再看。")
-              :("Pressure has barely moved in 24 hours ("+(chg>0?"+":"")+chg.toFixed(1)+" hPa). It may look grey as mid-level cloud drifts over, without the rain following. This is the hardest state to call, and not one to change your plans for — wait for the next update."));
+              :(M?("Tekanan hampir tidak berubah dalam 24 jam ("+(chg>0?"+":"")+chg.toFixed(1)+" hPa). Langit mungkin kelabu apabila awan aras tengah berarak lalu, tanpa hujan menyusul. Inilah keadaan paling sukar dibaca, dan bukan sebab untuk mengubah rancangan — tunggu kemas kini seterusnya."):("Pressure has barely moved in 24 hours ("+(chg>0?"+":"")+chg.toFixed(1)+" hPa). It may look grey as mid-level cloud drifts over, without the rain following. This is the hardest state to call, and not one to change your plans for — wait for the next update.")));
   }
 
   var ph=monsoon(DOC&&DOC.generated);
   if(g.k==="wet"&&ph!=="inter")
     out.push(W?(ph==="ne"?"现在是东北季风季，雨通常先落在吉兰丹、丁加奴和彭亨东岸。"
                         :"现在是西南季风季，雨通常偏向西海岸和砂拉越。")
-              :(ph==="ne"?"It is northeast monsoon season, so the rain usually lands first on Kelantan, Terengganu and east Pahang."
-                        :"It is southwest monsoon season, so the rain tends to favour the west coast and Sarawak."));
+              :(M?(ph==="ne"?"Kini musim monsun timur laut, jadi hujan biasanya turun dahulu di Kelantan, Terengganu dan pantai timur Pahang."
+                        :"Kini musim monsun barat daya, jadi hujan cenderung lebih banyak di pantai barat dan Sarawak."):(ph==="ne"?"It is northeast monsoon season, so the rain usually lands first on Kelantan, Terengganu and east Pahang."
+                        :"It is southwest monsoon season, so the rain tends to favour the west coast and Sarawak.")));
 
   // The lead card names only the nearest storm, but must say how many exist,
   // so a second system in the basin is never invisible to someone who reads
@@ -1731,10 +1906,13 @@ function plainLines(ref,P,nchg){
                 stormLabel(near.s)+"，在 "+Math.round(near.d).toLocaleString()+" 公里外"+scsLine(near.s)+"。"+
                 (many?"其余的在下面的台风情报里都有。":"")+
                 "台风本身几乎不会打到马来西亚，影响我们的是它把季风变强。")
-              :((many?("There are "+count+" systems in the region; the nearest is "):"The nearest typhoon is ")+
+              :(M?((many?("Terdapat "+count+" sistem di rantau ini; yang terdekat ialah "):"Taufan terdekat ialah ")+
+                stormLabel(near.s)+", "+Math.round(near.d).toLocaleString()+" km jauhnya"+scsLine(near.s)+". "+
+                (many?"Yang lain disenaraikan di bawah. ":"")+
+                "Taufan sendiri hampir tidak pernah sampai ke Malaysia; yang sampai kepada kita ialah monsun yang diperkuatnya."):((many?("There are "+count+" systems in the region; the nearest is "):"The nearest typhoon is ")+
                 stormLabel(near.s)+", "+Math.round(near.d).toLocaleString()+" km away"+scsLine(near.s)+". "+
                 (many?"The rest are listed below. ":"")+
-                "Typhoons themselves almost never reach Malaysia; what reaches us is the monsoon they strengthen."));
+                "Typhoons themselves almost never reach Malaysia; what reaches us is the monsoon they strengthen.")));
   }
   return {lines:out,g:g,chg:chg,surge:surge};
 }
@@ -1766,7 +1944,7 @@ function renderSimple(){
   var r=plainLines(ref,P,northChange(P));
   if(!r){ box.appendChild(el("div",null,L("presNone"))); withSquall(); return; }
   var head=el("div","cardhead");
-  head.appendChild(el("div","sname",(lang==="en"?ref.en:ref.zh)));
+  head.appendChild(el("div","sname",(pn(ref))));
   var hb=el("div","badges");
   hb.appendChild(regBadge(r.g));
   var q=squallFor(ref.lat,ref.lon);
@@ -1782,7 +1960,7 @@ function renderSimple(){
   r.lines.forEach(function(t){ box.appendChild(el("p","plain",t)); });
   if(ref.gps){
     var bl=el("div","pos",fill(L("gpsBase"),
-      {place:(lang==="en"?ref.base.en:ref.base.zh),km:Math.round(ref.baseKm)}));
+      {place:(pn(ref.base)),km:Math.round(ref.baseKm)}));
     if(ref.baseKm>120){ bl.textContent+=" "+X(L("gpsRough")); bl.style.color="#ffd489"; }
     box.appendChild(bl);
   }
@@ -1888,7 +2066,7 @@ function renderTrend(){
       var ok=presFresh(P,e), rd=ok?reading(e,nchg,r.lat,r.lon,r.id):null;
       var surge=rd?rd.surge:null, g=rd?rd.g:null;
       var row=el("div","inv"), left=el("div");
-      left.appendChild(el("div",null,(lang==="en"?r.en:r.zh)));
+      left.appendChild(el("div",null,(pn(r))));
       var bits=[e.hpa.toFixed(1)+" "+L("hpa")];
       if(e.change24!==null&&e.change24!==undefined)
         bits.push("24h "+(e.change24<0?"▼":"▲")+Math.abs(e.change24).toFixed(1));
@@ -1987,7 +2165,7 @@ function stormCard(s,n){
     var d0=hav(c.lat,c.lon,ref.lat,ref.lon), line=el("div","rangeline");
     var p1=document.createElement("div");
     p1.innerHTML=X(fill(L("rangeNow"),{km:Math.round(d0).toLocaleString(),
-      place:(lang==="en"?ref.en:ref.zh), dir:compass(bearing(ref.lat,ref.lon,c.lat,c.lon))}));
+      place:(pn(ref)), dir:compass(bearing(ref.lat,ref.lon,c.lat,c.lon))}));
     line.appendChild(p1);
     var best=null;
     (s.forecast||[]).forEach(function(f){
@@ -2062,7 +2240,7 @@ function renderRegion(){
     var here=ref?P.places[presRef(ref).id]:null;
     if(here){
       var line=document.createElement("div");
-      var txt=fill(L("presAt"),{place:(lang==="en"?ref.en:ref.zh),hpa:here.hpa.toFixed(1)});
+      var txt=fill(L("presAt"),{place:(pn(ref)),hpa:here.hpa.toFixed(1)});
       if(!presFresh(P,here)){
         txt+=" · ⚠ "+L("presOld");
       } else if(here.change24===null||here.change24===undefined){
@@ -2085,7 +2263,7 @@ function renderRegion(){
       .sort(function(a,b){ return a.c-b.c; }).slice(0,3);
     if(falls.length){
       strip.appendChild(el("div","pos",L("presFalls")+falls.map(function(f){
-        return (lang==="en"?f.r.en:f.r.zh)+" ▼"+Math.abs(f.c).toFixed(1);
+        return (pn(f.r))+" ▼"+Math.abs(f.c).toFixed(1);
       }).join(" · ")));
     }
     if(here && !presFresh(P,here))
@@ -2118,7 +2296,7 @@ function renderOthers(){
     left.appendChild(el("div",null,title));
     var bits=[fmtLat(o.lat)+" "+fmtLon(o.lon)];
     if(ref&&isFinite(o._d)) bits.push(fill(L("away"),{km:Math.round(o._d).toLocaleString(),
-                              place:(lang==="en"?ref.en:ref.zh)}));
+                              place:(pn(ref))}));
     if(o.severity!=null) bits.push(o.severity+" "+(o.severity_unit||""));
     left.appendChild(el("div","pos",bits.join(" · ")));
     row.appendChild(left);
@@ -2154,7 +2332,7 @@ function renderGone(box){
   d.appendChild(el("div","k",X(L("goneT"))));
   gone.forEach(function(g){
     d.appendChild(el("div",null,X(fill(L("goneOne"),
-      {n:(lang!=="en"&&cname(g.name_en)?cname(g.name_en)+" ":"")+(g.name_en||g.id||"?"),
+      {n:(!LAT()&&cname(g.name_en)?cname(g.name_en)+" ":"")+(g.name_en||g.id||"?"),
        t:bothT(g.last_seen)}))));
   });
   box.appendChild(d);
@@ -2178,6 +2356,24 @@ zh:[
  ["为什么标出南海",
   "进入南海的台风，对马来西亚的影响通常比留在菲律宾以东的大：它更靠近，也更容易把南海的南北气压差拉开、把季风涌推下来。本页在台风卡片上标出「在南海」或「几小时后在南海」，根据的是气象厅公布的实况和预报位置。\n南海在这里是一个画出来的框：北纬 3–23°、东经 105–120°（包括北部湾）。这是为了这个标签画的，不是官方的海域界线。"],
  ["马来西亚为什么要看台风","半岛几乎不会被台风正面登陆——纬度太低，科氏力太弱，气旋转不起来。真正的影响是间接的：西北太平洋或南海的台风会拉紧气压梯度、加强东北季风涌流，把连续大雨推到吉兰丹、丁加奴、彭亨东岸。看台风，其实是提前几天看季风涌。"]
+],
+ms:[
+ ["Mengapa JMA dan bukan JTWC","Pelayan JTWC memulangkan 403 kepada setiap IP pusat data, jadi pelayan GitHub tidak dapat menghubunginya. JMA ialah Pusat Meteorologi Khusus Serantau yang ditetapkan WMO bagi Pasifik Utara barat (RSMC Tokyo) — pihak berkuasa rasmi bagi lembangan ini. JTWC ialah perkhidmatan tentera AS yang kebetulan terbuka kepada umum. Pertukaran ini sebenarnya lebih dekat dengan konvensyen MET Malaysia sendiri."],
+ ["Angin 10 minit lawan 1 minit","JMA mengambil purata 10 minit, begitu juga MET Malaysia. JTWC mengambil purata 1 minit, yang kira-kira 14% lebih tinggi bagi ribut yang sama. Apabila dua agensi berbeza, semak tempoh puratanya dahulu sebelum memutuskan siapa yang salah. Lencana \"≈ Cat X\" di sini menukar angin 10 minit kepada asas 1 minit sebelum dibandingkan dengan skala Saffir-Simpson — ia hasil tukaran, bukan pengelasan JMA sendiri."],
+ ["TD / TS / STS / TY","Mengikut angin maksimum 10 minit: di bawah 17 m/s lekukan tropika, 17–24.5 ribut tropika, 24.5–32.7 ribut tropika kuat, melebihi 32.7 taufan. Dalam takrif JMA, perkataan \"taufan\" ialah tepat garis 33 m/s (kira-kira 64 knot) itu."],
+ ["Keamatan lawan saiz","JMA menggunakan dua skala berasingan: 強い / 非常に強い / 猛烈な menerangkan keamatan (kelajuan angin), manakala 大型 / 超大型 menerangkan saiz (jejari kawasan angin kencang). Ribut boleh ganas tetapi kecil, atau sangat besar tetapi lemah. Bacalah secara berasingan."],
+ ["Bulatan ramalan (予報円)","70% peluang pusat ribut jatuh di dalamnya. Lebih besar bermakna laluan kurang dapat diramal, dan tidak menunjukkan kekuatan. Ia membesar mengikut masa — itulah ketidakpastian yang dapat dilihat. Perhatikan ia menerangkan ke mana pusat ribut pergi, bukan sejauh mana kemusnahan sampai."],
+ ["Kawasan ribut lawan kawasan angin kencang","Kawasan ribut ialah 25 m/s ke atas; kawasan angin kencang ialah 15 m/s ke atas. Kedua-duanya disenaraikan mengikut sektor, kerana ribut tidak pernah bulat. Untuk keluasan, bacalah ini — bukan bulatan ramalan."],
+ ["Tekanan pusat","Ukuran utama keamatan bagi JMA. 920 hPa jauh lebih kuat daripada 970 hPa. Tekanan dan angin ialah dua sisi syiling yang sama, tetapi tekanan diukur dengan lebih langsung manakala angin biasanya dianggarkan."],
+ ["Lekukan berhuruf (a, b, c)","JMA hanya memberi nombor dan nama apabila sistem mencapai gred ribut tropika (17 m/s, 10 minit). Lekukan di bawah tahap itu diberi huruf mengikut urutan: a, b, c. Jadi huruf b dalam \"Lekukan tropika b\" ialah penamaan rasmi JMA sendiri, bukan data yang hilang.\nIni tidak sama dengan INVEST AS (90W-99W). INVEST hanyalah kawasan yang wajar diperhati dan mungkin belum ada peredaran tertutup; lekukan tropika JMA ialah sistem yang telah dinilai dan menerima buletin rasmi. INVEST ialah senarai pemerhatian; lekukan berhuruf sudah pun dinamakan."],
+ ["Apa itu GDACS","GDACS — Sistem Amaran dan Penyelarasan Bencana Global — ialah platform yang dikendalikan bersama oleh Pusat Penyelidikan Bersama Suruhanjaya Eropah dan Pejabat Penyelarasan Hal Ehwal Kemanusiaan PBB sejak 2004. Penggunanya ialah agensi bantuan. Ia bukan perkhidmatan cuaca dan tidak mengeluarkan ramalan: ia mengambil cerapan dan laluan pihak lain, kemudian menganggarkan berapa ramai orang dan berapa banyak infrastruktur yang berada di laluan itu, lalu memberi skor hijau, jingga atau merah.\nWarna itu ialah skor impak, bukan gred kekuatan — taufan ganas di tengah lautan boleh berwarna hijau, sistem lemah di pantai yang padat boleh berwarna jingga, dan sedikit anjakan pada laluan ramalan boleh mengubah amaran dari merah kembali ke hijau dalam dua hari. Laluan siklonnya kebanyakannya daripada JTWC dan NOAA AS, dan ia menggred mengikut Saffir-Simpson menggunakan angin 1 minit, jadi ribut yang sama dibaca kira-kira satu kategori lebih tinggi daripada asas 10 minit JMA.\nHalaman ini menggunakannya untuk mengisi satu jurang: JMA hanya menomborkan siklon yang diberi buletin rasmi, jadi tekanan rendah Laut China Selatan di bawah gred taufan tidak pernah muncul dalam bahagian di atas, dan GDACS kadangkala ada. Bacalah untuk mengetahui sama ada sesuatu wujud. Warnanya untuk agensi bantuan."],
+ ["Nama ribut","JMA memberi nama, dan hanya bermula dari gred ribut tropika (17 m/s) ke atas. Senarai itu milik Jawatankuasa Taufan WMO: 140 nama, sepuluh daripada setiap empat belas ahli, digunakan mengikut urutan lalu diulang semula. Malaysia antara penyumbangnya — antaranya Sepat, Merbok, Matmo dan Tapah.\nDalam Bahasa Melayu dan Inggeris, halaman ini memaparkan nama rumi JMA sebagaimana diterbitkan. Nama Cina pula bukan daripada JMA: CMA, Balai Cerap Hong Kong dan Biro Meteorologi Macau bersetuju dengan satu terjemahan bersama, yang dicetak oleh akhbar Cina Malaysia, dan halaman ini memaparkannya apabila dibaca dalam bahasa Cina.\nNama yang menyebabkan kerugian besar dibersarakan dan diganti — sembilan diganti bagi 2026. Apabila JMA menggunakan nama yang tiada dalam senarai halaman ini, nama rumi sahaja dipaparkan."],
+ ["Menyemaknya dengan langit","Halaman ini memberi anda arah aliran tekanan. Awan ialah separuh lagi, dan ia percuma — keluar, dongak ke langit, dan anda boleh menilai sama ada tiga bacaan ini tepat.\nLebih kering: taufan menarik udara ke atas dan apa yang naik mesti turun, selalunya di atas kita. Penurunan itu memanaskan dan mengeringkan aras tengah dan menutup perolakan. Jadi langit dipenuhi awan sirus dan sirostratus yang mengalir dari ribut — lapisan nipis seperti susu, kadangkala dengan halo mengelilingi matahari — manakala awan kumulus di bawahnya kekal rata dan rendah, tumbuh sedikit selepas tengah hari, tidak pernah tinggi, hilang menjelang petang. Jerebu terkumpul kerana tiada yang mencucinya. Panas, kelabu keputihan, tiada hujan.\nLebih basah (jurang luruan membuka): awan tiba berlapis-lapis, bukan tumbuh menjadi menara. Lapisan rendah kelabu masuk dari satu arah dari laut, dasarnya hanya beberapa ratus meter tinggi, dan ia kekal. Hujannya berterusan dan sederhana, bukan lebat-lalu-berhenti seperti ribut petir, dan angin bertiup tetap dan bukannya bertiup kencang kemudian reda. Bacalah arah dan ketahanannya: masuk dari laut, masih ada selepas gelap, itulah luruan.\nStabil: kitaran harian biasa. Cerah atau berkabus pada waktu subuh, kumulus tumbuh sepanjang pagi, beberapa menara mencapai saiz ribut petir pada waktu petang, dan di mana ia turun ialah nasib — 20 mm di lembah ini, tiada di lembah sebelah.\nPerkara paling mudah disalah faham: perisai sirus taufan selalunya menjangkau seribu kilometer atau lebih dari pusatnya. Awan tinggi yang hanyut dari timur laut bukan bukti sesuatu sedang datang. Ia aliran keluar ribut itu, dan selalunya ada udara turun di bawahnya, yang bermakna lebih kering, bukan lebih basah. Naluri bahawa langit seperti susu bermakna perubahan sedang datang biasanya terbalik di sini.\nBerbaloi dicatat: pada hari stabil, perhatikan sama ada kumulus kekal rata atau tumbuh tinggi. Itulah bacaan yang paling kurang buktinya bagi halaman ini, dan langit menjawabnya secara percuma."],
+ ["Indeks luruan sejuk",
+  "Semasa monsun timur laut (November hingga Mac), udara sejuk dari tanah besar China menolak ke selatan merentasi utara Laut China Selatan. Itulah luruan sejuk. Ia memperkuat monsun dan menolak wap air ke Kelantan, Terengganu, Pahang dan barat Sarawak — banyak banjir hujung tahun bermula begini.\nHalaman ini menggunakan takrif yang lazim dalam kajian (Chang, Harr & Chen, 2005): angin utara-selatan 925 hPa (kira-kira 800 m dari permukaan) dipuratakan sepanjang 15°U dari 110°T hingga 117.5°T. Angin utara melebihi 8 m/s ialah luruan; 8–10 lemah, 10–12 sederhana, melebihi 12 kuat. Ia mengukur angin di utara Laut China Selatan, bukan hujan di Malaysia: luruan biasanya mengambil masa sehari dua untuk sampai ke sini, dan luruan yang sama membawa lebih banyak hujan apabila Ayunan Madden–Julian (MJO) aktif.\nIndeks ini ialah takrif yang diterbitkan, bukan peraturan rekaan halaman ini; anginnya daripada model ECMWF, dan hari selepas hari ini ialah ramalan model."],
+ ["Mengapa Laut China Selatan ditanda",
+  "Taufan yang memasuki Laut China Selatan biasanya lebih penting kepada Malaysia daripada yang kekal di timur Filipina: ia lebih dekat, dan lebih mudah melebarkan perbezaan tekanan utara-selatan merentasi laut itu serta menolak luruan monsun ke selatan. Kad ribut ditanda “Di Laut China Selatan” atau “menjelang +N j” berdasarkan kedudukan analisis dan ramalan yang diterbitkan JMA.\nLaut China Selatan di sini ialah kotak yang dilukis: 3–23°U, 105–120°T (termasuk Teluk Tonkin). Ia dilukis untuk label ini dan bukan sempadan laut rasmi."],
+ ["Mengapa Malaysia memerhati taufan","Semenanjung hampir tidak pernah dilanda secara langsung — terlalu dekat dengan khatulistiwa untuk daya Coriolis memusingkan taufan. Kesan sebenarnya tidak langsung: taufan di Pasifik Barat atau Laut China Selatan mengetatkan kecerunan tekanan dan memperkuat luruan monsun timur laut yang membawa hujan berhari-hari ke Kelantan, Terengganu dan pantai timur Pahang. Memerhati taufan bermakna memerhati luruan beberapa hari lebih awal."]
 ],
 en:[
  ["Why JMA instead of JTWC","JTWC's servers return 403 to every datacenter IP, so GitHub's runners cannot reach them. JMA is the WMO-designated Regional Specialized Meteorological Centre for the western North Pacific (RSMC Tokyo) — the official authority for this basin. JTWC is a US military service that happens to be public. The switch actually brings us closer to MET Malaysia's own conventions."],
@@ -2239,7 +2435,7 @@ function renderGpsNote(){
   if(ref.baseKm>GPS_MAXKM){
     box.className="gpsnote warn";
     box.appendChild(el("span",null," "+fill(L("gpsFar"),
-      {place:(lang==="en"?ref.base.en:ref.base.zh),km:Math.round(ref.baseKm)})));
+      {place:(pn(ref.base)),km:Math.round(ref.baseKm)})));
   }
   if(GPSBUSY) box.appendChild(el("span",null," "+L("gpsUpdating")));
   box.appendChild(el("span","co"," "+L("gpsPrivate")));
@@ -2297,7 +2493,7 @@ function renderGpsOffer(){
 
 function renderLearn(){
   var box=document.getElementById("learn"); box.textContent="";
-  GLOSS[lang==="tw"?"zh":lang].forEach(function(p){
+  (GLOSS[LK()]||GLOSS.en).forEach(function(p){
     var d=el("details"); d.appendChild(el("summary",null,p[0]));
     d.appendChild(el("div","gloss",p[1])); box.appendChild(d);
   });
@@ -2306,12 +2502,12 @@ function renderLearn(){
 var UPDREADY=false;
 function renderStamp(){
   var s=document.getElementById("stamp");
-  s.textContent=(UPDREADY?X(lang!=="en"?"新版待重载 · ":"Update ready — reload · "):"")+
+  s.textContent=(UPDREADY?X(tr("新版待重载 · ","Update ready — reload · ","Versi baharu sedia — muat semula · ")):"")+
                 "TYPHOONWATCH "+VERSION+" · "+location.origin;
 }
 
 function renderAll(){
-  document.documentElement.lang = lang==="tw"?"zh-Hant":lang==="zh"?"zh-Hans":"en";
+  document.documentElement.lang = lang==="tw"?"zh-Hant":lang==="zh"?"zh-Hans":lang==="ms"?"ms":"en";
   var b=document.getElementById("brand");
   b.textContent=X(L("brand")); b.appendChild(el("span","lat",L("lat")));
   document.getElementById("tagline").textContent=X(L("tagline"));
@@ -2332,7 +2528,7 @@ function renderAll(){
     REFS.forEach(function(r){
       if(r.grp!==pair[0]) return;
       var o=document.createElement("option"); o.value=r.id;
-      o.textContent=X(lang==="en"?r.en:r.zh); if(r.id===cur) o.selected=true;
+      o.textContent=X(pn(r)); if(r.id===cur) o.selected=true;
       og.appendChild(o);
     });
     sel.appendChild(og);
@@ -2441,10 +2637,36 @@ document.getElementById("footBox").addEventListener("toggle",function(){
   try{ localStorage.setItem("twatch.foot",FOOTOPEN?"1":"0"); }catch(e){}
 });
 
-document.getElementById("langBtn").addEventListener("click",function(){
-  lang = LANGS[(LANGS.indexOf(lang)+1)%LANGS.length];
+function setLang(l){
+  lang = l;
   try{ localStorage.setItem(LS,lang); }catch(e){}
   renderAll();
+}
+document.getElementById("langBtn").addEventListener("click",function(){
+  setLang(LANGS[(LANGS.indexOf(lang)+1)%LANGS.length]);
+});
+/* Onboarding: the first launch asks for a language before anything else.
+   Until it is answered the page underneath renders in the browser's own
+   language as a best guess, so nothing is blank behind the picker. */
+function guessLang(){
+  var n=((navigator.languages&&navigator.languages[0])||navigator.language||"").toLowerCase();
+  if(/^zh-(tw|hk|mo)|^zh-hant/.test(n)) return "tw";
+  if(/^zh/.test(n)) return "zh";
+  if(/^(ms|id)/.test(n)) return "ms";
+  if(/^en/.test(n)) return "en";
+  return "zh";
+}
+function openLangPick(){
+  var lp=document.getElementById("langPick");
+  lp.classList.add("on"); document.body.classList.add("lp-open");
+  var b=lp.querySelector('button[data-lang="'+lang+'"]')||lp.querySelector("button");
+  try{ b.focus({preventScroll:true}); }catch(e){}
+}
+document.getElementById("langPick").addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("button[data-lang]");
+  if(!b) return;
+  this.classList.remove("on"); document.body.classList.remove("lp-open");
+  setLang(b.getAttribute("data-lang"));
 });
 document.getElementById("updBtn").addEventListener("click",function(){
   if(!reloadUseful()){ renderAll(); return; }   // disabled anyway; belt and braces
@@ -2468,7 +2690,10 @@ document.getElementById("refSel").addEventListener("change",function(e){
   try{ localStorage.setItem(LSR,v); }catch(err){}
   renderAll();
 });
-try{ var sv=localStorage.getItem(LS); if(LANGS.indexOf(sv)>-1) lang=sv; }catch(e){}
+var SAVEDLANG=null;
+try{ SAVEDLANG=localStorage.getItem(LS); }catch(e){}
+if(LANGS.indexOf(SAVEDLANG)>-1) lang=SAVEDLANG;
+else { lang=guessLang(); openLangPick(); }
 renderAll(); load(true);   // first paint always fetches
 
 initLocation();
