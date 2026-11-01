@@ -48,6 +48,7 @@ button:hover{border-color:var(--faint)}
   background:var(--panel2);border-radius:7px;padding:9px 11px;margin-top:4px;line-height:1.5}
 .gpsoffer .q{font-size:14px}
 .gpsoffer .why{font-size:12px;color:var(--dim);margin:3px 0 8px}
+.gpsoffer .why.warn{color:#ffd489}
 .gpsoffer .acts{display:flex;gap:8px;flex-wrap:wrap}
 .gpsoffer .yes{border-color:var(--teal)}
 button:disabled{cursor:default;border-style:dashed}
@@ -186,7 +187,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.7.0";
+var VERSION = "v3.7.1";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -309,9 +310,10 @@ var T = {
     goneT:"已从气象厅名单撤下", goneOne:"{n}：最后一次出现在 {t}。",
     footTitle:"关于本页 · 来源与二维码",
     gpsUse:"📍 用我的位置", gpsBusy:"正在定位…", gpsUpdating:"· 正在更新位置…",
-    gpsOffer:"📍 用你现在的位置，看离你最近的台风和季风读数？",
-    gpsOfferWhy:"坐标只留在这台手机上，不会送出去。不用也可以，直接选一个地点。",
-    gpsOfferYes:"用我的位置", gpsOfferNo:"自己选地点",
+    gpsOffer:"📍 用你现在的位置，看离你最近的台风和季风读数",
+    gpsOfferWhy:"点下面的按钮，浏览器会问你给不给定位。坐标只留在这台手机上，不会送出去。不想用定位，也可以从上面的列表选一个地点。",
+    gpsOfferYes:"📍 用我的位置",
+    gpsPending:"还没有选地点。点上面的「📍 用我的位置」，或从列表选一个地点，这里就会显示你那里的读数。",
     gpsAt:"我的位置 {lat} {lon}（{age}取得）",
     gpsBase:"气压走向取自最近的参考点：{place}，{km} 公里外。",
     gpsFar:"最近的参考点是{place}，{km} 公里外——太远了，这个距离的气压走向说明不了你那里的情况，所以这一段不显示。台风距离和地图照常。",
@@ -438,9 +440,10 @@ var T = {
     goneT:"Dropped from JMA's list", goneOne:"{n}: last seen {t}.",
     footTitle:"About this page · sources and QR",
     gpsUse:"📍 Use my location", gpsBusy:"Locating…", gpsUpdating:"· updating…",
-    gpsOffer:"📍 Use where you are now for the nearest storm and monsoon reading?",
-    gpsOfferWhy:"The coordinates stay on this phone and are never sent anywhere. Or just pick a place.",
-    gpsOfferYes:"Use my location", gpsOfferNo:"Choose a place",
+    gpsOffer:"📍 Use where you are now for the nearest storm and monsoon reading",
+    gpsOfferWhy:"Tap the button and the browser will ask for location permission. The coordinates stay on this phone and are never sent anywhere. Or pick a place from the list above instead.",
+    gpsOfferYes:"📍 Use my location",
+    gpsPending:"No place yet. Tap \u201c📍 Use my location\u201d above, or pick a place from the list, and the reading for where you are appears here.",
     gpsAt:"My location {lat} {lon} (fixed {age} ago)",
     gpsBase:"Pressure trend taken from the nearest reference: {place}, {km} km away.",
     gpsFar:"The nearest reference is {place}, {km} km away — too far for its pressure trend to say anything about where you are, so that section is hidden. Storm distances and the maps are unaffected.",
@@ -697,9 +700,10 @@ function refChoice(){
 }
 function refPlace(){
   var id=refChoice();
-  if(id==="__gps"){ var g=gpsRef(); if(g) return g; }
   for(var i=0;i<REFS.length;i++) if(REFS[i].id===id) return REFS[i];
-  return REFS[0];
+  // Not a place picked by hand: "My location" is the default. Until there
+  // is a fix there is NO place — not a stand-in town the reader never chose.
+  return gpsRef();
 }
 /* Which reference the PRESSURE numbers come from. Everything geometric uses
    ref.lat/lon; only the places table needs a real id. */
@@ -1047,10 +1051,13 @@ function overviewMap(storms,others,ref){
     return c;
   }
 
-  var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
-  var refTxt=X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"");
-  LBOX.push({x:rx-5,y:ry+4,w:10});                 // your place: the dot
-  LBOX.push({x:rx+7,y:ry+4,w:labelW(refTxt)});     // your place: its name
+  var rx=0, ry=0, refTxt="";
+  if(ref){
+    rx=+PX(ref.lon).toFixed(1); ry=+PY(ref.lat).toFixed(1);
+    refTxt=X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"");
+    LBOX.push({x:rx-5,y:ry+4,w:10});               // your place: the dot
+    LBOX.push({x:rx+7,y:ry+4,w:labelW(refTxt)});   // your place: its name
+  }
 
   /* Pass 1 registers every dot before pass 2 places any label, so a label
      can never land on a storm that simply had not been drawn yet. */
@@ -1101,6 +1108,7 @@ function overviewMap(storms,others,ref){
          '" fill="'+col+'" font-size="'+FSO+'" paint-order="stroke" stroke="#081019"'+
          ' stroke-width="'+(3*K).toFixed(1)+'">'+ot+'</text>';
   });
+  if(ref)
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="'+(4*K).toFixed(1)+'" fill="#e2ebf4" stroke="#0a1420"'+
        ' stroke-width="'+K.toFixed(2)+'"/>'+
        '<text x="'+(rx+6*K).toFixed(1)+'" y="'+(ry+4*K).toFixed(1)+
@@ -1118,7 +1126,7 @@ function trackPlot(s,ref){
   });
   if(!pts.length) return "";
   var minLa=1e9,maxLa=-1e9,minLo=1e9,maxLo=-1e9;
-  pts.concat([{lat:ref.lat,lon:ref.lon}]).forEach(function(p){
+  pts.concat(ref?[{lat:ref.lat,lon:ref.lon}]:[]).forEach(function(p){
     var padDeg=(p.circle||0)/111;
     minLa=Math.min(minLa,p.lat-padDeg);maxLa=Math.max(maxLa,p.lat+padDeg);
     minLo=Math.min(minLo,p.lon-padDeg);maxLo=Math.max(maxLo,p.lon+padDeg);
@@ -1130,7 +1138,7 @@ function trackPlot(s,ref){
      two. Regional places further north (Manila, Taipei, Tokyo) are left
      alone: dragging the frame down to 0 for them would shrink the storm
      to nothing for no gain. */
-  if(Math.abs(ref.lat)<8){ minLa=Math.min(minLa,0); maxLa=Math.max(maxLa,0); }
+  if(ref&&Math.abs(ref.lat)<8){ minLa=Math.min(minLa,0); maxLa=Math.max(maxLa,0); }
   var padLa=Math.max(1.5,(maxLa-minLa)*.12), padLo=Math.max(1.5,(maxLo-minLo)*.12);
   minLa-=padLa;maxLa+=padLa;minLo-=padLo;maxLo+=padLo;
   var W=680,H=380;
@@ -1225,6 +1233,7 @@ function trackPlot(s,ref){
       }
     }
   });
+  if(ref){
   var rx=+PX(ref.lon).toFixed(1), ry=+PY(ref.lat).toFixed(1);
   svg+='<circle cx="'+rx+'" cy="'+ry+'" r="'+(4*K).toFixed(1)+'" fill="#e2ebf4" stroke="#081019"'+
        ' stroke-width="'+K.toFixed(2)+'"/>'+
@@ -1232,6 +1241,7 @@ function trackPlot(s,ref){
        '" fill="#e2ebf4" font-size="'+FST+'" paint-order="stroke" stroke="#081019"'+
        ' stroke-width="'+(3*K).toFixed(1)+'">'+
        X(lang==="en"?ref.en:ref.zh).replace(/[<>&]/g,"")+'</text>';
+  }
   // Name sits with the storm. Western Pacific tracks run up and to the LEFT
   // (northwest), so the forecast dots and their +NNh labels crowd that side.
   // Default the name below and to the right — the water the storm has already
@@ -1732,6 +1742,7 @@ function plainLines(ref,P,nchg){
 function renderSimple(){
   var box=document.getElementById("simple"); box.textContent="";
   var ref=refPlace(), P=(DOC&&DOC.pressure)||null;
+  if(!ref){ box.appendChild(el("div","plain",L("gpsPending"))); return; }
   // The squall block does not depend on the pressure data, so it is shown
   // whatever happened to that — a stale pressure file must not hide it.
   function withSquall(){
@@ -1972,6 +1983,7 @@ function stormCard(s,n){
   card.appendChild(g);
 
   if(c.lat!=null){
+    if(ref){
     var d0=hav(c.lat,c.lon,ref.lat,ref.lon), line=el("div","rangeline");
     var p1=document.createElement("div");
     p1.innerHTML=X(fill(L("rangeNow"),{km:Math.round(d0).toLocaleString(),
@@ -1990,6 +2002,7 @@ function stormCard(s,n){
     }
     line.appendChild(el("span","note",L(ref.grp==="my"?"rangeNote":"rangeNoteGen")));
     card.appendChild(line);
+    }
 
     s._label=stormLabel(s);
     var plot=trackPlot(s,ref);
@@ -2046,7 +2059,7 @@ function renderRegion(){
   if(!P||!P.places||!Object.keys(P.places).length){
     strip.appendChild(el("div",null,L("presNone")));
   } else {
-    var here=P.places[presRef(ref).id];
+    var here=ref?P.places[presRef(ref).id]:null;
     if(here){
       var line=document.createElement("div");
       var txt=fill(L("presAt"),{place:(lang==="en"?ref.en:ref.zh),hpa:here.hpa.toFixed(1)});
@@ -2098,14 +2111,14 @@ function renderOthers(){
     return;
   }
   list.map(function(o){
-    o._d = (o.lat!=null)?hav(o.lat,o.lon,ref.lat,ref.lon):Infinity; return o;
+    o._d = (ref&&o.lat!=null)?hav(o.lat,o.lon,ref.lat,ref.lon):Infinity; return o;
   }).sort(function(a,b){ return a._d-b._d; }).forEach(function(o){
     var row=el("div","inv"), left=el("div");
     var title=(o.name||o.id)+(o.also_jma?"  "+fill(L("dupOf"),{id:o.also_jma}):"");
     left.appendChild(el("div",null,title));
-    var bits=[fmtLat(o.lat)+" "+fmtLon(o.lon),
-              fill(L("away"),{km:Math.round(o._d).toLocaleString(),
-                              place:(lang==="en"?ref.en:ref.zh)})];
+    var bits=[fmtLat(o.lat)+" "+fmtLon(o.lon)];
+    if(ref&&isFinite(o._d)) bits.push(fill(L("away"),{km:Math.round(o._d).toLocaleString(),
+                              place:(lang==="en"?ref.en:ref.zh)}));
     if(o.severity!=null) bits.push(o.severity+" "+(o.severity_unit||""));
     left.appendChild(el("div","pos",bits.join(" · ")));
     row.appendChild(left);
@@ -2213,6 +2226,7 @@ function renderGpsNote(){
   var box=document.getElementById("gpsNote");
   box.textContent=""; box.className="gpsnote";
   var ref=refPlace();
+  if(!ref) return;                     // the card speaks for itself
   if(GPSBUSY && !ref.gps){ box.textContent=X(L("gpsBusy")); return; }
   if(GPSERR){
     box.className="gpsnote warn";
@@ -2231,27 +2245,11 @@ function renderGpsNote(){
   box.appendChild(el("span","co"," "+L("gpsPrivate")));
 }
 
-/* Location is the default. On launch, with no place chosen by hand:
-   - permission already granted  -> locate silently, no card, no prompt;
-   - not asked yet (or unknown)  -> show the card; the browser prompt comes
-                                    only from a tap on "Use my location";
-   - denied, or no geolocation   -> stay on the default place, say nothing.
-   Choosing "Choose a place" or any place in the list retires the card. */
-var OFFERKEY="twatch.gpsOffer", GPSOFFER=false;
-function offerDone(){ try{ return localStorage.getItem(OFFERKEY)==="done"; }catch(e){ return false; } }
-function retireOffer(){
-  GPSOFFER=false;
-  try{ localStorage.setItem(OFFERKEY,"done"); }catch(e){}
-}
-function geoPermission(){
-  return new Promise(function(res){
-    if(!navigator.geolocation) return res("unsupported");
-    try{
-      navigator.permissions.query({name:"geolocation"})
-        .then(function(p){ res(p.state); }, function(){ res("unknown"); });
-    }catch(e){ res("unknown"); }
-  });
-}
+/* "My location" is the default place, but it is never fetched unasked: the
+   browser's permission prompt appears only after a tap on the button, so it
+   arrives with its reason in front of it. Until then there is no place and
+   the place-specific readings wait (renderSimple says so). A place picked
+   from the list always wins and is kept across launches. */
 function useLocation(silent){
   renderAll();                         // paints "locating" first
   askGPS(function(){
@@ -2262,41 +2260,39 @@ function useLocation(silent){
     renderAll();
   });
 }
+function geoPermission(){
+  return new Promise(function(res){
+    try{
+      navigator.permissions.query({name:"geolocation"})
+        .then(function(p){ res(p.state); }, function(){ res("unknown"); });
+    }catch(e){ res("unknown"); }
+  });
+}
+/* Only for a reader who already tapped "Use my location" before: refresh the
+   fix on launch, but never by prompting — where permission is no longer
+   standing (iOS home-screen apps can forget it), keep the stored fix and its
+   age rather than ask unasked. */
 function initLocation(){
-  var c=refChoice();
-  if(c && c!=="__gps") return;         // a place picked by hand: leave it
+  if(refChoice()!=="__gps" || !GPSFIX || !navigator.geolocation) return;
   geoPermission().then(function(st){
-    if(st==="unsupported") return;
-    if(c==="__gps"){
-      // Already in location mode. The browser does not re-prompt once
-      // granted, and maximumAge lets it hand back a recent cached position.
-      // Where permission is not standing (iOS home-screen apps can forget
-      // it), do not prompt unasked: keep the stored fix and its age.
-      if(st==="granted"||(st==="unknown"&&GPSFIX)) useLocation(true);
-      return;
-    }
-    if(st==="granted"){ useLocation(true); return; }
-    if(st==="denied"||offerDone()) return;
-    GPSOFFER=true; renderAll();
+    if(st==="granted"||st==="unknown") useLocation(true);
   });
 }
 function renderGpsOffer(){
   var box=document.getElementById("gpsOffer");
   box.textContent="";
-  box.hidden=!GPSOFFER;
-  if(!GPSOFFER) return;
+  var show=!refPlace();
+  box.hidden=!show;
+  if(!show) return;
   box.appendChild(el("div","q",L("gpsOffer")));
-  box.appendChild(el("div","why",L("gpsOfferWhy")));
+  if(GPSERR) box.appendChild(el("div","why warn",
+    L(GPSERR==="denied"?"gpsDenied":GPSERR==="unsupported"?"gpsNoSupport":"gpsFailed")));
+  else box.appendChild(el("div","why",L("gpsOfferWhy")));
   var acts=el("div","acts");
-  var yes=el("button","yes",L("gpsOfferYes")); yes.type="button";
-  yes.addEventListener("click",function(){ retireOffer(); useLocation(false); });
-  var no=el("button",null,L("gpsOfferNo")); no.type="button";
-  no.addEventListener("click",function(){
-    retireOffer(); renderAll();
-    var sel=document.getElementById("refSel"); sel.focus();
-    try{ if(sel.showPicker) sel.showPicker(); }catch(e){}
-  });
-  acts.appendChild(yes); acts.appendChild(no); box.appendChild(acts);
+  var yes=el("button","yes",GPSBUSY?L("gpsBusy"):L("gpsOfferYes")); yes.type="button";
+  if(GPSBUSY) yes.disabled=true;
+  yes.addEventListener("click",function(){ useLocation(false); });
+  acts.appendChild(yes); box.appendChild(acts);
 }
 
 function renderLearn(){
@@ -2324,7 +2320,7 @@ function renderAll(){
   lb.appendChild(el("span","nx","→ "+NEXTLANG[lang]));
   refreshStatus();
   document.getElementById("hLearn").textContent=X(L("hLearn"));
-  var sel=document.getElementById("refSel"), cur=refPlace().id;
+  var sel=document.getElementById("refSel"), cr=refPlace(), cur=cr?cr.id:"__gps";
   sel.textContent="";
   var oGps=document.createElement("option");
   oGps.value="__gps";
@@ -2464,7 +2460,6 @@ setInterval(function(){
 }, 60000);
 document.getElementById("refSel").addEventListener("change",function(e){
   var v=e.target.value;
-  retireOffer();                     // any choice in the list answers the card
   if(v==="__gps"){
     // Re-ask every time it is chosen, so picking it again is how you refresh.
     useLocation(false);
