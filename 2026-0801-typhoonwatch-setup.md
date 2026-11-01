@@ -67,7 +67,8 @@ Then open `index.html?demo=1` from `file://`.
 
 - `python scripts/fetch_typhoon.py --selftest` green
 - `node --check` on the extracted script and on `sw.js`
-- `VERSION` in `index.html` and `CACHE_VERSION` in `sw.js` matching
+- bump `VERSION` in `index.html` (display only — `sw.js` has no version to
+  keep in sync; it detects a changed `index.html` by its content digest)
 - ship `index.html`, `sw.js`, `manifest.json`, `icon.svg`
 
 ## Map data

@@ -177,7 +177,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.5.1";
+var VERSION = "v3.6.0";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -2399,9 +2399,28 @@ try{
 }catch(e){}
 
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js").then(function(reg){
+  /* sw.js has no version number to keep in step with VERSION: it identifies
+     this page by a digest of its content. We ask which copy we are running,
+     and on each return to the tab ask whether the server's copy differs. */
+  function swAsk(msg){
+    return new Promise(function(res){
+      var c=navigator.serviceWorker.controller; if(!c||!window.MessageChannel) return res(null);
+      var ch=new MessageChannel(), t=setTimeout(function(){ res(null); },15000);
+      ch.port1.onmessage=function(e){ clearTimeout(t); res(e.data); };
+      c.postMessage(msg,[ch.port2]);
+    });
+  }
+  var SHELLDIGEST=null;
+  swAsk({type:"shell-digest"}).then(function(r){ SHELLDIGEST=r&&r.digest; });
+  function checkShell(){
+    if(!SHELLDIGEST||UPDREADY) return;
+    swAsk({type:"shell-check",digest:SHELLDIGEST}).then(function(r){
+      if(r&&r.newer){ UPDREADY=true; renderStamp(); }
+    });
+  }
+  navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).then(function(reg){
     var last=0;
-    function poke(){ var n=Date.now(); if(n-last>6e4){ last=n; reg.update(); } }
+    function poke(){ var n=Date.now(); if(n-last>6e4){ last=n; reg.update(); checkShell(); } }
     document.addEventListener("visibilitychange",function(){ if(!document.hidden) poke(); });
     window.addEventListener("online",function(){ poke(); load(); });
     reg.addEventListener("updatefound",function(){
