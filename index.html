@@ -177,7 +177,7 @@ details.foot{border-top:0;padding-top:0;margin-top:0}
    for this basin and uses 10-minute sustained winds, matching MET
    Malaysia's convention.
    ==================================================================== */
-var VERSION = "v3.5.0";
+var VERSION = "v3.5.1";
 var STALE_H = 8;
 var DATA_URL = "./data/typhoon.json";
 var LS = "twatch.lang", LSR = "twatch.ref";
@@ -1506,10 +1506,19 @@ function scsLine(s){
   return i.now?L("scsLineNow"):fill(L("scsLineFc"),{tau:i.tau});
 }
 function inSCS(p){ return !!(p&&p.lat!=null&&p.lat>=SCS.s&&p.lat<=SCS.n&&p.lon>=SCS.w&&p.lon<=SCS.e); }
+/* Present-tense guidance ("already in", "+24 h is in") is only said from a
+   bulletin that is still current, and only about forecast times that have not
+   yet passed — an old +24 h point is a guess about the past. */
 function scsInfo(s){
   if(!s||s.unavailable||!s.parsed) return null;
+  var age=stormAgeH(s);
+  if(age===null||age>STALE_H) return null;
   if(inSCS(s.current)) return {now:true};
-  var f=(s.forecast||[]).filter(inSCS)[0];
+  var now=Date.now();
+  var f=(s.forecast||[]).filter(function(p){
+    var v=Date.parse((p&&p.valid)||"");
+    return !isNaN(v)&&v>now&&inSCS(p);
+  })[0];
   return f?{tau:f.tau}:null;
 }
 

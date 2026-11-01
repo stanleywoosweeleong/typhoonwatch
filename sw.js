@@ -1,16 +1,18 @@
 /* 风眼 TYPHOONWATCH service worker
    Bump CACHE_VERSION on every release; it must match VERSION in index.html. */
-var CACHE_VERSION = "twatch-v3.5.0";
+var CACHE_VERSION = "twatch-v3.5.1";
 var SHELL = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE_VERSION).then(function (c) { return c.addAll(SHELL); }));
 });
 
+/* Cache storage is shared by every app on this GitHub Pages origin, so only
+   our own old versions (twatch-*) are cleared — never a sibling app's. */
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
     return Promise.all(keys.map(function (k) {
-      return k === CACHE_VERSION ? null : caches.delete(k);
+      return (k.indexOf("twatch-") === 0 && k !== CACHE_VERSION) ? caches.delete(k) : null;
     }));
   }).then(function () { return self.clients.claim(); }));
 });
@@ -52,8 +54,18 @@ function networkFirst(req, timeoutMs, mark) {
       }, timeoutMs);
       fetch(req).then(function (res) {
         clearTimeout(timer);
-        if (res && res.ok) cache.put(key, res.clone());
-        if (!settled) { settled = true; resolve(res); }
+        if (res && res.ok) {
+          cache.put(key, res.clone());
+          if (!settled) { settled = true; resolve(res); }
+          return;
+        }
+        // A 4xx/5xx (e.g. a Pages 503) is no better than being offline:
+        // prefer the cached copy, and pass the error through only if none.
+        fromCache().then(function (hit) {
+          if (settled) return;
+          settled = true;
+          resolve(hit || res);
+        });
       }).catch(function () {
         clearTimeout(timer);
         fromCache().then(function (hit) {
