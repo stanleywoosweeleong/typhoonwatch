@@ -1,9 +1,12 @@
 {
- "errors": [],
+ "errors": [
+  "pressure: <urlopen error _ssl.c:994: The handshake operation timed out>",
+  "cold surge: <urlopen error _ssl.c:994: The handshake operation timed out>"
+ ],
  "fetch_ok": true,
- "generated": "2026-11-13T11:36:25Z",
+ "generated": "2026-11-13T20:03:43Z",
  "gone": [],
- "last_attempt": "2026-11-13T11:36:25Z",
+ "last_attempt": "2026-11-13T20:03:43Z",
  "others": [],
  "others_source": "GDACS (JRC/European Commission), aggregating several agencies",
  "pressure": {
@@ -830,13 +833,15 @@
     "valid": "2026-11-13T11:00Z"
    }
   },
+  "stale": true,
+  "stale_since": "2026-11-13T20:03:43Z",
   "time": "2026-11-13T11:36Z"
  },
  "source": "Japan Meteorological Agency — RSMC Tokyo Typhoon Center",
  "source_url": "https://www.jma.go.jp/bosai/map.html#contents=typhoon",
  "squall": {
   "app_url": "https://stanleywoosweeleong.github.io/SumatraSquall/",
-  "at": "2026-11-13T11:37:31Z",
+  "at": "2026-11-13T20:08:07Z",
   "empty": [],
   "levels": [
    [
@@ -864,7 +869,10 @@
   "nights": [
    {
     "blocked": null,
-    "earliest": null,
+    "earliest": {
+     "at": "2026-11-13T17:00:00Z",
+     "id": "lumut"
+    },
     "gate": true,
     "lacking": [],
     "level": "watch",
@@ -872,312 +880,28 @@
     "missing": [],
     "parts": {
      "cape": {
-      "cape": 2470,
+      "cape": 2720,
       "pts": 15,
       "score": 1,
       "w": 15
      },
      "conv": {
-      "conv": 0.86,
-      "pts": 8.6,
-      "score": 0.43,
+      "conv": 1.69,
+      "pts": 16.9,
+      "score": 0.84,
       "w": 20
      },
      "gust": {
-      "at": "2026-11-14T01:00:00Z",
+      "at": "2026-11-14T02:00:00Z",
       "kmh": 26,
       "pts": 0,
       "score": 0,
-      "town": "melaka",
+      "town": "jb",
       "w": 15
      },
      "rain": {
-      "frac": 0.25,
-      "max": 5,
-      "pts": 12.5,
-      "score": 0.63,
-      "w": 20
-     },
-     "season": {
-      "phase": "INTER",
-      "pts": 3.5,
-      "score": 0.7,
-      "w": 5
-     },
-     "steer": {
-      "from": 107,
-      "ms": 4.1,
-      "pts": 0,
-      "score": 0,
-      "w": 25
-     }
-    },
-    "score": 30,
-    "towns": {
-     "alor": {
-      "first": null,
-      "gust": 17,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "bentong": {
-      "first": null,
-      "gust": 13,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.3,
-      "rain": 0.7
-     },
-     "bintulu": {
-      "first": null,
-      "gust": 19,
-      "lag": null,
-      "max": 0.4,
-      "rain": 0.4
-     },
-     "bpahat": {
-      "first": null,
-      "gust": 22,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "ipoh": {
-      "first": null,
-      "gust": 12,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "jb": {
-      "first": null,
-      "gust": 19,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.1,
-      "rain": 0.2
-     },
-     "kk": {
-      "first": null,
-      "gust": 21,
-      "lag": null,
-      "max": 0.3,
-      "rain": 0.3
-     },
-     "kl": {
-      "first": null,
-      "gust": 12,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "klang": {
-      "first": null,
-      "gust": 17,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "kuantan": {
-      "first": null,
-      "gust": 17,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.5,
-      "rain": 1.7
-     },
-     "kuching": {
-      "first": "2026-11-13T19:00:00Z",
-      "gust": 16,
-      "lag": null,
-      "max": 4.4,
-      "rain": 11.7
-     },
-     "labuan": {
-      "first": null,
-      "gust": 26,
-      "lag": null,
-      "max": 0,
-      "rain": 0
-     },
-     "lumut": {
-      "first": null,
-      "gust": 17,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.1,
-      "rain": 0.1
-     },
-     "melaka": {
-      "first": null,
-      "gust": 26,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "miri": {
-      "first": null,
-      "gust": 17,
-      "lag": null,
-      "max": 0.1,
-      "rain": 0.1
-     },
-     "muar": {
-      "first": null,
-      "gust": 25,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "pd": {
-      "first": null,
-      "gust": 22,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "penang": {
-      "first": null,
-      "gust": 16,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "raub": {
-      "first": null,
-      "gust": 16,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.2,
-      "rain": 0.3
-     },
-     "sandakan": {
-      "first": null,
-      "gust": 25,
-      "lag": null,
-      "max": 0.5,
-      "rain": 1.5
-     },
-     "segamat": {
-      "first": null,
-      "gust": 21,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.1,
-      "rain": 0.2
-     },
-     "seremban": {
-      "first": null,
-      "gust": 16,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0,
-      "rain": 0
-     },
-     "sibu": {
-      "first": null,
-      "gust": 15,
-      "lag": null,
-      "max": 1,
-      "rain": 1.5
-     },
-     "tawau": {
-      "first": null,
-      "gust": 16,
-      "lag": null,
-      "max": 0.4,
-      "rain": 1.7
-     },
-     "temerloh": {
-      "first": null,
-      "gust": 16,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.2,
-      "rain": 0.6
-     },
-     "tintan": {
-      "first": null,
-      "gust": 13,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.4,
-      "rain": 0.7
-     },
-     "triang": {
-      "first": null,
-      "gust": 18,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.2,
-      "rain": 0.2
-     }
-    }
-   },
-   {
-    "blocked": null,
-    "earliest": {
-     "at": "2026-11-14T17:00:00Z",
-     "id": "tintan"
-    },
-    "gate": true,
-    "lacking": [],
-    "level": "watch",
-    "m0": "2026-11-14T16:00:00Z",
-    "missing": [],
-    "parts": {
-     "cape": {
-      "cape": 1590,
-      "pts": 10.9,
-      "score": 0.73,
-      "w": 15
-     },
-     "conv": {
-      "conv": 0.45,
-      "pts": 4.5,
-      "score": 0.23,
-      "w": 20
-     },
-     "gust": {
-      "at": "2026-11-15T02:00:00Z",
-      "kmh": 27,
-      "pts": 0,
-      "score": 0,
-      "town": "seremban",
-      "w": 15
-     },
-     "rain": {
-      "frac": 0.83,
-      "max": 7.4,
+      "frac": 0.53,
+      "max": 9,
       "pts": 20,
       "score": 1,
       "w": 20
@@ -1189,8 +913,8 @@
       "w": 5
      },
      "steer": {
-      "from": 53,
-      "ms": 2.4,
+      "from": 110,
+      "ms": 3.3,
       "pts": 0,
       "score": 0,
       "w": 25
@@ -1200,28 +924,28 @@
     "towns": {
      "alor": {
       "first": null,
-      "gust": 16,
+      "gust": 19,
       "lag": {
        "upwind": true
       },
-      "max": 0,
-      "rain": 0
+      "max": 0.6,
+      "rain": 0.8
      },
      "bentong": {
-      "first": null,
-      "gust": 13,
+      "first": "2026-11-13T16:00:00Z",
+      "gust": 12,
       "lag": {
        "upwind": true
       },
-      "max": 0,
-      "rain": 0
+      "max": 6,
+      "rain": 8
      },
      "bintulu": {
-      "first": null,
-      "gust": 22,
+      "first": "2026-11-13T17:00:00Z",
+      "gust": 30,
       "lag": null,
-      "max": 0.2,
-      "rain": 0.2
+      "max": 4,
+      "rain": 10.7
      },
      "bpahat": {
       "first": null,
@@ -1229,8 +953,292 @@
       "lag": {
        "upwind": true
       },
-      "max": 0.4,
+      "max": 1.4,
+      "rain": 6.4
+     },
+     "ipoh": {
+      "first": null,
+      "gust": 17,
+      "lag": {
+       "upwind": true
+      },
+      "max": 1.8,
+      "rain": 3.6
+     },
+     "jb": {
+      "first": null,
+      "gust": 26,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0.8,
+      "rain": 2.2
+     },
+     "kk": {
+      "first": null,
+      "gust": 19,
+      "lag": null,
+      "max": 0,
+      "rain": 0
+     },
+     "kl": {
+      "first": null,
+      "gust": 19,
+      "lag": {
+       "upwind": true
+      },
+      "max": 1.2,
+      "rain": 1.7
+     },
+     "klang": {
+      "first": "2026-11-13T21:00:00Z",
+      "gust": 22,
+      "lag": {
+       "upwind": true
+      },
+      "max": 4.7,
+      "rain": 5.9
+     },
+     "kuantan": {
+      "first": "2026-11-13T18:00:00Z",
+      "gust": 20,
+      "lag": {
+       "upwind": true
+      },
+      "max": 2.8,
+      "rain": 7.3
+     },
+     "kuching": {
+      "first": "2026-11-13T18:00:00Z",
+      "gust": 22,
+      "lag": null,
+      "max": 7.6,
+      "rain": 20.2
+     },
+     "labuan": {
+      "first": null,
+      "gust": 29,
+      "lag": null,
+      "max": 0.1,
+      "rain": 0.1
+     },
+     "lumut": {
+      "first": "2026-11-13T17:00:00Z",
+      "gust": 16,
+      "lag": {
+       "upwind": true
+      },
+      "max": 8.9,
+      "rain": 15.3
+     },
+     "melaka": {
+      "first": "2026-11-13T20:00:00Z",
+      "gust": 23,
+      "lag": {
+       "upwind": true
+      },
+      "max": 3.1,
+      "rain": 6.5
+     },
+     "miri": {
+      "first": "2026-11-13T16:00:00Z",
+      "gust": 21,
+      "lag": null,
+      "max": 2.4,
+      "rain": 2.8
+     },
+     "muar": {
+      "first": "2026-11-13T20:00:00Z",
+      "gust": 15,
+      "lag": {
+       "upwind": true
+      },
+      "max": 4.2,
+      "rain": 13.9
+     },
+     "pd": {
+      "first": "2026-11-13T21:00:00Z",
+      "gust": 23,
+      "lag": {
+       "upwind": true
+      },
+      "max": 5.5,
+      "rain": 6.9
+     },
+     "penang": {
+      "first": null,
+      "gust": 18,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0,
+      "rain": 0
+     },
+     "raub": {
+      "first": null,
+      "gust": 16,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0.7,
+      "rain": 1.8
+     },
+     "sandakan": {
+      "first": null,
+      "gust": 22,
+      "lag": null,
+      "max": 0.3,
+      "rain": 1
+     },
+     "segamat": {
+      "first": "2026-11-14T00:00:00Z",
+      "gust": 15,
+      "lag": {
+       "upwind": true
+      },
+      "max": 2.2,
+      "rain": 7.7
+     },
+     "seremban": {
+      "first": "2026-11-13T21:00:00Z",
+      "gust": 22,
+      "lag": {
+       "upwind": true
+      },
+      "max": 4.2,
+      "rain": 7.7
+     },
+     "sibu": {
+      "first": "2026-11-13T18:00:00Z",
+      "gust": 21,
+      "lag": null,
+      "max": 4.7,
+      "rain": 19.3
+     },
+     "tawau": {
+      "first": null,
+      "gust": 23,
+      "lag": null,
+      "max": 0.1,
+      "rain": 0.2
+     },
+     "temerloh": {
+      "first": "2026-11-13T16:00:00Z",
+      "gust": 18,
+      "lag": {
+       "upwind": true
+      },
+      "max": 4.7,
+      "rain": 13.7
+     },
+     "tintan": {
+      "first": "2026-11-13T17:00:00Z",
+      "gust": 19,
+      "lag": {
+       "upwind": true
+      },
+      "max": 15.3,
+      "rain": 32.5
+     },
+     "triang": {
+      "first": "2026-11-13T19:00:00Z",
+      "gust": 17,
+      "lag": {
+       "upwind": true
+      },
+      "max": 3.7,
+      "rain": 7.8
+     }
+    }
+   },
+   {
+    "blocked": null,
+    "earliest": {
+     "at": "2026-11-14T19:00:00Z",
+     "id": "klang"
+    },
+    "gate": true,
+    "lacking": [],
+    "level": "watch",
+    "m0": "2026-11-14T16:00:00Z",
+    "missing": [],
+    "parts": {
+     "cape": {
+      "cape": 1710,
+      "pts": 12.1,
+      "score": 0.81,
+      "w": 15
+     },
+     "conv": {
+      "conv": 0.21,
+      "pts": 2.1,
+      "score": 0.1,
+      "w": 20
+     },
+     "gust": {
+      "at": "2026-11-14T21:00:00Z",
+      "kmh": 26,
+      "pts": 0,
+      "score": 0,
+      "town": "melaka",
+      "w": 15
+     },
+     "rain": {
+      "frac": 0.72,
+      "max": 7.6,
+      "pts": 20,
+      "score": 1,
+      "w": 20
+     },
+     "season": {
+      "phase": "INTER",
+      "pts": 3.5,
+      "score": 0.7,
+      "w": 5
+     },
+     "steer": {
+      "from": 41,
+      "ms": 2.7,
+      "pts": 0,
+      "score": 0,
+      "w": 25
+     }
+    },
+    "score": 30,
+    "towns": {
+     "alor": {
+      "first": null,
+      "gust": 15,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0.2,
+      "rain": 0.6
+     },
+     "bentong": {
+      "first": null,
+      "gust": 15,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0.1,
+      "rain": 0.1
+     },
+     "bintulu": {
+      "first": null,
+      "gust": 26,
+      "lag": null,
+      "max": 0.8,
       "rain": 1.6
+     },
+     "bpahat": {
+      "first": "2026-11-14T21:00:00Z",
+      "gust": 15,
+      "lag": {
+       "upwind": true
+      },
+      "max": 2.9,
+      "rain": 4.3
      },
      "ipoh": {
       "first": null,
@@ -1238,16 +1246,16 @@
       "lag": {
        "upwind": true
       },
-      "max": 1.2,
-      "rain": 2.4
+      "max": 0.1,
+      "rain": 0.1
      },
      "jb": {
       "first": null,
-      "gust": 18,
+      "gust": 15,
       "lag": {
        "upwind": true
       },
-      "max": 0.8,
+      "max": 1,
       "rain": 3.2
      },
      "kk": {
@@ -1258,172 +1266,172 @@
       "rain": 0
      },
      "kl": {
-      "first": null,
-      "gust": 18,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.1,
-      "rain": 0.1
-     },
-     "klang": {
-      "first": "2026-11-15T01:00:00Z",
-      "gust": 17,
-      "lag": {
-       "upwind": true
-      },
-      "max": 2.9,
-      "rain": 7.3
-     },
-     "kuantan": {
-      "first": "2026-11-14T17:00:00Z",
+      "first": "2026-11-14T19:00:00Z",
       "gust": 19,
       "lag": {
        "upwind": true
       },
-      "max": 4.4,
-      "rain": 11.8
+      "max": 4.7,
+      "rain": 9.1
+     },
+     "klang": {
+      "first": "2026-11-14T19:00:00Z",
+      "gust": 19,
+      "lag": {
+       "upwind": true
+      },
+      "max": 8.1,
+      "rain": 13.6
+     },
+     "kuantan": {
+      "first": null,
+      "gust": 23,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0.8,
+      "rain": 2.9
      },
      "kuching": {
       "first": null,
-      "gust": 19,
+      "gust": 22,
       "lag": null,
       "max": 0.5,
-      "rain": 2.1
+      "rain": 1.2
      },
      "labuan": {
       "first": null,
-      "gust": 26,
+      "gust": 25,
       "lag": null,
       "max": 0,
       "rain": 0
      },
      "lumut": {
-      "first": "2026-11-14T22:00:00Z",
-      "gust": 20,
-      "lag": {
-       "upwind": true
-      },
-      "max": 7.2,
-      "rain": 21.1
-     },
-     "melaka": {
       "first": null,
       "gust": 16,
       "lag": {
        "upwind": true
       },
-      "max": 0.4,
-      "rain": 1.3
+      "max": 1.7,
+      "rain": 5.5
+     },
+     "melaka": {
+      "first": null,
+      "gust": 26,
+      "lag": {
+       "upwind": true
+      },
+      "max": 1.7,
+      "rain": 3.2
      },
      "miri": {
       "first": null,
-      "gust": 19,
+      "gust": 18,
       "lag": null,
-      "max": 0.1,
-      "rain": 0.1
+      "max": 0.2,
+      "rain": 0.2
      },
      "muar": {
-      "first": "2026-11-14T19:00:00Z",
+      "first": "2026-11-14T21:00:00Z",
       "gust": 17,
       "lag": {
        "upwind": true
       },
-      "max": 2.8,
-      "rain": 5.6
+      "max": 2,
+      "rain": 3.9
      },
      "pd": {
-      "first": null,
-      "gust": 27,
+      "first": "2026-11-14T19:00:00Z",
+      "gust": 24,
       "lag": {
        "upwind": true
       },
-      "max": 0.9,
-      "rain": 1.5
+      "max": 7.9,
+      "rain": 10.6
      },
      "penang": {
       "first": null,
-      "gust": 20,
+      "gust": 17,
       "lag": {
        "upwind": true
       },
-      "max": 0.5,
-      "rain": 1.3
+      "max": 1.8,
+      "rain": 6.8
      },
      "raub": {
       "first": null,
-      "gust": 17,
+      "gust": 16,
       "lag": {
        "upwind": true
       },
-      "max": 0.1,
-      "rain": 0.2
-     },
-     "sandakan": {
-      "first": null,
-      "gust": 22,
-      "lag": null,
-      "max": 0.3,
-      "rain": 1.6
-     },
-     "segamat": {
-      "first": null,
-      "gust": 17,
-      "lag": {
-       "upwind": true
-      },
-      "max": 1.2,
-      "rain": 2.8
-     },
-     "seremban": {
-      "first": null,
-      "gust": 27,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.2,
-      "rain": 0.5
-     },
-     "sibu": {
-      "first": null,
-      "gust": 19,
-      "lag": null,
       "max": 0,
       "rain": 0
      },
+     "sandakan": {
+      "first": null,
+      "gust": 18,
+      "lag": null,
+      "max": 0.5,
+      "rain": 2.2
+     },
+     "segamat": {
+      "first": "2026-11-14T22:00:00Z",
+      "gust": 13,
+      "lag": {
+       "upwind": true
+      },
+      "max": 4.4,
+      "rain": 5.9
+     },
+     "seremban": {
+      "first": "2026-11-14T19:00:00Z",
+      "gust": 22,
+      "lag": {
+       "upwind": true
+      },
+      "max": 4.5,
+      "rain": 7.1
+     },
+     "sibu": {
+      "first": null,
+      "gust": 24,
+      "lag": null,
+      "max": 1.4,
+      "rain": 1.5
+     },
      "tawau": {
       "first": null,
-      "gust": 23,
+      "gust": 26,
       "lag": null,
-      "max": 0.8,
-      "rain": 1.2
+      "max": 0.1,
+      "rain": 0.3
      },
      "temerloh": {
+      "first": null,
+      "gust": 14,
+      "lag": {
+       "upwind": true
+      },
+      "max": 0,
+      "rain": 0
+     },
+     "tintan": {
+      "first": null,
+      "gust": 19,
+      "lag": {
+       "upwind": true
+      },
+      "max": 1.1,
+      "rain": 1.2
+     },
+     "triang": {
       "first": null,
       "gust": 13,
       "lag": {
        "upwind": true
       },
-      "max": 0.2,
-      "rain": 0.6
-     },
-     "tintan": {
-      "first": "2026-11-14T17:00:00Z",
-      "gust": 16,
-      "lag": {
-       "upwind": true
-      },
-      "max": 5.3,
-      "rain": 12.4
-     },
-     "triang": {
-      "first": null,
-      "gust": 15,
-      "lag": {
-       "upwind": true
-      },
-      "max": 0.2,
-      "rain": 0.5
+      "max": 0,
+      "rain": 0
      }
     }
    }
@@ -1704,6 +1712,7 @@
   "model": "ecmwf_ifs025",
   "now": -1.1,
   "ref": "Chang, Harr & Chen (2005), Monthly Weather Review 133",
+  "stale": true,
   "step": 0.5,
   "threshold": 8.0,
   "time": "2026-11-13T11:37Z",
